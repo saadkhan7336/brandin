@@ -1,5 +1,5 @@
-import { BrowserRouter as Router,Routes,Route } from "react-router-dom";
-import React from 'react'
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React from "react";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import ProtectedRoute from "./ProtectedRoute";
@@ -9,27 +9,50 @@ import Profile from "../pages/profile/Profile";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import VerifyOtp from "../pages/auth/VerifyOtp";
 import ResetPassword from "../pages/auth/ResetPassword";
+import AnalyticsPage from "../pages/features/AnalyticsPage";
+import CompaignManagement from "../pages/features/CompaignManagement";
+import FindMatchPage from "../pages/features/FindMatchPage";
+import VerifiedProfilesPage from "../pages/features/VerifiedProfilesPage";
+import FeaturesPage from "../pages/FeaturesPage";
 
 function AppRoutes() {
   return (
     <Router>
-        <Routes>
-                {/* Public Routes */}
-                <Route path="/login" element={<Login/>} />
-                <Route path="/register" element={<Register/>}/>
-                <Route path="/forgot-password" element={<ForgotPassword/>}/>
-                <Route path="/verify-otp" element={<VerifyOtp/>}/>
-                <Route path="/reset-password" element={<ResetPassword/>}/>
-                 {/* Protected Routes */}
-                 <Route element={<ProtectedRoute/>}>
-                 <Route path="/dashboard" element={<Dashboard />} />
+      <Routes>
+        {/* Public Routes */}
+        {/* <Route path="/" element={<LandingPage />} /> */}
+        <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/features/analytics" element={<AnalyticsPage />} />
+        <Route
+          path="/features/campaign-management"
+          element={<CompaignManagement />}
+        />
+        <Route path="/features/find-matches" element={<FindMatchPage />} />
+        <Route
+          path="/features/verified-profiles"
+          element={<VerifiedProfilesPage />}
+        />
+        {/* <Route path="/about" element={<AboutPage />} /> */}
+        {/* <Route path="/contact" element={<ContactPage />} /> */}
+        {/* <Route path="/blog" element={<BlogPage />} /> */}
+        {/* <Route path="/help-center" element={<HelpCenterPage />} /> */}
+        {/* <Route path="/case-studies" element={<CaseStudiesPage />} /> */}
+        {/* <Route path="/privacy-policy" element={<PrivacyPolicyPage />} /> */}
+        {/* <Route path="/terms-of-service" element={<TermsOfServicePage />} /> */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        {/* Protected Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/campaigns" element={<Campaign />} />
           <Route path="/profile" element={<Profile />} />
         </Route>
-        </Routes>
+      </Routes>
     </Router>
-  )
+  );
 }
 
-
-export default AppRoutes
+export default AppRoutes;
