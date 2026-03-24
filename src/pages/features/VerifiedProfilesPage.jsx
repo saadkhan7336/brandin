@@ -9,7 +9,6 @@ import {
   Lock,
   UserCheck,
   FileCheck,
-  Search,
   ArrowRight,
 } from "lucide-react";
 

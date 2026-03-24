@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import InfluButton from "../../components/common/InfluBtn";
 import LandingNavbar from "../../components/layout/LandingNavbar";
 import {
-  Shield,
   Target,
   Calendar,
   Users,
@@ -11,7 +10,6 @@ import {
   MessageSquare,
   Clock,
   ArrowRight,
-  CheckCircle,
 } from "lucide-react";
 
 function CompaignManagement() {

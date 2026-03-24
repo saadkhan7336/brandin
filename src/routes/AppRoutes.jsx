@@ -14,6 +14,9 @@ import CompaignManagement from "../pages/features/CompaignManagement";
 import FindMatchPage from "../pages/features/FindMatchPage";
 import VerifiedProfilesPage from "../pages/features/VerifiedProfilesPage";
 import FeaturesPage from "../pages/FeaturesPage";
+import HelpCenterPage from "../components/HelpCenterPage";
+import CaseStudiesPage from "../components/CaseStudiesPage";
+import PrivacyPolicyPage from "../components/PrivacyPolicyPage";
 
 function AppRoutes() {
   return (
@@ -32,13 +35,13 @@ function AppRoutes() {
           path="/features/verified-profiles"
           element={<VerifiedProfilesPage />}
         />
+        <Route path="/help-center" element={<HelpCenterPage />} />
+        <Route path="/case-studies" element={<CaseStudiesPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        {/* <Route path="/terms-of-service" element={<TermsOfServicePage />} /> */}
         {/* <Route path="/about" element={<AboutPage />} /> */}
         {/* <Route path="/contact" element={<ContactPage />} /> */}
         {/* <Route path="/blog" element={<BlogPage />} /> */}
-        {/* <Route path="/help-center" element={<HelpCenterPage />} /> */}
-        {/* <Route path="/case-studies" element={<CaseStudiesPage />} /> */}
-        {/* <Route path="/privacy-policy" element={<PrivacyPolicyPage />} /> */}
-        {/* <Route path="/terms-of-service" element={<TermsOfServicePage />} /> */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
