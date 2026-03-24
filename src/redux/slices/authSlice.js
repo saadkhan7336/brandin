@@ -24,7 +24,7 @@ const authSlice=createSlice({
             state.user=null;
             state.isAuthenticated=false;
         },
-        setloading:(state,action)=>{
+        setLoading:(state,action)=>{
             state.loading=action.payload;
         },
         setError:(state,action)=>{
@@ -52,7 +52,7 @@ const authSlice=createSlice({
 export const {
     setAuthUser,
     logoutSuccess,
-    setloading,
+    setLoading,
     setError,
     setMessage,
     setOtpVerified,
