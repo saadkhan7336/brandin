@@ -3,13 +3,11 @@ import { useNavigate } from "react-router-dom";
 import InfluButton from "../../components/common/InfluBtn";
 import LandingNavbar from "../../components/layout/LandingNavbar";
 import {
-  Shield,
   Search,
   Filter,
   Users,
   Star,
   MapPin,
-  TrendingUp,
   ArrowRight,
   CheckCircle,
 } from "lucide-react";
