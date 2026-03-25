@@ -14,9 +14,9 @@ import CompaignManagement from "../pages/features/CompaignManagement";
 import FindMatchPage from "../pages/features/FindMatchPage";
 import VerifiedProfilesPage from "../pages/features/VerifiedProfilesPage";
 import FeaturesPage from "../pages/FeaturesPage";
-import HelpCenterPage from "../components/HelpCenterPage";
-import CaseStudiesPage from "../components/CaseStudiesPage";
-import PrivacyPolicyPage from "../components/PrivacyPolicyPage";
+import HelpCenterPage from "../pages/HelpCenterPage";
+import CaseStudiesPage from "../pages/CaseStudiesPage";
+import PrivacyPolicyPage from "../pages/PrivacyPolicyPage";
 
 function AppRoutes() {
   return (
