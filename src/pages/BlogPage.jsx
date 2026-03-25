@@ -1,75 +1,84 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LandingNavbar } from '../components/layout/LandingNavbar';
-import { InfluButton } from '../components/common/InfluButton';
-import { Search, Calendar, User, ArrowRight, Shield } from 'lucide-react';
+import React from "react";
+import LandingNavbar from "../components/layout/LandingNavbar";
+import InfluButton from "../components/common/InfluBtn";
+import { Search, Calendar, User, ArrowRight, Shield } from "lucide-react";
 
 export default function BlogPage() {
-  const navigate = useNavigate();
-
   const categories = [
-    'All',
-    'Influencer Tips',
-    'Brand Strategy',
-    'Case Studies',
-    'Market Trends',
-    'Platform Updates',
+    "All",
+    "Influencer Tips",
+    "Brand Strategy",
+    "Case Studies",
+    "Market Trends",
+    "Platform Updates",
   ];
 
   const blogPosts = [
     {
       id: 1,
-      title: 'How to Build a Strong Influencer-Brand Partnership',
-      excerpt: 'Discover the key strategies for creating long-lasting and successful collaborations that benefit both parties.',
-      image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=600&fit=crop',
-      category: 'Brand Strategy',
-      author: 'Emma Wilson',
-      date: 'Mar 15, 2024',
+      title: "How to Build a Strong Influencer-Brand Partnership",
+      excerpt:
+        "Discover the key strategies for creating long-lasting and successful collaborations that benefit both parties.",
+      image:
+        "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=600&fit=crop",
+      category: "Brand Strategy",
+      author: "Emma Wilson",
+      date: "Mar 15, 2024",
     },
     {
       id: 2,
-      title: 'The Rise of Micro-Influencers in 2024',
-      excerpt: 'Why small audiences are delivering big results for brands in the current social media landscape.',
-      image: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&h=600&fit=crop',
-      category: 'Market Trends',
-      author: 'David Chen',
-      date: 'Mar 12, 2024',
+      title: "The Rise of Micro-Influencers in 2024",
+      excerpt:
+        "Why small audiences are delivering big results for brands in the current social media landscape.",
+      image:
+        "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&h=600&fit=crop",
+      category: "Market Trends",
+      author: "David Chen",
+      date: "Mar 12, 2024",
     },
     {
       id: 3,
-      title: '10 Essential Tools for Every Content Creator',
-      excerpt: 'Boost your productivity and content quality with these must-have tools for modern influencers.',
-      image: 'https://images.unsplash.com/photo-1492724441997-5dc865305da7?w=800&h=600&fit=crop',
-      category: 'Influencer Tips',
-      author: 'Sophie Miller',
-      date: 'Mar 10, 2024',
+      title: "10 Essential Tools for Every Content Creator",
+      excerpt:
+        "Boost your productivity and content quality with these must-have tools for modern influencers.",
+      image:
+        "https://images.unsplash.com/photo-1492724441997-5dc865305da7?w=800&h=600&fit=crop",
+      category: "Influencer Tips",
+      author: "Sophie Miller",
+      date: "Mar 10, 2024",
     },
     {
       id: 4,
-      title: 'Measuring ROI in Influencer Marketing',
-      excerpt: 'Learn how to accurately track and measure the success of your influencer campaigns.',
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop',
-      category: 'Brand Strategy',
-      author: 'James Taylor',
-      date: 'Mar 8, 2024',
+      title: "Measuring ROI in Influencer Marketing",
+      excerpt:
+        "Learn how to accurately track and measure the success of your influencer campaigns.",
+      image:
+        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop",
+      category: "Brand Strategy",
+      author: "James Taylor",
+      date: "Mar 8, 2024",
     },
     {
       id: 5,
-      title: 'Content Creation: From Idea to Viral Success',
-      excerpt: 'A step-by-step guide to creating engaging content that resonates with your audience.',
-      image: 'https://images.unsplash.com/photo-1496065187758-c818805aefe3?w=800&h=600&fit=crop',
-      category: 'Influencer Tips',
-      author: 'Alex Rivera',
-      date: 'Mar 5, 2024',
+      title: "Content Creation: From Idea to Viral Success",
+      excerpt:
+        "A step-by-step guide to creating engaging content that resonates with your audience.",
+      image:
+        "https://images.unsplash.com/photo-1496065187758-c818805aefe3?w=800&h=600&fit=crop",
+      category: "Influencer Tips",
+      author: "Alex Rivera",
+      date: "Mar 5, 2024",
     },
     {
       id: 6,
-      title: 'Platform Spotlight: Maximizing Your Reach',
-      excerpt: 'Tips and tricks for mastering different social media platforms to grow your influence.',
-      image: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=600&fit=crop',
-      category: 'Platform Updates',
-      author: 'Sarah Johnson',
-      date: 'Mar 2, 2024',
+      title: "Platform Spotlight: Maximizing Your Reach",
+      excerpt:
+        "Tips and tricks for mastering different social media platforms to grow your influence.",
+      image:
+        "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=600&fit=crop",
+      category: "Platform Updates",
+      author: "Sarah Johnson",
+      date: "Mar 2, 2024",
     },
   ];
 
@@ -89,9 +98,10 @@ export default function BlogPage() {
             <span className="text-[#3b82f6]">Modern Creator Economy</span>
           </h1>
           <p className="text-xl text-[#6b7280] max-w-2xl mx-auto mb-10">
-            Expert advice, industry trends, and success stories to help you navigate the world of influencer marketing.
+            Expert advice, industry trends, and success stories to help you
+            navigate the world of influencer marketing.
           </p>
-          
+
           {/* Search Bar */}
           <div className="max-w-xl mx-auto relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] w-5 h-5" />
@@ -153,8 +163,8 @@ export default function BlogPage() {
                 key={index}
                 className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
                   index === 0
-                    ? 'bg-[#3b82f6] text-white'
-                    : 'text-[#6b7280] hover:bg-[#f3f4f6]'
+                    ? "bg-[#3b82f6] text-white"
+                    : "text-[#6b7280] hover:bg-[#f3f4f6]"
                 }`}
               >
                 {category}
@@ -220,7 +230,8 @@ export default function BlogPage() {
             Stay Ahead of the Curve
           </h2>
           <p className="text-xl text-[#9ca3af] mb-10">
-            Subscribe to our newsletter for the latest influencer marketing insights delivered to your inbox.
+            Subscribe to our newsletter for the latest influencer marketing
+            insights delivered to your inbox.
           </p>
           <form className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto">
             <input
@@ -228,12 +239,17 @@ export default function BlogPage() {
               placeholder="Enter your email"
               className="flex-1 px-6 py-4 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent"
             />
-            <InfluButton variant="primary" size="lg" className="whitespace-nowrap">
+            <InfluButton
+              variant="primary"
+              size="lg"
+              className="whitespace-nowrap"
+            >
               Subscribe Now
             </InfluButton>
           </form>
           <p className="text-sm text-[#4b5563] mt-6">
-            By subscribing, you agree to our Privacy Policy and Terms of Service.
+            By subscribing, you agree to our Privacy Policy and Terms of
+            Service.
           </p>
         </div>
       </section>

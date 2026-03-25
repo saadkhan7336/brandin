@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import  InfluButton  from '../components/common/InfluBtn.jsx';
 import  LandingNavbar  from '../components/layout/LandingNavbar.jsx';
-import { Shield, Users, Target, TrendingUp, Search, CheckCircle, Star, Zap, ArrowRight, ChevronDown } from 'lucide-react';
+import { Shield,   Target, TrendingUp, Search, Star, Zap, ArrowRight } from 'lucide-react';
 
 export default function LandingPage() {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LandingNavbar } from '../components/layout/LandingNavbar';
-import { InfluButton } from '../components/common/InfluButton';
+import LandingNavbar from '../components/layout/LandingNavbar';
+import InfluButton from '../components/common/InfluBtn';
 import { Shield, Target, Users, Heart, Zap, Globe, TrendingUp, Award, CheckCircle, ArrowRight, Search } from 'lucide-react';
 
 export default function AboutUsPage() {
