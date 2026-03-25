@@ -17,13 +17,17 @@ import FeaturesPage from "../pages/FeaturesPage";
 import HelpCenterPage from "../pages/HelpCenterPage";
 import CaseStudiesPage from "../pages/CaseStudiesPage";
 import PrivacyPolicyPage from "../pages/PrivacyPolicyPage";
+import LandingPage from "../pages/LandingPage";
+import AboutPage from "../pages/AboutUsPage";
+import ContactPage from "../pages/ContactPage";
+import BlogPage from "../pages/BlogPage";
 
 function AppRoutes() {
   return (
     <Router>
       <Routes>
         {/* Public Routes */}
-        {/* <Route path="/" element={<LandingPage />} /> */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/features/analytics" element={<AnalyticsPage />} />
         <Route
@@ -39,9 +43,9 @@ function AppRoutes() {
         <Route path="/case-studies" element={<CaseStudiesPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         {/* <Route path="/terms-of-service" element={<TermsOfServicePage />} /> */}
-        {/* <Route path="/about" element={<AboutPage />} /> */}
-        {/* <Route path="/contact" element={<ContactPage />} /> */}
-        {/* <Route path="/blog" element={<BlogPage />} /> */}
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/blog" element={<BlogPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
