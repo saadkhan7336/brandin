@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Shield, Lock, Mail } from "lucide-react";
+import { getDashboardByRole } from "../../routes/ProtectedRoute";
 
 import { Input } from "../../components/common/FormComponents";
 import { Button } from "../../components/common/Button";
@@ -19,7 +20,7 @@ export default function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { loading, error, isAuthenticated } = useSelector(
+  const { loading, error, isAuthenticated, user } = useSelector(
     (state) => state.auth,
   );
 
@@ -32,29 +33,12 @@ export default function Login() {
     dispatch(clearAuthState());
   }, [dispatch]);
 
+  // If already authenticated, redirect to role-based dashboard
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/dashboard");
+    if (isAuthenticated && user) {
+      navigate(getDashboardByRole(user.role));
     }
-  }, [isAuthenticated, navigate]);
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   try {
-  //     dispatch(setLoading(true));
-  //     await api.post(ENDPOINTS.LOGIN, formData);
-
-  //     const res = await api.get(ENDPOINTS.ME);
-  //      dispatch(setAuthUser(res.data.data))
-  //      localStorage.setItem('brandly_has_session', 'true');
-  //     navigate('/dashboard');
-
-  //   } catch (err) {
-  //     dispatch(setError(err.response?.data?.message || "Login failed"));
-  //   } finally {
-  //     dispatch(setLoading(false));
-  //   }
-  // };
+  }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,14 +49,15 @@ export default function Login() {
       // Step 1: Login → cookies set
       await api.post(ENDPOINTS.LOGIN, formData);
 
-      // Step 2: Get user from backend via cookies
+      // Step 2: Get user profile from backend
       const res = await api.get(ENDPOINTS.ME);
+      const userData = res.data.data;
 
       // Step 3: Store in Redux
-      dispatch(setAuthUser(res.data.data));
+      dispatch(setAuthUser(userData));
 
-      // Step 4: Redirect
-      navigate("/dashboard");
+      // Step 4: Role-based redirect
+      navigate(getDashboardByRole(userData.role));
     } catch (err) {
       dispatch(setError(err.response?.data?.message || "Login failed"));
     } finally {
