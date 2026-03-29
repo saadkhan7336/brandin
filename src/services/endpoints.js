@@ -4,7 +4,7 @@ export const ENDPOINTS = {
   FORGOT_PASSWORD: "/auth/forgot-password",
   RESET_PASSWORD: "/auth/reset-password",
   LOGOUT: "/auth/logout",
-  ME: "/auth/profile",
+  ME: "/users/profile",
   campaigns: {
     getAll: "/campaigns",
     getOne: (id) => `/campaigns/${id}`,

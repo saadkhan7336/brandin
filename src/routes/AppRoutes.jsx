@@ -31,6 +31,7 @@ import PublicRoute from "./PublicRoute";
 // Dashboard pages
 import BrandDashboard from "../pages/dashboard/BrandDashboard";
 import Campaign from "../pages/campaigns/Campaign";
+import CampaignHub from "../pages/campaign/CampaignHub";
 import Profile from "../pages/profile/Profile";
 
 /**
@@ -79,7 +80,7 @@ function AppRoutes() {
             <Route path="/brand/search" element={<BrandDashboard />} />
             <Route path="/brand/requests" element={<BrandDashboard />} />
             <Route path="/brand/collaborations" element={<BrandDashboard />} />
-            <Route path="/brand/campaigns" element={<Campaign />} />
+            <Route path="/brand/campaigns" element={<CampaignHub />} />
             <Route path="/brand/settings" element={<Profile />} />
           </Route>
         </Route>

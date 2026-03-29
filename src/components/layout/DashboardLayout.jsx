@@ -61,7 +61,7 @@ export default function DashboardLayout() {
       </div>
 
       {/* Body: Sidebar + Main */}
-      <div className="flex">
+      <div className="flex h-[calc(100vh-72px)] overflow-hidden">
         <Sidebar
           userRole={userRole}
           isOpen={isSidebarOpen}
