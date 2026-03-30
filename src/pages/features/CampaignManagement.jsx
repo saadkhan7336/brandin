@@ -12,7 +12,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-function CompaignManagement() {
+function CampaignManagement() {
   const navigate = useNavigate();
   const features = [
     {
@@ -172,4 +172,4 @@ function CompaignManagement() {
   )
 }
 
-export default CompaignManagement;
+export default CampaignManagement;
