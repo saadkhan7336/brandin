@@ -30,6 +30,7 @@ import PublicRoute from "./PublicRoute";
 
 // Dashboard pages
 import BrandDashboard from "../pages/dashboard/BrandDashboard";
+import SearchInfluencers from "../pages/brand/SearchInfluencers";
 import Campaign from "../pages/campaigns/Campaign";
 import Profile from "../pages/profile/Profile";
 
@@ -76,7 +77,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute allowedRoles={["brand"]} />}>
           <Route element={<DashboardLayout />}>
             <Route path="/brand/dashboard" element={<BrandDashboard />} />
-            <Route path="/brand/search" element={<BrandDashboard />} />
+            <Route path="/brand/search" element={<SearchInfluencers />} />
             <Route path="/brand/requests" element={<BrandDashboard />} />
             <Route path="/brand/collaborations" element={<BrandDashboard />} />
             <Route path="/brand/campaigns" element={<Campaign />} />
