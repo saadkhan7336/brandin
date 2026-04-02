@@ -77,7 +77,6 @@ const BrandPublicProfile = () => {
   const name = brand.brandname || "Brand";
   const logo = brand.logo;
   const user = brand.user || {};
-  const activeCampaigns = campaigns.filter((c) => c.status === "active");
 
   // Real metrics from backend stats object
   const metrics = {
@@ -121,29 +120,34 @@ const BrandPublicProfile = () => {
 
       {/* ── Hero Banner ───────────────────────────────────────────────────── */}
       <div className="relative">
-        <div className="h-44 sm:h-52 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-500 overflow-hidden">
+        <div className="h-44 sm:h-52 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-500 overflow-hidden relative">
+          {user.coverPic ? (
+            <img src={user.coverPic} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-800 to-slate-900" />
+          )}
           {/* Decorative pattern overlay */}
-          <div className="absolute inset-0 opacity-20" style={{
+          <div className="absolute inset-0 opacity-10" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }} />
         </div>
 
         {/* Profile Card Overlay */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 -mt-16 relative z-10 px-6 py-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 -mt-16 relative z-10 px-8 pt-24 pb-8">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               {/* Logo + Info */}
               <div className="flex items-start gap-4">
                 {/* Logo */}
-                <div className="-mt-12">
-                  {logo ? (
+                <div className="absolute -top-16 left-8">
+                  {logo || user.profilePic ? (
                     <img
-                      src={logo}
+                      src={logo || user.profilePic}
                       alt={name}
-                      className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-lg"
+                      className="w-36 h-36 rounded-2xl object-cover border-4 border-white shadow-xl"
                     />
                   ) : (
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 border-4 border-white shadow-lg flex items-center justify-center text-blue-600 font-bold text-2xl">
+                    <div className="w-36 h-36 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 border-4 border-white shadow-xl flex items-center justify-center text-blue-600 font-bold text-4xl">
                       {name[0]}
                     </div>
                   )}

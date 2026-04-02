@@ -1,15 +1,33 @@
 import React, { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, LogOut } from 'lucide-react';
+import { Settings, LogOut, Moon, Sun, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 
-export default function ProfileDropdown({ user, isOpen, onClose, onLogout }) {
+export default function ProfileDropdown({ user, roleProfile, isOpen, onClose, onLogout }) {
   const panelRef = useRef(null);
   const navigate = useNavigate();
+  const { updateStatus } = useAuth();
 
-  const userName = user?.name || user?.brandName || user?.fullName || 'User';
-  const userEmail = user?.email || 'user@example.com';
   const userRole = user?.role || 'brand';
-  const initial = userName.charAt(0).toUpperCase();
+  const isBrand = userRole === 'brand';
+  const isInfluencer = userRole === 'influencer';
+
+  // Dynamic names
+  const brandName = roleProfile?.brandname;
+  const influencerName = roleProfile?.username;
+  const fullName = user?.fullname;
+
+  const displayName = 
+    isBrand ? (brandName || fullName || 'Brand') : 
+    isInfluencer ? (influencerName || fullName || 'Influencer') : 
+    (fullName || 'User');
+
+  const userEmail = user?.email || 'user@example.com';
+  const initial = displayName.charAt(0).toUpperCase();
+
+  // Dynamic avatars & cover
+  const avatarUrl = isBrand ? (roleProfile?.logo || user?.profilePic) : (user?.profilePic);
+  const coverUrl = user?.coverPic;
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -33,35 +51,58 @@ export default function ProfileDropdown({ user, isOpen, onClose, onLogout }) {
       className="absolute right-4 top-[72px] w-[300px] bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
       style={{ animation: 'fadeSlideDown 0.2s ease-out' }}
     >
-      {/* Blue gradient header */}
-      <div className="relative h-24 bg-gradient-to-r from-blue-500 to-blue-600">
-        {/* Avatar overlapping header */}
-        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2">
-          <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-blue-500 border-[3px] border-white flex items-center justify-center shadow-lg">
+      {/* Blue gradient header / Cover image */}
+      <div className="relative h-24 bg-gradient-to-r from-blue-500 to-blue-600 overflow-hidden">
+        {coverUrl && (
+          <img src={coverUrl} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+        )}
+        <div className="absolute inset-0 bg-black/20" /> {/* Subtle overlay for contrast */}
+      </div>
+
+      {/* Avatar overlapping header - Moved outside to prevent overflow clipping */}
+      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-2xl bg-blue-500 border-[3px] border-white flex items-center justify-center shadow-lg overflow-hidden">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+            ) : (
               <span className="text-xl font-bold text-white">{initial}</span>
-            </div>
-            {/* Green status dot */}
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
+            )}
           </div>
+          {/* Status dot */}
+          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+            user?.status === 'offline' ? 'bg-gray-400' : 'bg-green-500'
+          }`} />
         </div>
       </div>
 
       {/* User info */}
       <div className="pt-12 pb-4 px-5 text-center">
-        <h4 className="text-lg font-bold text-gray-900">{userName}</h4>
-        <p className="text-sm text-blue-500 mt-0.5">{userEmail}</p>
+        <h4 className="text-lg font-bold text-gray-900 truncate px-2">{displayName}</h4>
+        <p className="text-sm text-blue-500 mt-0.5 truncate">{userEmail}</p>
       </div>
 
       {/* Status + Role cards */}
       <div className="px-5 pb-4 grid grid-cols-2 gap-3">
-        <div className="border border-gray-200 rounded-xl p-3">
+        <button 
+          onClick={() => updateStatus(user?.status === 'offline' ? 'active' : 'offline')}
+          className="border border-gray-200 rounded-xl p-3 text-left hover:border-blue-300 hover:bg-blue-50/30 transition-all group"
+        >
           <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Status</p>
-          <div className="flex items-center gap-1.5 mt-1">
-            <div className="w-2 h-2 rounded-full bg-green-500" />
-            <span className="text-sm font-semibold text-green-500">Active Now</span>
+          <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center gap-1.5">
+              <div className={`w-2 h-2 rounded-full ${user?.status === 'offline' ? 'bg-gray-400' : 'bg-green-500'}`} />
+              <span className={`text-sm font-semibold ${user?.status === 'offline' ? 'text-gray-500' : 'text-green-500'}`}>
+                {user?.status === 'offline' ? 'Offline' : 'Active Now'}
+              </span>
+            </div>
+            {user?.status === 'offline' ? (
+              <ToggleLeft className="w-5 h-5 text-gray-300 group-hover:text-gray-400 transition-colors" />
+            ) : (
+              <ToggleRight className="w-5 h-5 text-green-500 transition-colors" />
+            )}
           </div>
-        </div>
+        </button>
         <div className="border border-gray-200 rounded-xl p-3">
           <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Role</p>
           <p className="text-sm font-semibold text-gray-900 mt-1 capitalize">{userRole}</p>

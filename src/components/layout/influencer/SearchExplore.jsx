@@ -3,7 +3,7 @@
 // Replaces the placeholder at /influencer/search-brands
 
 import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Search,
   Filter,
@@ -276,8 +276,8 @@ const PLATFORMS = [
 const SearchExplore = () => {
   const navigate = useNavigate();
 
-  // Tab state: "campaigns" | "brands"
-  const [activeTab, setActiveTab] = useState("campaigns");
+  const { tab } = useParams();
+  const activeTab = tab === "brands" ? "brands" : "campaigns";
 
   // Data
   const [campaigns, setCampaigns] = useState([]);
@@ -298,7 +298,6 @@ const SearchExplore = () => {
   // Pagination
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
-  const [total, setTotal] = useState(0);
 
   // ── Fetch campaigns ─────────────────────────────────────────────────────────
   const fetchCampaigns = useCallback(async () => {
@@ -313,7 +312,6 @@ const SearchExplore = () => {
       const res = await api.get(`/campaigns?${params.toString()}`);
       const data = res.data.data;
       setCampaigns(data.campaigns || []);
-      setTotal(data.total || 0);
       setPages(data.pages || 1);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load campaigns");
@@ -334,7 +332,6 @@ const SearchExplore = () => {
       const res = await api.get(`/brands/public-list?${params.toString()}`);
       const data = res.data.data;
       setBrands(data.brands || []);
-      setTotal(data.total || 0);
       setPages(data.pages || 1);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load brands");
@@ -425,7 +422,7 @@ const SearchExplore = () => {
           <div className="flex gap-2 mt-6">
             <button
               onClick={() => {
-                setActiveTab("campaigns");
+                navigate("/influencer/search/campaigns");
                 setPage(1);
               }}
               className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
@@ -439,7 +436,7 @@ const SearchExplore = () => {
             </button>
             <button
               onClick={() => {
-                setActiveTab("brands");
+                navigate("/influencer/search/brands");
                 setPage(1);
               }}
               className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${

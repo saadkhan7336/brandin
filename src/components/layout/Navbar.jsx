@@ -4,15 +4,31 @@ import { Bell, Menu, X, Shield } from 'lucide-react';
 export default function Navbar({
   userRole,
   user,
+  roleProfile,
   notificationCount,
   isSidebarOpen,
   onToggleSidebar,
   onToggleNotifications,
   onToggleProfile,
 }) {
-  const userName = user?.name || user?.brandName || user?.fullName || 'User';
+  const isBrand = userRole === 'brand';
+  const isInfluencer = userRole === 'influencer';
+
+  // Dynamic names
+  const brandName = roleProfile?.brandname;
+  const influencerName = roleProfile?.username;
+  const fullName = user?.fullname;
+
+  const displayName = 
+    isBrand ? (brandName || fullName || 'Brand') : 
+    isInfluencer ? (influencerName || fullName || 'Influencer') : 
+    (fullName || 'User');
+
   const userEmail = user?.email || '';
-  const initial = userName.charAt(0).toUpperCase();
+  const initial = displayName.charAt(0).toUpperCase();
+
+  // Dynamic avatars
+  const avatarUrl = isBrand ? (roleProfile?.logo || user?.profilePic) : (user?.profilePic);
   
   const roleLabel = 
     userRole === 'admin' ? 'ADMIN' : 
@@ -76,16 +92,22 @@ export default function Navbar({
           >
             {/* Avatar */}
             <div className="relative">
-              <div className={`w-9 h-9 rounded-full ${roleBgColor} flex items-center justify-center`}>
-                <span className="text-white font-semibold text-sm">{initial}</span>
+              <div className={`w-9 h-9 rounded-full ${roleBgColor} flex items-center justify-center overflow-hidden`}>
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white font-semibold text-sm">{initial}</span>
+                )}
               </div>
-              {/* Green status dot */}
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+              {/* Status dot */}
+              <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
+                user?.status === 'offline' ? 'bg-gray-400' : 'bg-green-500'
+              }`} />
             </div>
 
             {/* Name + role + email */}
             <div className="hidden md:block text-left">
-              <p className="text-sm font-semibold text-gray-900 leading-tight">{userName}</p>
+              <p className="text-sm font-semibold text-gray-900 leading-tight">{displayName}</p>
               <p className="text-xs text-gray-400 leading-tight">
                 <span className={`font-bold ${userRole === 'brand' ? 'text-blue-500' : 'text-emerald-500'}`}>
                   {roleLabel}
