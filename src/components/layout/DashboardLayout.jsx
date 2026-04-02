@@ -1,22 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useAuth } from '../../hooks/useAuth';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import NotificationPanel from './NotificationPanel';
 import ProfileDropdown from './ProfileDropdown';
+import { fetchNotifications } from '../../redux/slices/notificationSlice';
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { logout } = useAuth();
   const { user } = useSelector((state) => state.auth);
 
   const userRole = user?.role || 'brand';
+  const { unreadCount } = useSelector((state) => state.notifications);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchNotifications({ limit: 5 }));
+  }, [dispatch]);
 
   const handleLogout = async () => {
     await logout();
@@ -40,7 +47,7 @@ export default function DashboardLayout() {
         <Navbar
           userRole={userRole}
           user={user}
-          notificationCount={3}
+          notificationCount={unreadCount}
           isSidebarOpen={isSidebarOpen}
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
           onToggleNotifications={handleToggleNotifications}
@@ -61,7 +68,7 @@ export default function DashboardLayout() {
       </div>
 
       {/* Body: Sidebar + Main */}
-      <div className="flex">
+      <div className="flex h-[calc(100vh-72px)] overflow-hidden">
         <Sidebar
           userRole={userRole}
           isOpen={isSidebarOpen}

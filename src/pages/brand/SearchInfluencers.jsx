@@ -271,6 +271,11 @@ function SearchInfluencers() {
                       </div>
                       {followersCount > 0 && <span>{followersString}</span>}
                       {influencer.category && <span className="capitalize">{influencer.category}</span>}
+                      {influencer.minPrice > 0 && (
+                        <span className="text-[#1A73E8] font-semibold mt-1">
+                          Starts from ${influencer.minPrice}
+                        </span>
+                      )}
                     </div>
 
                     <button className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white text-[13px] font-medium rounded-full py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-2 mt-auto">

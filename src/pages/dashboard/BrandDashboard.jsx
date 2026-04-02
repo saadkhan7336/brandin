@@ -17,9 +17,11 @@ function BrandDashboard() {
     activeCampaigns: 0,
     pendingRequests: 0,
     totalInfluencersContacted: 0,
+    totalCampaigns: 0,
+    completedCampaigns: 0,
+    successRate: 0
   });
   const [influencers, setInfluencers] = useState([]);
-  const [activities, setActivities] = useState([]);
 
   // UI States
   const [isLoading, setIsLoading] = useState(true);
@@ -45,11 +47,18 @@ function BrandDashboard() {
         // Map Stats Data
         if (statsResult.status === 'fulfilled' && statsResult.value.data?.success) {
           const statsData = statsResult.value.data.data;
+          const total = statsData.totalCampaigns || 0;
+          const completed = statsData.completedCampaigns || 0;
+          const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
           setStats({
             totalRequests: statsData.totalRequests || 0,
             activeCampaigns: statsData.activeCampaigns || 0,
             pendingRequests: statsData.pendingRequests || 0,
             totalInfluencersContacted: statsData.totalInfluencersContacted || 0,
+            totalCampaigns: total,
+            completedCampaigns: completed,
+            successRate: rate
           });
         } else if (statsResult.status === 'rejected') {
           const status = statsResult.reason?.response?.status;
@@ -65,9 +74,22 @@ function BrandDashboard() {
           setInfluencers(influencersResult.value.data.data.influencers || []);
         }
 
-        // Map Activities Data
+        // Automatically mark activities as read on fetch
         if (activitiesResult.status === 'fulfilled' && activitiesResult.value.data?.success) {
-          setActivities(activitiesResult.value.data.data.activities || []);
+          try {
+            // Backend endpoint for marking all as read (if exists) or we could call mark as read for each
+            // For now, if the user requested automatic "read on viewing", and we are fetching them, 
+            // we should ideally tell the backend they are viewed.
+            // Assuming there's a bulk mark as read endpoint or we can implement it.
+            // Based on my research, there's router.patch("/activity/:id/read")
+            // I'll add a helper to mark all unread ones.
+            const unread = activitiesResult.value.data.data.activities?.filter(a => !a.isRead) || [];
+            if (unread.length > 0) {
+              await Promise.all(unread.map(a => api.patch(`/brands/activity/${a._id}/read`)));
+            }
+          } catch (activityErr) {
+            console.error("Error marking activities as read:", activityErr);
+          }
         }
 
       } catch (err) {
@@ -85,31 +107,31 @@ function BrandDashboard() {
   const displayStats = [
     {
       id: 1,
-      title: "Total Requests",
-      value: stats.totalRequests,
-      icon: <FileText className="w-6 h-6 text-blue-500" />,
-      bgClass: "bg-blue-50"
+      title: "Success Rate",
+      value: `${stats.successRate}%`,
+      icon: <CheckCircle className="w-6 h-6 text-green-500" />,
+      bgClass: "bg-green-50"
     },
     {
       id: 2,
       title: "Active Campaigns",
       value: stats.activeCampaigns,
-      icon: <CheckCircle className="w-6 h-6 text-green-500" />,
-      bgClass: "bg-green-50"
+      icon: <FileText className="w-6 h-6 text-blue-500" />,
+      bgClass: "bg-blue-50"
     },
     {
       id: 3,
-      title: "Pending Approvals",
-      value: stats.pendingRequests,
-      icon: <Clock className="w-6 h-6 text-yellow-500" />,
-      bgClass: "bg-yellow-50"
+      title: "Total Campaigns",
+      value: stats.totalCampaigns,
+      icon: <ShieldCheck className="w-6 h-6 text-indigo-500" />,
+      bgClass: "bg-indigo-50"
     },
     {
       id: 4,
-      title: "Influencers Found",
-      value: stats.totalInfluencersContacted,
-      icon: <Users className="w-6 h-6 text-gray-500" />,
-      bgClass: "bg-gray-50"
+      title: "Pending Requests",
+      value: stats.pendingRequests,
+      icon: <Clock className="w-6 h-6 text-yellow-500" />,
+      bgClass: "bg-yellow-50"
     }
   ];
 
@@ -251,51 +273,7 @@ function BrandDashboard() {
         )}
       </div>
 
-      {/* Recent Activity Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100/60 p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-6">Recent Activity</h2>
-
-        {isLoading ? (
-          <div className="space-y-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex gap-4 items-start animate-pulse">
-                <div className="w-2.5 h-2.5 mt-1.5 rounded-full bg-gray-300 flex-shrink-0"></div>
-                <div className="flex flex-col w-full">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/4"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {activities.length > 0 ? (
-              activities.map((activity, index) => {
-                let timeAgo = "Just now";
-                try {
-                  timeAgo = formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true });
-                } catch (e) {
-                  // Ignore invalid dates
-                }
-
-                return (
-                  <div key={activity._id} className="flex gap-4 items-start relative">
-                    <div className={`w-2.5 h-2.5 mt-[6px] rounded-full flex-shrink-0 relative z-10 ${getActivityColor(activity.type)}`}></div>
-                    <div className="flex flex-col">
-                      <p className="text-gray-900 font-medium text-[14px] leading-snug">
-                        {activity.description || activity.title || "No description available"}
-                      </p>
-                      <p className="text-gray-500 text-[12px] mt-1">{timeAgo}</p>
-                    </div>
-                  </div>
-                )
-              })
-            ) : (
-              <p className="text-gray-500 text-sm text-center py-4">You have no recent activities yet.</p>
-            )}
-          </div>
-        )}
-      </div>
+      {/* Recent Activity Section Removed as per request */}
     </div>
   );
 }
