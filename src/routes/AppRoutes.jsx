@@ -37,6 +37,10 @@ import PublicRoute from "./PublicRoute";
 import BrandDashboard from "../pages/dashboard/BrandDashboard";
 import CampaignHub from "../pages/campaign/CampaignHub";
 import Profile from "../pages/profile/Profile";
+import SearchExplore from "../components/layout/influencer/SearchExplore";
+import CampaignDetail from "../components/layout/influencer/CampaignDetail";
+import BrandPublicProfile from "../components/layout/influencer/BrandPublicProfile";
+import InfluencerExplore from "../components/layout/brand/InfluencerExplore";
 
 /**
  * Catch-all redirect component.
@@ -87,7 +91,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute allowedRoles={["brand"]} />}>
           <Route element={<DashboardLayout />}>
             <Route path="/brand/dashboard" element={<BrandDashboard />} />
-            <Route path="/brand/search" element={<BrandDashboard />} />
+            <Route path="/brand/search" element={<InfluencerExplore />} />
             <Route path="/brand/requests" element={<BrandDashboard />} />
             <Route path="/brand/collaborations" element={<BrandDashboard />} />
             <Route path="/brand/campaigns" element={<CampaignHub />} />
@@ -99,25 +103,13 @@ function AppRoutes() {
         <Route element={<ProtectedRoute allowedRoles={["influencer"]} />}>
           <Route element={<DashboardLayout />}>
             <Route path="/influencer/dashboard" element={<BrandDashboard />} />
-            <Route
-              path="/influencer/search-brands"
-              element={<BrandDashboard />}
-            />
-            <Route path="/influencer/requests" element={<BrandDashboard />} />
-            <Route
-              path="/influencer/collaborations"
-              element={<BrandDashboard />}
-            />
-            <Route path="/influencer/settings" element={<Profile />} />
-          </Route>
-        </Route>
+            <Route path="/influencer/search" element={<SearchExplore />} />
+            <Route path="/influencer/search/campaign/:campaignId" element={<CampaignDetail />} />
+            <Route path="/influencer/search/brand/:brandId" element={<BrandPublicProfile />} />
 
-        {/* ===== Admin routes (role-protected) ===== */}
-        <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-          <Route element={<DashboardLayout />}>
-            <Route path="/admin/dashboard" element={<BrandDashboard />} />
-            <Route path="/admin/campaigns" element={<CampaignHub />} />
-            <Route path="/admin/settings" element={<Profile />} />
+            <Route path="/influencer/requests" element={<BrandDashboard />} />
+            <Route path="/influencer/collaborations" element={<BrandDashboard />} />
+            <Route path="/influencer/settings" element={<Profile />} />
           </Route>
         </Route>
 

@@ -1,20 +1,20 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import React from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 /**
  * Returns the correct dashboard path for a given role.
  */
 export function getDashboardByRole(role) {
   switch (role) {
-    case 'brand':
-      return '/brand/dashboard';
-    case 'influencer':
-      return '/influencer/dashboard';
-    case 'admin':
-      return '/admin/dashboard';
+    case "brand":
+      return "/brand/dashboard";
+    case "influencer":
+      return "/influencer/dashboard";
+    case "admin":
+      return "/admin/dashboard";
     default:
-      return '/login';
+      return "/login";
   }
 }
 

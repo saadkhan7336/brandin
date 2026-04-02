@@ -83,6 +83,7 @@ export const useAuth = () => {
       const response = await api.get(ENDPOINTS.ME);
 
       dispatch(setAuthUser(response.data.data));
+      console.log(error);
 
     } catch (err) {
       dispatch(logoutSuccess());
@@ -103,6 +104,7 @@ export const useAuth = () => {
 
     } catch (err) {
       dispatch(setError(err.response?.data?.message || "Logout failed"));
+      console.log(err);
     } finally {
       dispatch(setLoading(false));
     }
