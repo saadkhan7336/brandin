@@ -10,9 +10,7 @@ import {
   Handshake,
   MessageSquare,
   Settings,
-  Eye,
-  CheckCircle2,
-  ExternalLink
+  CheckCircle2
 } from 'lucide-react';
 import { fetchNotifications, markAsRead, markAllAsRead, deleteActivity } from '../../redux/slices/notificationSlice';
 import { formatDistanceToNow } from 'date-fns';

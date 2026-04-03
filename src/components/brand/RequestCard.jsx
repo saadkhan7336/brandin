@@ -1,17 +1,15 @@
 import React from 'react';
 import { 
-  ShieldCheck, 
   Instagram, 
   Youtube, 
   Twitter, 
   Linkedin, 
   MessageSquare, 
   Check, 
-  X, 
-  ExternalLink 
+  X
 } from 'lucide-react';
 
-const RequestCard = ({ request, onAccept, onReject }) => {
+const RequestCard = ({ request, onAccept, onReject, onViewProfile }) => {
   const { influencerDetails, campaignDetails, status, note, createdAt, senderDetails } = request;
   
   // Influencer details logic
@@ -21,7 +19,7 @@ const RequestCard = ({ request, onAccept, onReject }) => {
   const avatar = user.profilePic || `https://ui-avatars.com/api/?name=${username}&background=random`;
   
   // Campaign details
-  const campaignName = campaignDetails?.name || 'Unknown Campaign';
+  const campaignName = campaignDetails?.name || request.title || 'Unknown Campaign';
   
   // Platform logic
   const platform = influencer.platforms?.[0] || {};
@@ -100,7 +98,10 @@ const RequestCard = ({ request, onAccept, onReject }) => {
 
         {/* Actions */}
         <div className="flex items-center gap-2 shrink-0 self-center md:self-start">
-          <button className="flex items-center px-3 py-1.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors border border-gray-200">
+          <button
+            onClick={() => onViewProfile && onViewProfile(influencerDetails?._id)}
+            className="flex items-center px-3 py-1.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors border border-gray-200"
+          >
             View Profile
           </button>
           

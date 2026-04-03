@@ -18,7 +18,7 @@ import {
   Twitter,
 } from "lucide-react";
 import api from "../../../services/api";
-import ApplyCampaignModal from "./ApplyCampaignModal";
+import SendCollabModal from "./SendCollabModal";
 
 const BrandPublicProfile = () => {
   const { brandId } = useParams();
@@ -469,10 +469,10 @@ const BrandPublicProfile = () => {
         )}
       </div>
 
-      {/* ── Apply / Send Request Modal ────────────────────────────────────── */}
+      {/* ── Send Request Modal ────────────────────────────────────── */}
       {showApplyModal && (
-        <ApplyCampaignModal
-          brand={{ _id: brandId, brandname: name, logo }}
+        <SendCollabModal
+          targetUser={{ _id: brandId, name: name }}
           targetType="brand"
           onClose={() => setShowApplyModal(false)}
           onSuccess={() => setShowApplyModal(false)}

@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
   FileText, CheckCircle, Clock, Users,
   Instagram, Youtube, ShieldCheck, Twitter, Linkedin,
   AlertCircle
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 import api from '../../services/api';
 
 function BrandDashboard() {
   const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
 
   // Data State
   const [stats, setStats] = useState({
@@ -146,15 +147,6 @@ function BrandDashboard() {
     return <Users className="w-4 h-4 mr-1 text-gray-500" />;
   };
 
-  // Helper function to determine visual activity indicator color
-  const getActivityColor = (type) => {
-    const t = type?.toLowerCase() || '';
-    if (t.includes('accept') || t.includes('complet')) return 'bg-green-500';
-    if (t.includes('reject') || t.includes('cancel') || t.includes('delet')) return 'bg-red-500';
-    if (t.includes('creat') || t.includes('sent')) return 'bg-blue-500';
-    return 'bg-yellow-500';
-  };
-
   return (
     <div className="flex flex-col gap-8 max-w-[1200px] mx-auto w-full pb-10">
       {/* Header Section */}
@@ -258,7 +250,9 @@ function BrandDashboard() {
                       {influencer.category && <span className="capitalize">{influencer.category}</span>}
                     </div>
 
-                    <button className="w-full bg-[#1A73E8] hover:bg-[#1557B0] text-white text-[13px] font-medium rounded-full py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1A73E8] focus:ring-offset-2 mt-auto">
+                    <button
+                      onClick={() => navigate(`/brand/influencer/${influencer._id}`)}
+                      className="w-full bg-[#1A73E8] hover:bg-[#1557B0] text-white text-[13px] font-medium rounded-full py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1A73E8] focus:ring-offset-2 mt-auto">
                       View Profile
                     </button>
                   </div>

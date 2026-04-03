@@ -7,7 +7,7 @@
 
 //   useEffect(() => {
 //     fetchUser();
-//   }, [fetchUser]);
+//   }, [location.pathname, fetchUser]);
 
 //   return <AppRoutes/>
 // }

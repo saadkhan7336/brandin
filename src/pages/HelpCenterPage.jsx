@@ -7,7 +7,6 @@ import { Search, BookOpen, Video, FileText, Settings, Users, CreditCard, Shield,
 export default function HelpCenterPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(null);
 
   const categories = [
     {

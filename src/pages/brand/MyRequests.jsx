@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { 
   Search, 
   Filter, 
@@ -14,15 +15,15 @@ import {
   setError, 
   setRequests, 
   setFilters, 
-  updateRequestInState,
-  setStats 
+  updateRequestInState
 } from '../../redux/slices/collaborationSlice';
 import collaborationService from '../../services/collaborationService';
 import RequestCard from '../../components/brand/RequestCard';
 
 const MyRequests = () => {
   const dispatch = useDispatch();
-  const { requests, loading, error, filters, total, page, pages, stats } = useSelector(
+  const navigate = useNavigate();
+  const { requests, loading, error, filters, total, page, pages } = useSelector(
     (state) => state.collaboration
   );
 
@@ -186,6 +187,7 @@ const MyRequests = () => {
                 request={request} 
                 onAccept={handleAccept}
                 onReject={handleReject}
+                onViewProfile={(id) => id && navigate(`/brand/influencer/${id}`)}
               />
             ))}
 

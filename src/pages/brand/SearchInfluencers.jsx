@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search, ShieldCheck, Instagram, Youtube, Twitter, Linkedin, Users,
   AlertCircle, ChevronLeft, ChevronRight
@@ -6,6 +7,7 @@ import {
 import api from '../../services/api.js';
 
 function SearchInfluencers() {
+  const navigate = useNavigate();
   // Filter States
   const [filters, setFilters] = useState({
     category: '',
@@ -66,7 +68,7 @@ function SearchInfluencers() {
     }, 500);
 
     return () => clearTimeout(handler);
-  }, [filters.search, filters.category, filters.platform, filters.minFollowers]);
+  }, [filters.search, filters.category, filters.platform, filters.minFollowers, fetchInfluencers]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -278,7 +280,10 @@ function SearchInfluencers() {
                       )}
                     </div>
 
-                    <button className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white text-[13px] font-medium rounded-full py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-2 mt-auto">
+                    <button
+                      onClick={() => navigate(`/brand/influencer/${influencer._id}`)}
+                      className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white text-[13px] font-medium rounded-full py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-2 mt-auto"
+                    >
                       View Profile
                     </button>
                   </div>

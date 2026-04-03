@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, LogOut, Moon, Sun, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Settings, LogOut, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function ProfileDropdown({ user, roleProfile, isOpen, onClose, onLogout }) {

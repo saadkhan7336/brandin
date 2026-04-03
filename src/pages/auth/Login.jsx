@@ -51,13 +51,13 @@ export default function Login() {
 
       // Step 2: Get user profile from backend
       const res = await api.get(ENDPOINTS.ME);
-      const userData = res.data.data;
+      const { user: authUser } = res.data.data;
 
       // Step 3: Store in Redux
-      dispatch(setAuthUser(userData));
+      dispatch(setAuthUser(authUser));
 
       // Step 4: Role-based redirect
-      navigate(getDashboardByRole(userData.role));
+      navigate(getDashboardByRole(authUser.role));
     } catch (err) {
       dispatch(setError(err.response?.data?.message || "Login failed"));
     } finally {

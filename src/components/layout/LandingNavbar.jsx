@@ -15,7 +15,6 @@ import {
   Menu,
   X,
   ChevronRight,
-  icons,
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import InfluBtn from "../common/InfluBtn";
@@ -43,9 +42,9 @@ function LandingNavbar() {
   };
 
   const MobileNavigate = (route) => {
-    Navigate(route);
+    navigate(route);
     setMobileDropdownOpen(null);
-    setMobileDropdownOpen(false);
+    setMobileMenuOpen(false);
   };
 
   const ForBrandMenu = [
