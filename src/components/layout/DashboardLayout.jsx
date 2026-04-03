@@ -13,6 +13,7 @@ export default function DashboardLayout() {
   const dispatch = useDispatch();
   const { logout } = useAuth();
   const { user } = useSelector((state) => state.auth);
+  const { roleProfile } = useSelector((state) => state.profile);
 
   const userRole = user?.role || 'brand';
   const { unreadCount } = useSelector((state) => state.notifications);
@@ -47,6 +48,7 @@ export default function DashboardLayout() {
         <Navbar
           userRole={userRole}
           user={user}
+          roleProfile={roleProfile}
           notificationCount={unreadCount}
           isSidebarOpen={isSidebarOpen}
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
@@ -61,6 +63,7 @@ export default function DashboardLayout() {
         />
         <ProfileDropdown
           user={user}
+          roleProfile={roleProfile}
           isOpen={isProfileOpen}
           onClose={() => setIsProfileOpen(false)}
           onLogout={handleLogout}
