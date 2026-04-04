@@ -12,6 +12,11 @@ const initialState = {
   total: 0,
   page: 1,
   pages: 1,
+  // category counts
+  counts: {
+    sent: 0,
+    received: 0,
+  },
   // UI states
   loading: false,
   error: null,
@@ -20,7 +25,9 @@ const initialState = {
     page: 1,
     limit: 10,
     status: "all",
+    type: "received", // default to received (applications)
     search: "",
+    platform: "all",
   },
 };
 
@@ -40,6 +47,7 @@ const collaborationSlice = createSlice({
       state.total = action.payload.total;
       state.page = action.payload.page;
       state.pages = action.payload.pages;
+      state.counts = action.payload.counts || state.counts;
     },
     updateRequestInState: (state, action) => {
       const index = state.requests.findIndex(

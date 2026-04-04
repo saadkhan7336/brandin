@@ -160,10 +160,15 @@ const InfluencerProfile = () => {
   const mainPlatform  = platforms[0] || null;
   const portfolio     = influencer?.portfolio || '';
 
-  // Banner gradient — use portfolio as cover if it's an image URL, else gradient
+  // Banner display — use coverImage (influencer model), else coverPic (user model), 
+  // else portfolio (if image), else gradient
   const isImageUrl = (url) => /\.(jpg|jpeg|png|gif|webp|avif|svg)(\?.*)?$/i.test(url);
-  const bannerStyle = portfolio && isImageUrl(portfolio)
-    ? { backgroundImage: `url(${portfolio})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+  const bannerImage = influencer?.coverImage 
+                    || user?.coverPic 
+                    || (portfolio && isImageUrl(portfolio) ? portfolio : null);
+  
+  const bannerStyle = bannerImage
+    ? { backgroundImage: `url(${bannerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
     : { background: 'linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 40%, #ddd6fe 100%)' };
 
   // Placeholder post tiles
@@ -436,7 +441,7 @@ const InfluencerProfile = () => {
       {showModal && (
         <SendCollabModal 
           targetType="influencer"
-          targetUser={{ _id: influencerId, name: username }}
+          targetUser={{ _id: user?._id || data?.influencer?.user?._id || influencerId, name: username }}
           onClose={() => setShowModal(false)}
           onSuccess={() => setShowModal(false)}
         />

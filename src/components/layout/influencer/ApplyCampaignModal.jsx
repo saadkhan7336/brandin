@@ -12,12 +12,20 @@ import api from "../../../services/api";
  *   onClose    – callback to close the modal
  *   onSuccess  – callback after successful submission
  */
-const ApplyCampaignModal = ({ campaign, brand, targetType: propTargetType, onClose, onSuccess }) => {
+const ApplyCampaignModal = ({ 
+  campaign, 
+  brand, 
+  targetType: propTargetType, 
+  initialNote = "",
+  initialBudget = "",
+  onClose, 
+  onSuccess 
+}) => {
   // Determine target type automatically
   const targetType = propTargetType || (brand ? "brand" : "campaign");
 
-  const [note, setNote] = useState("");
-  const [proposedBudget, setProposedBudget] = useState("");
+  const [note, setNote] = useState(initialNote);
+  const [proposedBudget, setProposedBudget] = useState(initialBudget);
   const [portfolio, setPortfolio] = useState(null);
   const [selectedCampaignId, setSelectedCampaignId] = useState(campaign?._id || "");
 

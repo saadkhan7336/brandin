@@ -201,7 +201,9 @@ function BrandDashboard() {
       <div>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-gray-900">Recommended Influencers</h2>
-          <button className="text-blue-600 border border-blue-200 hover:border-blue-600 hover:bg-blue-50 transition-colors font-medium text-sm rounded-full px-5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+          <button
+            onClick={() => navigate('/brand/search')}
+            className="text-blue-600 border border-blue-200 hover:border-blue-600 hover:bg-blue-50 transition-colors font-medium text-sm rounded-full px-5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
             View All
           </button>
         </div>

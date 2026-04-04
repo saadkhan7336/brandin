@@ -7,13 +7,16 @@ import Sidebar from './Sidebar';
 import NotificationPanel from './NotificationPanel';
 import ProfileDropdown from './ProfileDropdown';
 import { fetchNotifications } from '../../redux/slices/notificationSlice';
+import profileService from '../../services/profileService';
+import { setProfileData } from '../../redux/slices/Profileslice';
+import CompletionBanner from '../common/CompletionBanner';
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { logout } = useAuth();
   const { user } = useSelector((state) => state.auth);
-  const { roleProfile } = useSelector((state) => state.profile);
+  const { roleProfile, completion } = useSelector((state) => state.profile);
 
   const userRole = user?.role || 'brand';
   const { unreadCount } = useSelector((state) => state.notifications);
@@ -24,6 +27,17 @@ export default function DashboardLayout() {
 
   useEffect(() => {
     dispatch(fetchNotifications({ limit: 5 }));
+    
+    // Fetch profile completion status
+    const fetchProfileData = async () => {
+      try {
+        const profileData = await profileService.getMe();
+        dispatch(setProfileData(profileData));
+      } catch (err) {
+        console.error("Error fetching profile completion:", err);
+      }
+    };
+    fetchProfileData();
   }, [dispatch]);
 
   const handleLogout = async () => {
@@ -81,6 +95,15 @@ export default function DashboardLayout() {
 
         {/* Main content — dynamic pages via <Outlet> */}
         <main className="flex-1 p-5 sm:p-6 lg:p-8 min-w-0 overflow-y-auto">
+          {/* Global Completion Banner */}
+          {completion && !completion.isComplete && (
+            <div className="mb-8">
+              <CompletionBanner 
+                completion={completion} 
+                onGoToSection={() => navigate(user?.role === 'brand' ? '/brand/settings' : '/influencer/settings')} 
+              />
+            </div>
+          )}
           <Outlet />
         </main>
       </div>
