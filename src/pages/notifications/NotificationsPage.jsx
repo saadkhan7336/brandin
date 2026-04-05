@@ -59,7 +59,7 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="w-full max-w-[1800px] mx-auto py-8 px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>

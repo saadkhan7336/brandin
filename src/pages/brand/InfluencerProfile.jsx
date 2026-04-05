@@ -1,81 +1,78 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  Instagram, Youtube, Twitter, Linkedin, Globe,
-  MapPin, Calendar, ShieldCheck, Users, ExternalLink,
-  MessageSquare, Send, AlertCircle, Image as ImageIcon
-} from 'lucide-react';
-import api from '../../services/api';
-import SendCollabModal from '../../components/layout/influencer/SendCollabModal';
+  Instagram,
+  Youtube,
+  Twitter,
+  Linkedin,
+  Globe,
+  MapPin,
+  Calendar,
+  ShieldCheck,
+  Users,
+  ExternalLink,
+  MessageSquare,
+  Send,
+  AlertCircle,
+  ShieldClose,
+  Star,
+  Briefcase,
+  TrendingUp,
+  Edit3,
+} from "lucide-react";
+import api from "../../services/api";
+import SendCollabModal from "../../components/layout/influencer/SendCollabModal";
+import { cn } from "../../utils/helper";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-const formatFollowers = (n) => {
-  if (!n) return '0';
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return `${n}`;
-};
-
 const formatJoinDate = (dateStr) => {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 };
 
-const PlatformIcon = ({ name, className = 'w-4 h-4' }) => {
-  const n = name?.toLowerCase() || '';
-  if (n.includes('instagram')) return <Instagram className={className} />;
-  if (n.includes('youtube'))   return <Youtube   className={className} />;
-  if (n.includes('twitter'))   return <Twitter   className={className} />;
-  if (n.includes('linkedin'))  return <Linkedin  className={className} />;
-  return <Users className={className} />;
+const SocialIcon = ({ name, size = 16, className }) => {
+  const map = {
+    instagram: Instagram,
+    tiktok: ({ size, className }) => (
+      <svg
+        viewBox="0 0 24 24"
+        width={size}
+        height={size}
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+      </svg>
+    ),
+    twitter: Twitter,
+    linkedin: Linkedin,
+    youtube: Youtube,
+  };
+  const Icon = map[name?.toLowerCase()] || Globe;
+  return <Icon size={size} className={className} />;
 };
 
-// ── Skeleton ───────────────────────────────────────────────────────────────────
-
-const ProfileSkeleton = () => (
-  <div className="max-w-[1100px] mx-auto w-full pb-10 animate-pulse">
-    {/* Banner */}
-    <div className="h-52 bg-gray-200 rounded-2xl mb-0" />
-
-    <div className="flex gap-6 mt-[-40px] px-6">
-      {/* Avatar placeholder */}
-      <div className="w-24 h-24 rounded-full bg-gray-300 border-4 border-white shrink-0" />
+const SectionHeader = ({ title, icon: Icon, color = "blue" }) => (
+  <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-3 tracking-tight">
+    <div
+      className={cn(
+        "w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200",
+        `bg-${color}-600`,
+      )}
+    >
+      <Icon size={16} />
     </div>
-
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-5 px-6">
-      {/* Left card */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5 space-y-3">
-        <div className="h-4 bg-gray-200 rounded w-32" />
-        <div className="space-y-2">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-3 bg-gray-100 rounded w-full" />
-          ))}
-        </div>
-      </div>
-
-      {/* Right area */}
-      <div className="lg:col-span-2 space-y-4">
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
-          <div className="h-4 bg-gray-200 rounded w-40 mb-3" />
-          <div className="space-y-2">
-            <div className="h-3 bg-gray-100 rounded w-full" />
-            <div className="h-3 bg-gray-100 rounded w-5/6" />
-            <div className="h-3 bg-gray-100 rounded w-4/6" />
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
-          <div className="h-4 bg-gray-200 rounded w-32 mb-4" />
-          <div className="grid grid-cols-4 gap-3">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="aspect-square bg-gray-100 rounded-lg" />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+    {title}
+  </h3>
 );
 
 // ── Main Component ─────────────────────────────────────────────────────────────
@@ -84,10 +81,11 @@ const InfluencerProfile = () => {
   const { influencerId } = useParams();
   const navigate = useNavigate();
 
-  const [data, setData]       = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
+  const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState("about");
 
   useEffect(() => {
     const load = async () => {
@@ -98,11 +96,13 @@ const InfluencerProfile = () => {
         if (res.data?.success) {
           setData(res.data.data);
         } else {
-          setError('Failed to load influencer profile.');
+          setError("Failed to load influencer profile.");
         }
       } catch (err) {
-        console.error('Error loading influencer profile:', err);
-        setError(err.response?.data?.message || 'Failed to load influencer profile.');
+        console.error("Error loading influencer profile:", err);
+        setError(
+          err.response?.data?.message || "Failed to load influencer profile.",
+        );
       } finally {
         setLoading(false);
       }
@@ -110,36 +110,31 @@ const InfluencerProfile = () => {
     if (influencerId) load();
   }, [influencerId]);
 
-  // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="max-w-[1100px] mx-auto w-full pb-10">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-5 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </button>
-        <ProfileSkeleton />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
+        <p className="text-slate-400 font-black uppercase text-[10px] tracking-widest animate-pulse">
+          Fetching Influencer Data...
+        </p>
       </div>
     );
   }
 
-  // ── Error ──────────────────────────────────────────────────────────────────
-  if (error) {
+  if (error || !data) {
     return (
       <div className="max-w-[1100px] mx-auto w-full pb-10">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-5 transition-colors"
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-5 transition-colors font-medium"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Back
+          <ArrowLeft className="w-4 h-4" /> Back
         </button>
-        <div className="bg-red-50 border border-red-100 rounded-xl p-6 flex items-start gap-3 text-red-700">
+        <div className="bg-red-50 border border-red-100 rounded-xl p-6 flex items-start gap-4 text-red-700">
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-          <p className="font-medium">{error}</p>
+          <p className="font-medium">
+            {error || "Influencer profile not found"}
+          </p>
         </div>
       </div>
     );
@@ -148,300 +143,441 @@ const InfluencerProfile = () => {
   const { influencer, totalFollowers } = data || {};
   const user = influencer?.user || {};
 
-  // Derive display values
-  const username      = influencer?.username || user?.fullname || 'Influencer';
-  const avatar        = influencer?.profilePicture || user?.profilePic
-                        || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random&size=200`;
-  const about         = influencer?.about || '';
-  const category      = influencer?.category || '';
-  const location      = influencer?.location || '';
-  const joinedDate    = formatJoinDate(user?.createdAt || influencer?.createdAt);
-  const platforms     = influencer?.platforms || [];
-  const mainPlatform  = platforms[0] || null;
-  const portfolio     = influencer?.portfolio || '';
+  // ── DEACTIVATED ─────────────────────────────────────────────────────────────
+  if (user?.isDeactivated) {
+    return (
+      <div className="max-w-[1100px] mx-auto w-full pb-10 px-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-5 transition-colors font-medium"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
+        <div className="bg-slate-50 border border-slate-100 rounded-[3rem] p-16 flex flex-col items-center text-center gap-4">
+          <div className="w-20 h-20 bg-white rounded-full shadow-lg flex items-center justify-center mb-4">
+            <ShieldClose size={32} className="text-slate-300" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+            Account Deactivated
+          </h2>
+          <p className="text-slate-500 max-w-sm mb-6 font-medium leading-relaxed">
+            This influencer has temporarily deactivated their account. They will
+            be back soon!
+          </p>
+          <button
+            onClick={() => navigate("/brand/search")}
+            className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold shadow-xl shadow-slate-200"
+          >
+            Find Other Influencers
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  // Banner display — use coverImage (influencer model), else coverPic (user model), 
-  // else portfolio (if image), else gradient
-  const isImageUrl = (url) => /\.(jpg|jpeg|png|gif|webp|avif|svg)(\?.*)?$/i.test(url);
-  const bannerImage = influencer?.coverImage 
-                    || user?.coverPic 
-                    || (portfolio && isImageUrl(portfolio) ? portfolio : null);
-  
-  const bannerStyle = bannerImage
-    ? { backgroundImage: `url(${bannerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-    : { background: 'linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 40%, #ddd6fe 100%)' };
-
-  // Placeholder post tiles
-  const placeholderPosts = [
-    { id: 1, label: 'Post 1' },
-    { id: 2, label: 'Post 2' },
-    { id: 3, label: 'Post 3' },
-    { id: 4, label: 'Post 4' },
-  ];
+  const name = user?.fullname || influencer?.username || "Influencer";
+  const avatar =
+    influencer?.profilePicture ||
+    user?.profilePic ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=200`;
+  const cover =
+    influencer?.coverImage ||
+    user?.coverPic ||
+    "https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=2000";
 
   return (
-    <div className="max-w-[1100px] mx-auto w-full pb-10">
-
-      {/* Back button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-5 transition-colors font-medium"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back
-      </button>
-
-      {/* ── BANNER ──────────────────────────────────────────────────────────── */}
-      <div
-        className="relative h-52 rounded-2xl overflow-hidden"
-        style={bannerStyle}
-      >
-        {/* Action buttons — top-right of banner */}
-        <div className="absolute top-4 right-4 flex items-center gap-2">
+    <div className="max-w-6xl mx-auto space-y-10 pb-24 animate-in fade-in duration-700 px-4">
+      {/* ── HEADER ACTIONS ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div>
           <button
-            title="Message (coming soon)"
-            className="flex items-center gap-2 bg-white/90 hover:bg-white text-gray-700 border border-gray-200 text-[13px] font-semibold px-4 py-2 rounded-lg shadow-sm transition-all backdrop-blur-sm"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors mb-4 border-none"
           >
-            <MessageSquare className="w-4 h-4" />
-            Message
+            <ArrowLeft className="w-4 h-4" /> Back to Search
+          </button>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight italic uppercase">
+            {name}
+          </h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <button className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
+            <MessageSquare size={14} /> Message
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-[#1A73E8] hover:bg-[#1557B0] text-white text-[13px] font-semibold px-4 py-2 rounded-lg shadow-sm transition-all"
+            className="px-8 py-3 bg-[#1A73E8] text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-[#1557B0] transition-all flex items-center gap-2.5 active:scale-95 border-none"
           >
-            <Send className="w-4 h-4" />
-            Send Collab Request
+            <Send size={14} /> Send Collab Request
           </button>
         </div>
       </div>
 
-      {/* ── AVATAR (overlapping banner) ──────────────────────────────────────── */}
-      <div className="px-6 mt-[-40px] mb-4 flex items-end gap-4">
-        <div className="relative shrink-0">
+      {/* ── HERO BANNER ── */}
+      <div className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/40 overflow-hidden group/card relative">
+        <div className="h-56 bg-slate-100 relative group/cover cursor-default">
           <img
-            src={avatar}
-            alt={username}
-            className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
+            src={cover}
+            alt="Cover"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105"
           />
-          {/* Verified badge */}
-          <span className="absolute bottom-1 right-1 flex items-center bg-white rounded-full px-1.5 py-0.5 shadow text-[9px] font-bold text-green-700 border border-green-100 gap-0.5">
-            <ShieldCheck className="w-3 h-3 text-green-600" />
-            Verified
-          </span>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+        </div>
+
+        <div className="px-12 pb-12">
+          <div className="flex flex-col md:flex-row items-end gap-12 -mt-16 relative z-10">
+            <div className="relative group/logo">
+              <img
+                src={avatar}
+                alt="Avatar"
+                className="w-44 h-44 rounded-[2.5rem] object-cover border-[10px] border-white shadow-2xl bg-white"
+              />
+              {user.isVerified && (
+                <div className="absolute -bottom-2 -right-2 bg-blue-600 p-2.5 rounded-full text-white shadow-lg border-4 border-white">
+                  <ShieldCheck size={20} fill="currentColor" stroke="white" />
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 pb-4 space-y-6">
+              <div className="flex flex-wrap items-center gap-10 pt-8">
+                {/* Location */}
+                <div className="flex items-center gap-3.5 group/info">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 transition-all group-hover/info:scale-110 shadow-sm border border-blue-100/50">
+                    <MapPin size={16} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-0.5">
+                      Location
+                    </p>
+                    <div className="text-sm font-black text-slate-800">
+                      {influencer.location || "Earth"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Category */}
+                <div className="flex items-center gap-3.5 group/info">
+                  <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600 transition-all group-hover/info:scale-110 shadow-sm border border-orange-100/50">
+                    <Briefcase size={16} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-0.5">
+                      Niche
+                    </p>
+                    <div className="text-sm font-black text-slate-800 capitalize">
+                      {influencer.category || "Influencer"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Joined */}
+                <div className="flex items-center gap-3.5 group/info">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 transition-all group-hover/info:scale-110 shadow-sm border border-emerald-100/50">
+                    <Calendar size={16} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-0.5">
+                      Partner Since
+                    </p>
+                    <div className="text-sm font-black text-slate-800">
+                      {formatJoinDate(user.createdAt)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Media Kit */}
+                {influencer.resume && (
+                  <div className="flex items-center gap-3.5 group/info">
+                    <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600 transition-all group-hover/info:scale-110 shadow-sm border border-violet-100/50">
+                      <Globe size={16} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-0.5">
+                        Assets
+                      </p>
+                      <a
+                        href={influencer.resume}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm font-black text-blue-600 hover:underline"
+                      >
+                        Download Media Kit
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ── TWO-COLUMN BODY ──────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 px-0">
+        {/* LEFT COLUMN: STATS & SOCIALS */}
+        <div className="lg:col-span-4 space-y-8 animate-in slide-in-from-left-4 duration-1000">
+          {/* CORE METRICS */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-2xl shadow-slate-200/30 space-y-10 group">
+            <h3 className="text-sm font-black text-slate-900 tracking-widest uppercase flex items-center gap-3 text-left">
+              <TrendingUp size={16} className="text-blue-600" /> Platform
+              Insights
+            </h3>
+            <div className="space-y-8">
+              <div className="flex items-center gap-6 group/stat">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-blue-600 bg-blue-50 group-hover/stat:scale-110 transition-all duration-500 shadow-sm">
+                  <Users size={20} />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 leading-none">
+                    Total Reach
+                  </p>
+                  <p className="text-lg font-black text-slate-900 tracking-tight italic">
+                    {(totalFollowers || 0).toLocaleString()}+
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-6 group/stat">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-orange-600 bg-orange-50 group-hover/stat:scale-110 transition-all duration-500 shadow-sm">
+                  <Star size={20} />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 leading-none">
+                    Avg Rating
+                  </p>
+                  <p className="text-lg font-black text-slate-900 tracking-tight italic">
+                    {influencer.averageRating || "0.0"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        {/* ── LEFT SIDEBAR ─────────────────────────────────────────────────── */}
-        <div className="space-y-4">
-          {/* Info card */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+          {/* SOCIAL HANDLINGS */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-2xl shadow-slate-200/30 space-y-8">
+            <h3 className="text-sm font-black text-slate-900 tracking-widest uppercase flex items-center gap-3 text-left">
+              <Globe size={16} className="text-emerald-600" /> Digital Ecosystem
+            </h3>
+            <div className="flex flex-col gap-4">
+              {[
+                {
+                  id: "instagram",
+                  label: "Instagram",
+                  name: "INSTAGRAM",
+                  color: "pink",
+                },
+                {
+                  id: "tiktok",
+                  label: "TikTok",
+                  name: "TIKTOK",
+                  color: "slate",
+                },
+                {
+                  id: "twitter",
+                  label: "Twitter",
+                  name: "TWITTER",
+                  color: "blue",
+                },
+                {
+                  id: "youtube",
+                  label: "YouTube",
+                  name: "YOUTUBE",
+                  color: "red",
+                },
+                {
+                  id: "linkedin",
+                  label: "LinkedIn",
+                  name: "LINKEDIN",
+                  color: "indigo",
+                },
+              ].map((social) => (
+                <div
+                  key={social.id}
+                  className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50 transition-all group/soc"
+                >
+                  <div className="flex items-center gap-3.5 text-left">
+                    <div
+                      className={cn(
+                        `w-9 h-9 rounded-xl flex items-center justify-center bg-white shadow-sm transition-transform group-hover/soc:rotate-6`,
+                        `text-${social.color}-600`,
+                      )}
+                    >
+                      <SocialIcon name={social.id} size={16} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 tracking-widest leading-none mb-1.5 uppercase">
+                        {social.name}
+                      </p>
+                      <p className="text-xs font-bold text-slate-600">
+                        {influencer.socialMedia?.[social.id]
+                          ? `@${influencer.socialMedia[social.id]}`
+                          : "Not linked"}
+                      </p>
+                    </div>
+                  </div>
+                  {influencer.socialMedia?.[social.id] && (
+                    <button className="w-8 h-8 rounded-lg bg-slate-200/50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all border-none">
+                      <ExternalLink size={12} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
-            {/* Username */}
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="w-4 h-4 text-gray-400 shrink-0" />
-              <h2 className="text-[15px] font-bold text-gray-900">{username}</h2>
+        {/* RIGHT COLUMN: CONTENT AREAS */}
+        <div className="lg:col-span-8 space-y-8 animate-in slide-in-from-right-4 duration-1000">
+          <div className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/30 overflow-hidden flex flex-col h-full">
+            <div className="border-b border-slate-50 px-10 flex gap-12 bg-slate-50/10">
+              {["about", "collaborations", "reviews"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={cn(
+                    "py-6 text-xs font-black uppercase tracking-[0.2em] border-b-[3px] transition-all relative outline-none",
+                    activeTab === tab
+                      ? "border-slate-900 text-slate-900"
+                      : "border-transparent text-slate-400 hover:text-slate-600",
+                  )}
+                >
+                  {tab === "about"
+                    ? "Strategic Bio"
+                    : tab === "collaborations"
+                      ? "Collaborations"
+                      : "Brand Feedback"}
+                </button>
+              ))}
             </div>
 
-            <div className="space-y-3 text-[13px] text-gray-600">
-              {/* Platform */}
-              {mainPlatform && (
-                <div className="flex items-center gap-2.5">
-                  <PlatformIcon name={mainPlatform.name} className="w-4 h-4 text-gray-400 shrink-0" />
-                  <div>
-                    <span className="text-gray-400 text-[11px] font-medium uppercase tracking-wide mr-1.5">Platform</span>
-                    <span className="capitalize font-medium text-gray-800">{mainPlatform.name}</span>
-                    {mainPlatform.followers > 0 && (
-                      <span className="ml-1.5 text-gray-400">· {formatFollowers(mainPlatform.followers)} followers</span>
+            <div className="p-12 flex-1">
+              {activeTab === "about" && (
+                <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500 text-left">
+                  <SectionHeader title="The Narrative" icon={Edit3} />
+                  <p className="text-slate-600 leading-relaxed font-medium pl-6 border-l-4 border-slate-100 whitespace-pre-wrap text-base">
+                    {influencer.about || "Biography under review."}
+                  </p>
+                </div>
+              )}
+
+              {activeTab === "collaborations" && (
+                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
+                  <SectionHeader
+                    title="Active Collaborations"
+                    icon={Briefcase}
+                    color="blue"
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {(influencer.activeCollaborations || []).map(
+                      (collab, idx) => (
+                        <div
+                          key={idx}
+                          className="p-8 bg-slate-50/50 border border-slate-100 rounded-[2.5rem] hover:bg-white hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 group"
+                        >
+                          <div className="flex justify-between items-start mb-6">
+                            <div className="space-y-1 text-left">
+                              <p className="text-[10px] font-black text-blue-600 tracking-widest uppercase leading-none">
+                                Live Campaign
+                              </p>
+                              <h4 className="text-xl font-black text-slate-900 tracking-tight italic uppercase leading-tight">
+                                {collab.campaign?.name || "Untitled"}
+                              </h4>
+                              <p className="text-xs font-bold text-slate-400 italic">
+                                With{" "}
+                                {collab.sender?.fullname || "Brand Partner"}
+                              </p>
+                            </div>
+                            <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-500 text-white px-3 py-1.5 rounded-xl shadow-lg shadow-emerald-200">
+                              ACTIVE
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-600 leading-relaxed font-medium line-clamp-3 mb-6">
+                            {collab.campaign?.description ||
+                              "Ongoing collaboration."}
+                          </p>
+                        </div>
+                      ),
+                    )}
+                    {(!influencer.activeCollaborations ||
+                      influencer.activeCollaborations.length === 0) && (
+                      <div className="col-span-full py-20 text-center bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                        <p className="text-slate-400 font-black uppercase text-xs tracking-widest italic">
+                          No active collaborations right now.
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Niche / Category */}
-              {category && (
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 flex items-center justify-center shrink-0">
-                    <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
-                  </div>
-                  <div>
-                    <span className="text-gray-400 text-[11px] font-medium uppercase tracking-wide mr-1.5">Niche</span>
-                    <span className="capitalize font-medium text-gray-800">{category}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Location */}
-              {location && (
-                <div className="flex items-center gap-2.5">
-                  <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
-                  <div>
-                    <span className="text-gray-400 text-[11px] font-medium uppercase tracking-wide mr-1.5">Location</span>
-                    <span className="font-medium text-gray-800">{location}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Joined date */}
-              <div className="flex items-center gap-2.5">
-                <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
-                <div>
-                  <span className="text-gray-400 text-[11px] font-medium uppercase tracking-wide mr-1.5">Joined</span>
-                  <span className="font-medium text-gray-800">{joinedDate}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* External Links */}
-            {(portfolio || platforms.some(p => p.profileUrl)) && (
-              <div className="mt-5 pt-4 border-t border-gray-50">
-                <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wide mb-3">External Links</p>
-                <div className="flex flex-wrap gap-2">
-                  {/* Platform profile links */}
-                  {platforms.map((p, i) => p.profileUrl ? (
-                    <a
-                      key={i}
-                      href={p.profileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-[12px] text-gray-600 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 rounded-lg px-2.5 py-1 transition-all"
-                    >
-                      <PlatformIcon name={p.name} className="w-3.5 h-3.5" />
-                      <span className="capitalize">{p.name} Profile</span>
-                      <ExternalLink className="w-3 h-3 opacity-60" />
-                    </a>
-                  ) : null)}
-
-                  {/* Portfolio / Media Kit */}
-                  {portfolio && !isImageUrl(portfolio) && (
-                    <a
-                      href={portfolio}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-[12px] text-gray-600 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 rounded-lg px-2.5 py-1 transition-all"
-                    >
-                      <Globe className="w-3.5 h-3.5" />
-                      Media Kit
-                      <ExternalLink className="w-3 h-3 opacity-60" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* All Platforms card (if multiple) */}
-          {platforms.length > 1 && (
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-              <p className="text-[12px] font-semibold text-gray-500 uppercase tracking-wide mb-3">All Platforms</p>
-              <div className="space-y-3">
-                {platforms.map((p, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-[13px] text-gray-700">
-                      <PlatformIcon name={p.name} className="w-4 h-4 text-gray-400" />
-                      <span className="capitalize font-medium">{p.name}</span>
-                    </div>
-                    <span className="text-[12px] font-semibold text-gray-500">
-                      {formatFollowers(p.followers)} followers
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Total followers */}
-              {totalFollowers > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between text-[13px]">
-                  <span className="text-gray-500 font-medium">Total Reach</span>
-                  <span className="font-bold text-gray-900">{formatFollowers(totalFollowers)}</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* ── RIGHT CONTENT ─────────────────────────────────────────────────── */}
-        <div className="lg:col-span-2 space-y-4">
-
-          {/* About card */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Users className="w-4 h-4 text-gray-400" />
-              <h3 className="text-[15px] font-bold text-gray-900">About {username}</h3>
-            </div>
-            {about ? (
-              <p className="text-[13.5px] text-gray-600 leading-relaxed">{about}</p>
-            ) : (
-              <p className="text-[13px] text-gray-400 italic">No bio provided yet.</p>
-            )}
-          </div>
-
-          {/* Services card — show if any platform has services */}
-          {platforms.some(p => p.services && p.services.length > 0) && (
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-              <h3 className="text-[14px] font-bold text-gray-900 mb-4">Services & Pricing</h3>
-              <div className="space-y-4">
-                {platforms.filter(p => p.services && p.services.length > 0).map((platform, pi) => (
-                  <div key={pi}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <PlatformIcon name={platform.name} className="w-4 h-4 text-gray-500" />
-                      <span className="text-[13px] font-semibold text-gray-700 capitalize">{platform.name}</span>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {platform.services.map((svc, si) => (
-                        <div
-                          key={si}
-                          className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"
-                        >
-                          <span className="text-[13px] text-gray-700 font-medium">{svc.contentType}</span>
-                          <span className="text-[13px] font-bold text-[#1A73E8]">${svc.price?.toLocaleString()}</span>
+              {activeTab === "reviews" && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <SectionHeader
+                    title="Verified Feedback"
+                    icon={Star}
+                    color="yellow"
+                  />
+                  <div className="space-y-6 text-left">
+                    {(influencer.reviews || []).map((review, i) => (
+                      <div
+                        key={i}
+                        className="p-8 bg-slate-50/50 border border-slate-100 rounded-[2.5rem] flex flex-col md:flex-row gap-6 items-start group hover:bg-white hover:shadow-2xl transition-all duration-500"
+                      >
+                        <img
+                          src={
+                            review.reviewer?.profilePic ||
+                            `https://ui-avatars.com/api/?name=${review.reviewer?.fullname}`
+                          }
+                          className="w-14 h-14 rounded-2xl object-cover border-4 border-white shadow-lg"
+                          alt="Reviewer"
+                        />
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-black text-slate-900 uppercase italic tracking-tight">
+                              {review.reviewer?.fullname}
+                            </h4>
+                            <div className="flex gap-0.5">
+                              {[...Array(5)].map((_, idx) => (
+                                <Star
+                                  key={idx}
+                                  size={12}
+                                  className={cn(
+                                    idx < review.rating
+                                      ? "text-yellow-500 fill-yellow-500"
+                                      : "text-slate-200",
+                                  )}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-slate-600 font-medium leading-relaxed italic text-sm">
+                            "{review.comment}"
+                          </p>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
+                    {(!influencer.reviews ||
+                      influencer.reviews.length === 0) && (
+                      <div className="py-20 text-center bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                        <p className="text-slate-400 font-black uppercase text-xs tracking-widest italic">
+                          No reviews yet.
+                        </p>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Recent Content card */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[14px] font-bold text-gray-900">Recent Content</h3>
-              <button
-                title="Coming soon"
-                className="text-[13px] font-semibold text-[#1A73E8] hover:text-[#1557B0] transition-colors"
-              >
-                View all posts
-              </button>
-            </div>
-
-            {/* Placeholder tiles */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {placeholderPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="aspect-square rounded-xl bg-gray-100 border border-gray-100 flex flex-col items-center justify-center text-gray-300 hover:bg-gray-150 transition-colors cursor-pointer overflow-hidden"
-                >
-                  <ImageIcon className="w-8 h-8 mb-1.5 text-gray-300" />
-                  <span className="text-[11px] font-medium text-gray-300">{post.label}</span>
                 </div>
-              ))}
+              )}
             </div>
-
-            <p className="text-[11px] text-gray-400 mt-3 text-center">
-              Recent posts will appear here once the influencer connects their content feed.
-            </p>
           </div>
-
         </div>
       </div>
 
       {showModal && (
-        <SendCollabModal 
+        <SendCollabModal
           targetType="influencer"
-          targetUser={{ _id: user?._id || data?.influencer?.user?._id || influencerId, name: username }}
+          targetUser={{
+            _id: user?._id || data?.influencer?.user?._id || influencerId,
+            name: name,
+          }}
           onClose={() => setShowModal(false)}
           onSuccess={() => setShowModal(false)}
         />

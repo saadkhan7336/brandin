@@ -46,7 +46,7 @@ export default function Navbar({
     'bg-emerald-500';
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-40 h-[72px]">
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-40 h-[80px]">
       <div className="flex items-center justify-between h-full px-4 sm:px-6">
         {/* Left: hamburger + logo + title */}
         <div className="flex items-center gap-3">

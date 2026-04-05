@@ -365,7 +365,7 @@ const SearchExplore = () => {
     <div className="min-h-screen bg-gray-50">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-4">
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 pt-6 pb-4">
           {/* Page title + search bar */}
           <div className="flex flex-col md:flex-row gap-6 items-start justify-between">
             <div>
@@ -506,7 +506,7 @@ const SearchExplore = () => {
       </div>
 
       {/* ── Main content ────────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 py-6">
         {/* Error */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm mb-6">

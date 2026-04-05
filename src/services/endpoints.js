@@ -63,12 +63,15 @@ export const ENDPOINTS = {
   REGISTER: "/auth/register",
   FORGOT_PASSWORD: "/auth/forgot-password",
   RESET_PASSWORD: "/auth/reset-password",
+  CHANGE_PASSWORD: "/auth/change-password",
   LOGOUT: "/auth/logout",
 
   // User (shared)
   ME: "/users/me",            // GET  — merged user + roleProfile + completion
   USER_PROFILE: "/users/profile",       // GET  — just user doc (legacy)
   USER_UPDATE: "/users/update-profile",// PATCH — fullname, profilePic, coverPic
+  USER_DELETE: "/users", // DELETE — permanent account deletion
+  USER_DEACTIVATE: "/users/deactivate", // PATCH — temporary account deactivation
 
   // Campaigns
   campaigns: {

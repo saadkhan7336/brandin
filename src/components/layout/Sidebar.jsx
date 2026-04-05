@@ -111,7 +111,7 @@ const brandNavItems = [
   { icon: FileText,        label: "My Requests",        path: "/brand/requests" },
   { icon: Handshake,       label: "Collaborations",     path: "/brand/collaborations" },
   { icon: Target,          label: "Campaigns",          path: "/brand/campaigns" },
-  { icon: Settings,        label: "Profile Settings",   path: "/brand/settings" },
+  { icon: Settings,        label: "My Profile",         path: "/brand/profile" },
 ];
 
 const influencerNavItems = [
@@ -119,7 +119,7 @@ const influencerNavItems = [
   { icon: Building2,       label: "Explore",     path: "/influencer/search/campaigns" },
   { icon: FileText,        label: "Requests",    path: "/influencer/requests" },
   { icon: Handshake,       label: "Collaborations", path: "/influencer/collaborations" },
-  { icon: Settings,        label: "Profile Settings", path: "/influencer/settings" },
+  { icon: Target,          label: "My Profile",  path: "/influencer/profile" },
 ];
 
 const adminNavItems = [
@@ -145,9 +145,9 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout }) {
     <>
       <aside
         className={`
-          fixed lg:static inset-y-0 left-0 z-30 w-60 bg-white border-r border-gray-200
+          fixed lg:static inset-y-0 left-0 z-30 w-72 bg-white border-r border-gray-200
           flex flex-col transition-transform duration-300 ease-in-out
-          lg:translate-x-0 top-[72px] lg:top-0 h-[calc(100vh-72px)] lg:h-screen
+          lg:translate-x-0 top-[80px] lg:top-0 h-[calc(100vh-80px)] lg:h-screen
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
@@ -173,7 +173,7 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout }) {
         <nav className="flex-1 flex flex-col px-3 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isSettings = item.path.includes("settings");
+            const isProfilePage = item.path.includes("profile");
             return (
               <NavLink
                 key={item.path}
@@ -190,8 +190,8 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout }) {
               >
                 <Icon className="w-[18px] h-[18px] flex-shrink-0" />
                 <span>{item.label}</span>
-                {/* Red dot on settings when profile incomplete */}
-                {isSettings && showCompletionWarning && (
+                {/* Red dot on profile when profile incomplete */}
+                {isProfilePage && showCompletionWarning && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full" />
                 )}
               </NavLink>

@@ -104,7 +104,7 @@ const CampaignDetail = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative -mt-24">
+      <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 relative -mt-24">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
  
           {/* ── Left: Campaign Details ─────────────────────────────────────── */}

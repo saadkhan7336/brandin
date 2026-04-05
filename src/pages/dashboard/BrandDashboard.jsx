@@ -148,7 +148,7 @@ function BrandDashboard() {
   };
 
   return (
-    <div className="flex flex-col gap-8 max-w-[1200px] mx-auto w-full pb-10">
+    <div className="flex flex-col gap-8 w-full max-w-[1800px] mx-auto pb-10">
       {/* Header Section */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">

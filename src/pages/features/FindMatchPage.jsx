@@ -56,7 +56,7 @@ function FindMatchPage() {
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-6 bg-gradient-to-br from-[#dbeafe] to-white">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full max-w-[1800px] mx-auto">
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-[#3b82f6] rounded-2xl mb-6">
               <Search className="w-10 h-10 text-white" />
@@ -105,7 +105,7 @@ function FindMatchPage() {
 
       {/* Features Grid */}
       <section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full max-w-[1800px] mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-[#111827] mb-4">
               Smart Search, Better Results
@@ -134,7 +134,7 @@ function FindMatchPage() {
 
       {/* How it works */}
       <section className="py-20 px-6  bg-[#f9fafb]">
-        <div className="max-w-4xl mx-auto">
+        <div className="w-full max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-[#111827] mb-4">
               How it Works
@@ -161,7 +161,7 @@ function FindMatchPage() {
 
       {/* CTA Section */}
       <section className=" py-20 px-6 bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6]">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="w-full max-w-6xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-6">
             Ready to Find Your Perfect Match?
           </h2>

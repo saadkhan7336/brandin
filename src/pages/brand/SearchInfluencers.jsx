@@ -97,7 +97,7 @@ function SearchInfluencers() {
   };
 
   return (
-    <div className="flex flex-col max-w-[1200px] mx-auto w-full pb-10">
+    <div className="flex flex-col w-full max-w-[1800px] mx-auto pb-10">
 
       {/* Header Section */}
       <div className="mb-6">

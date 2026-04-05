@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import { 
   Search, 
   Filter, 
@@ -115,7 +114,7 @@ const InfluencerRequests = () => {
   ];
 
   return (
-    <div className="max-w-[1240px] mx-auto w-full pb-10 px-4 md:px-8">
+    <div className="w-full max-w-[1800px] mx-auto pb-10 px-4 md:px-8">
       {/* Header */}
       <div className="mb-8 pt-6">
         <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">

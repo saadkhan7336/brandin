@@ -16,6 +16,7 @@ import {
   Star,
   Instagram,
   Twitter,
+  ShieldClose,
 } from "lucide-react";
 import api from "../../../services/api";
 import SendCollabModal from "./SendCollabModal";
@@ -68,6 +69,27 @@ const BrandPublicProfile = () => {
           className="text-sm text-purple-600 hover:text-purple-800 font-medium flex items-center gap-1.5"
         >
           <ArrowLeft size={14} /> Go back
+        </button>
+      </div>
+    );
+  }
+
+  // Deactivated state handle
+  if (data.brand?.user?.isDeactivated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-6 text-center">
+        <div className="w-24 h-24 bg-white rounded-full shadow-xl flex items-center justify-center mb-8 animate-bounce">
+          <ShieldClose size={40} className="text-slate-300" />
+        </div>
+        <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">Profile Deactivated</h2>
+        <p className="text-slate-500 max-w-sm mb-8 font-medium">
+          The brand has temporarily deactivated their account. Check back later or explore other brands.
+        </p>
+        <button
+          onClick={() => navigate("/influencer/search/brands")}
+          className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all"
+        >
+          Explore Other Brands
         </button>
       </div>
     );

@@ -155,12 +155,14 @@ import CampaignHub from "../pages/campaign/CampaignHub";
 import SearchInfluencers from "../pages/brand/SearchInfluencers";
 import MyRequests from "../pages/brand/MyRequests";
 import InfluencerProfile from "../pages/brand/InfluencerProfile";
+import MyProfileView from "../pages/brand/MyProfileView";
 import NotificationsPage from "../pages/notifications/NotificationsPage";
 
 // Profile settings (shared page, role-aware)
 import ProfileSettings from "../pages/profile/ProfilesSetting";
 
 // Influencer-specific pages
+import MyProfileViewInfluencer from "../pages/influencer/MyProfileView";
 import SearchExplore from "../components/layout/influencer/SearchExplore";
 import CampaignDetail from "../components/layout/influencer/CampaignDetail";
 import BrandPublicProfile from "../components/layout/influencer/BrandPublicProfile";
@@ -212,6 +214,7 @@ export default function AppRoutes() {
               <Route path="/brand/collaborations" element={<BrandDashboard />} />
               <Route path="/brand/campaigns" element={<CampaignHub />} />
               <Route path="/brand/influencer/:influencerId" element={<InfluencerProfile />} />
+              <Route path="/brand/profile" element={<MyProfileView />} />
             </Route>
             {/* Settings — always accessible, even if incomplete */}
             <Route path="/brand/settings" element={<ProfileSettings />} />
@@ -229,6 +232,7 @@ export default function AppRoutes() {
               <Route path="/influencer/search/:tab" element={<SearchExplore />} />
               <Route path="/influencer/search/campaign/:campaignId" element={<CampaignDetail />} />
               <Route path="/influencer/search/brand/:brandId" element={<BrandPublicProfile />} />
+              <Route path="/influencer/profile" element={<MyProfileViewInfluencer />} />
             </Route>
 
             {/* Settings — always accessible */}

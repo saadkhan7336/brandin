@@ -37,13 +37,38 @@ const profileService = {
 
   /**
    * PATCH /influencers/update-profile
-   * Accepts JSON: about, username, category, platforms, location, portfolio, isAvailable
+   * Accepts JSON or FormData
    */
   updateInfluencerProfile: async (data) => {
-
-    const res = await api.patch(ENDPOINTS.influencers.update, data);
+    const isFormData = data instanceof FormData;
+    const config = isFormData ? { headers: { "Content-Type": "multipart/form-data" } } : {};
+    const res = await api.patch(ENDPOINTS.influencers.update, data, config);
     
     return res.data.data; // { influencer, completion }
+  },
+
+  /**
+   * POST /auth/change-password
+   */
+  changePassword: async (oldPassword, newPassword) => {
+    const res = await api.post(ENDPOINTS.CHANGE_PASSWORD, { oldPassword, newPassword });
+    return res.data;
+  },
+
+  /**
+   * DELETE /users
+   */
+  deleteAccount: async () => {
+    const res = await api.delete(ENDPOINTS.USER_DELETE);
+    return res.data;
+  },
+
+  /**
+   * PATCH /users/deactivate
+   */
+  deactivateAccount: async () => {
+    const res = await api.patch(ENDPOINTS.USER_DEACTIVATE);
+    return res.data;
   },
 };
 

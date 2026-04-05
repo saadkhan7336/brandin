@@ -1,18 +1,10 @@
-// src/pages/profile/ProfileSettings.jsx
-// Role-aware profile settings page.
-// Loads GET /users/me on mount, then provides three save sections:
-//   1. User Info   → PATCH /users/update-profile
-//   2. Brand Info  → PATCH /brands/update-profile   (brand only)
-//   2. Influencer  → PATCH /influencers/update-profile (influencer only)
-
+// src/pages/profile/ProfilesSetting.jsx
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation } from "react-router-dom";
 import {
-  Camera, Save, Plus, Trash2, Globe, Instagram, Youtube,
-  Twitter, Linkedin, Facebook, Check, AlertCircle, User,
-  ChevronDown, MapPin,
-  ChevronUp, ExternalLink,
+  Camera, Save, Trash2, Check, AlertCircle, User,
+  Lock, ShieldAlert,
+  ShieldClose, LogOut,
 } from "lucide-react";
 import { updateProfileComplete, updateUserFields } from "../../redux/slices/authSlice";
 import {
@@ -23,32 +15,7 @@ import profileService from "../../services/profileService";
 import CompletionBanner from "../../components/common/CompletionBanner";
 import { cn } from "../../utils/helper";
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-const PLATFORM_OPTIONS = ["Instagram", "YouTube", "TikTok", "Twitter", "Facebook", "LinkedIn"];
-const CONTENT_TYPES = ["Post", "Reel", "Story", "Vlog", "Photo Shoot", "Appearance", "Short", "Thread"];
-const CATEGORY_OPTIONS = [
-  "Fashion", "Beauty", "Food", "Travel", "Fitness", "Tech",
-  "Gaming", "Lifestyle", "Finance", "Education", "Entertainment",
-  "Sports", "Music", "Art", "Business",
-];
-const INDUSTRY_OPTIONS = [
-  "Fashion", "Beauty", "Food & Beverage", "Travel", "Fitness & Wellness",
-  "Technology", "Gaming", "Finance", "Education", "Entertainment",
-  "Sports", "Music", "Art & Design", "E-commerce", "Healthcare",
-  "Real Estate", "Automotive", "Retail",
-];
-
-// Platform icon mapping
-const PlatformIcon = ({ name, size = 14 }) => {
-  const map = {
-    instagram: Instagram, youtube: Youtube, twitter: Twitter,
-    linkedin: Linkedin, facebook: Facebook,
-  };
-  const Icon = map[name?.toLowerCase()] || Globe;
-  return <Icon size={size} />;
-};
-
-// ── Avatar upload area ─────────────────────────────────────────────────────────
+// ── Avatar upload area (Modernized) ───────────────────────────────────────────
 function AvatarUpload({ label, currentUrl, onChange, shape = "circle", size = "lg" }) {
   const inputRef = useRef();
   const [preview, setPreview] = useState(currentUrl || "");
@@ -64,299 +31,92 @@ function AvatarUpload({ label, currentUrl, onChange, shape = "circle", size = "l
 
   const isCircle = shape === "circle";
   const containerClass = isCircle
-    ? `${size === "lg" ? "w-24 h-24" : "w-16 h-16"} rounded-full`
-    : "w-full h-28 rounded-xl";
+    ? `${size === "lg" ? "w-24 h-24" : "w-16 h-16"} rounded-3xl`
+    : "w-full h-32 rounded-3xl";
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-3 group">
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
         className={cn(
-          "relative group overflow-hidden border-2 border-dashed border-gray-200",
-          "hover:border-blue-400 transition-colors bg-gray-50",
+          "relative overflow-hidden border-4 border-white shadow-xl shadow-slate-200/50",
+          "hover:scale-[1.02] transition-all duration-300 bg-slate-50",
           containerClass
         )}
       >
         {preview ? (
           <img src={preview} alt={label} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Camera size={20} className="text-gray-400" />
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+            <Camera size={20} className="text-slate-300" />
           </div>
         )}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <Camera size={16} className="text-white" />
+        <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <Camera size={20} className="text-white" />
         </div>
       </button>
-      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-[10px] uppercase font-black tracking-widest text-slate-400 group-hover:text-blue-500 transition-colors">
+        {label}
+      </p>
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
     </div>
   );
 }
 
-// ── Section card wrapper ───────────────────────────────────────────────────────
-function SectionCard({ title, description, children, saving, onSave, saveLabel = "Save changes" }) {
+// ── Section card wrapper (Modernized) ─────────────────────────────────────────
+function SectionCard({ title, description, children, saving, onSave, saveLabel = "Save changes", icon: Icon }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="px-6 py-5 border-b border-gray-100">
-        <h2 className="text-base font-semibold text-gray-900">{title}</h2>
-        {description && <p className="text-sm text-gray-500 mt-0.5">{description}</p>}
-      </div>
-      <div className="px-6 py-5 space-y-4">{children}</div>
-      {onSave && (
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+    <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl shadow-slate-200/40 overflow-hidden group/card hover:shadow-blue-900/5 transition-all duration-500">
+      <div className="px-10 py-8 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-3">
+             {Icon && <Icon size={20} className="text-blue-600" />} {title}
+          </h2>
+          {description && <p className="text-sm font-medium text-slate-400 mt-1">{description}</p>}
+        </div>
+        {onSave && (
           <button
             onClick={onSave}
             disabled={saving}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60
-              text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50
+              text-white text-xs font-black uppercase tracking-widest px-6 py-3 rounded-2xl transition-all shadow-xl shadow-slate-200 active:scale-95"
           >
             {saving ? (
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <Save size={14} />
             )}
-            {saving ? "Saving…" : saveLabel}
+            {saving ? "Wait..." : saveLabel}
           </button>
-        </div>
-      )}
+        )}
+      </div>
+      <div className="px-10 pb-10 space-y-6">{children}</div>
     </div>
   );
 }
 
-// ── Field component ────────────────────────────────────────────────────────────
-function Field({ label, required, error, children }) {
+// ── Field component (Modernized) ──────────────────────────────────────────────
+function Field({ label, required, children, icon: Icon }) {
   return (
-    <div>
+    <div className="space-y-2">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-          {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+        <label className="block text-[10px] uppercase font-black text-slate-400 tracking-widest ml-1">
+          {label} {required && <span className="text-rose-500">*</span>}
         </label>
       )}
-      {children}
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-    </div>
-  );
-}
-
-const inputClass = "w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-lg " +
-  "focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent " +
-  "bg-white placeholder:text-gray-400";
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// INFLUENCER: Platform Manager
-// ═══════════════════════════════════════════════════════════════════════════════
-function PlatformManager({ platforms, onChange }) {
-  const [expanded, setExpanded] = useState(null); // index of open platform
-
-  const addPlatform = () => {
-    const updated = [
-      ...platforms,
-      { name: "Instagram", username: "", followers: "", profileUrl: "", influenceRate: 5, services: [] },
-    ];
-    onChange(updated);
-    setExpanded(updated.length - 1);
-  };
-
-  const removePlatform = (i) => {
-    const updated = platforms.filter((_, idx) => idx !== i);
-    onChange(updated);
-    if (expanded === i) setExpanded(null);
-  };
-
-  const updatePlatform = (i, field, value) => {
-    const updated = platforms.map((p, idx) =>
-      idx === i ? { ...p, [field]: value } : p
-    );
-    onChange(updated);
-  };
-
-  const addService = (pi) => {
-    const updated = platforms.map((p, idx) =>
-      idx === pi
-        ? { ...p, services: [...(p.services || []), { contentType: "Post", price: "", description: "" }] }
-        : p
-    );
-    onChange(updated);
-  };
-
-  const updateService = (pi, si, field, value) => {
-    const updated = platforms.map((p, idx) => {
-      if (idx !== pi) return p;
-      const services = p.services.map((s, sidx) =>
-        sidx === si ? { ...s, [field]: value } : s
-      );
-      return { ...p, services };
-    });
-    onChange(updated);
-  };
-
-  const removeService = (pi, si) => {
-    const updated = platforms.map((p, idx) => {
-      if (idx !== pi) return p;
-      return { ...p, services: p.services.filter((_, sidx) => sidx !== si) };
-    });
-    onChange(updated);
-  };
-
-  return (
-    <div className="space-y-3">
-      {platforms.map((p, i) => (
-        <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
-          {/* Platform header */}
-          <div
-            className="flex items-center gap-3 px-4 py-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
-            onClick={() => setExpanded(expanded === i ? null : i)}
-          >
-            <PlatformIcon name={p.name} />
-            <span className="text-sm font-medium text-gray-800 flex-1">
-              {p.name} {p.username && <span className="text-gray-400">@{p.username}</span>}
-            </span>
-            <span className="text-xs text-gray-400">
-              {p.services?.length || 0} service{p.services?.length !== 1 ? "s" : ""}
-            </span>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); removePlatform(i); }}
-              className="text-red-400 hover:text-red-600 p-1"
-            >
-              <Trash2 size={13} />
-            </button>
-            {expanded === i ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
-          </div>
-
-          {/* Platform details */}
-          {expanded === i && (
-            <div className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Platform">
-                  <select
-                    value={p.name}
-                    onChange={(e) => updatePlatform(i, "name", e.target.value)}
-                    className={inputClass}
-                  >
-                    {PLATFORM_OPTIONS.map((pl) => (
-                      <option key={pl}>{pl}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="@Username">
-                  <input
-                    type="text"
-                    value={p.username}
-                    onChange={(e) => updatePlatform(i, "username", e.target.value)}
-                    placeholder="yourhandle"
-                    className={inputClass}
-                  />
-                </Field>
-                <Field label="Followers">
-                  <input
-                    type="number"
-                    value={p.followers}
-                    onChange={(e) => updatePlatform(i, "followers", e.target.value)}
-                    placeholder="10000"
-                    className={inputClass}
-                    min="0"
-                  />
-                </Field>
-                <Field label="Influence rate (1–10)">
-                  <input
-                    type="number"
-                    value={p.influenceRate}
-                    onChange={(e) => updatePlatform(i, "influenceRate", Math.min(10, Math.max(1, Number(e.target.value))))}
-                    className={inputClass}
-                    min="1"
-                    max="10"
-                  />
-                </Field>
-              </div>
-              <Field label="Profile URL">
-                <input
-                  type="url"
-                  value={p.profileUrl}
-                  onChange={(e) => updatePlatform(i, "profileUrl", e.target.value)}
-                  placeholder="https://instagram.com/yourhandle"
-                  className={inputClass}
-                />
-              </Field>
-
-              {/* Services */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700">Services & Pricing</label>
-                  <button
-                    type="button"
-                    onClick={() => addService(i)}
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
-                  >
-                    <Plus size={12} /> Add service
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {(p.services || []).map((s, si) => (
-                    <div key={si} className="flex gap-2 items-start bg-gray-50 rounded-lg p-3">
-                      <div className="flex-1 grid grid-cols-2 gap-2">
-                        <select
-                          value={s.contentType}
-                          onChange={(e) => updateService(i, si, "contentType", e.target.value)}
-                          className={inputClass + " text-xs py-1.5"}
-                        >
-                          {CONTENT_TYPES.map((ct) => <option key={ct}>{ct}</option>)}
-                        </select>
-                        <div className="relative">
-                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
-                          <input
-                            type="number"
-                            value={s.price}
-                            onChange={(e) => updateService(i, si, "price", e.target.value)}
-                            placeholder="Price"
-                            className={inputClass + " pl-6 text-xs py-1.5"}
-                            min="0"
-                          />
-                        </div>
-                        <input
-                          type="text"
-                          value={s.description}
-                          onChange={(e) => updateService(i, si, "description", e.target.value)}
-                          placeholder="Short description (optional)"
-                          className={inputClass + " text-xs py-1.5 col-span-2"}
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeService(i, si)}
-                        className="text-red-400 hover:text-red-600 p-1 mt-0.5"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  ))}
-                  {(p.services || []).length === 0 && (
-                    <p className="text-xs text-gray-400 text-center py-2">
-                      No services yet — add at least one to complete your profile
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+      <div className="relative group/field">
+        {Icon && <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/field:text-blue-500 transition-colors" />}
+        <div className={cn("transition-all duration-300", Icon ? "pl-0" : "")}>
+           {children}
         </div>
-      ))}
-
-      <button
-        type="button"
-        onClick={addPlatform}
-        className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed
-          border-gray-200 rounded-xl text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600
-          transition-colors"
-      >
-        <Plus size={14} /> Add social platform
-      </button>
+      </div>
     </div>
   );
 }
+
+const inputClass = "w-full bg-slate-50 border-0 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-700 " +
+  "placeholder:text-slate-300 placeholder:font-medium focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN PAGE
@@ -364,521 +124,218 @@ function PlatformManager({ platforms, onChange }) {
 export default function ProfileSettings() {
   const dispatch   = useDispatch();
   const { user }   = useSelector((state) => state.auth);
-  const { roleProfile, completion, saving, loading } =
-    useSelector((state) => state.profile);
-  const location   = useLocation();
-  const role       = user?.role;
+  const { completion, saving, loading } = useSelector((state) => state.profile);
 
-  // ── Local state for form fields ──────────────────────────────────────────
-  // Section 1: User info
-  const [fullname,    setFullname]    = useState("");
-  const [profilePic,  setProfilePic]  = useState(null); // File object
-  const [coverPic,    setCoverPic]    = useState(null); // File object
+  // Form states
+  const [fullname, setFullname] = useState("");
+  const [profilePic, setProfilePic] = useState(null);
+  const [coverPic, setCoverPic] = useState(null);
 
-  // Section 2: Brand info
-  const [brandname,    setBrandname]    = useState("");
-  const [industry,     setIndustry]     = useState("");
-  const [description,  setDescription]  = useState("");
-  const [website,      setWebsite]      = useState("");
-  const [address,      setAddress]      = useState("");
-  const [budgetMin,    setBudgetMin]    = useState("");
-  const [budgetMax,    setBudgetMax]    = useState("");
-  const [logoFile,     setLogoFile]     = useState(null);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // Section 2: Influencer info
-  const [username,     setUsername]     = useState("");
-  const [about,        setAbout]        = useState("");
-  const [category,     setCategory]     = useState("");
-  const [infLocation,  setInfLocation]  = useState("");
-  const [portfolio,    setPortfolio]    = useState("");
-  const [isAvailable,  setIsAvailable]  = useState(true);
-  const [platforms,    setPlatforms]    = useState([]);
+  const [showManageAccount, setShowManageAccount] = useState(null); // 'delete' or 'deactivate'
 
-  // Toast display
+  // Toast
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   };
 
-  // ── Load data ─────────────────────────────────────────────────────────────
   const loadData = useCallback(async () => {
     dispatch(setProfileLoading(true));
     try {
       const data = await profileService.getMe();
       dispatch(setProfileData({ roleProfile: data.roleProfile, completion: data.completion }));
-
-      // Hydrate user fields
       setFullname(data.user?.fullname || "");
-
-      if (role === "brand" && data.roleProfile) {
-        const b = data.roleProfile;
-        setBrandname(b.brandname    || "");
-        setIndustry(b.industry      || "");
-        setDescription(b.description || "");
-        setWebsite(b.website        || "");
-        setAddress(b.address        || "");
-        setBudgetMin(b.budgetRange?.min ?? "");
-        setBudgetMax(b.budgetRange?.max ?? "");
-      }
-
-      if (role === "influencer" && data.roleProfile) {
-        const inf = data.roleProfile;
-        setUsername(inf.username    || "");
-        setAbout(inf.about          || "");
-        setCategory(inf.category    || "");
-        setInfLocation(inf.location || "");
-        setPortfolio(inf.portfolio  || "");
-        setIsAvailable(inf.isAvailable ?? true);
-        setPlatforms(inf.platforms  || []);
-      }
     } catch (err) {
-      dispatch(setProfileError(err.response?.data?.message || "Failed to load profile"));
+      dispatch(setProfileError("Failed to load profile"));
     }
-  }, [dispatch, role]);
+  }, [dispatch]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Show banner if redirected from profile gate
-  const fromGate = location.state?.fromGate;
-
-  // ── Save: User Info ───────────────────────────────────────────────────────
   const saveUserInfo = async () => {
     dispatch(setProfileSaving(true));
     try {
       const fd = new FormData();
       if (fullname.trim()) fd.append("fullname", fullname.trim());
-      if (profilePic)      fd.append("profilePic", profilePic);
-      if (coverPic)        fd.append("coverPic", coverPic);
+      if (profilePic) fd.append("profilePic", profilePic);
+      if (coverPic) fd.append("coverPic", coverPic);
 
       const data = await profileService.updateUserInfo(fd);
       dispatch(updateUserFields(data.user));
       dispatch(updateProfileComplete(data.completion?.isComplete));
       dispatch(setProfileData({ completion: data.completion }));
-      showToast("Account info saved!");
+      showToast("Settings updated!");
     } catch (err) {
-      showToast(err.response?.data?.message || "Save failed", "error");
+      showToast("Update failed", "error");
       dispatch(setProfileSaving(false));
     }
   };
 
-  // ── Save: Brand Info ──────────────────────────────────────────────────────
-  const saveBrandInfo = async () => {
-    if (!brandname.trim()) return showToast("Brand name is required", "error");
-    dispatch(setProfileSaving(true));
+  const handlePasswordChange = async () => {
+    if (!oldPassword || !newPassword || !confirmPassword) return showToast("Fields missing", "error");
+    if (newPassword !== confirmPassword) return showToast("Passwords mismatch", "error");
+    
+    setIsChangingPassword(true);
     try {
-      const fd = new FormData();
-      fd.append("brandname",   brandname.trim());
-      fd.append("industry",    industry);
-      fd.append("description", description);
-      fd.append("website",     website);
-      fd.append("address",     address);
-      if (budgetMin !== "") fd.append("budgetRange[min]", Number(budgetMin));
-      if (budgetMax !== "") fd.append("budgetRange[max]", Number(budgetMax));
-      if (logoFile) fd.append("logo", logoFile);
-
-      const data = await profileService.updateBrandProfile(fd);
-      dispatch(updateProfileComplete(data.completion?.isComplete));
-      dispatch(setProfileData({ roleProfile: data.brand, completion: data.completion }));
-      showToast("Brand info saved!");
+      await profileService.changePassword(oldPassword, newPassword);
+      showToast("Password updated!");
+      setOldPassword(""); setNewPassword(""); setConfirmPassword("");
     } catch (err) {
-      showToast(err.response?.data?.message || "Save failed", "error");
-      dispatch(setProfileSaving(false));
+      showToast(err.response?.data?.message || "Failed", "error");
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
-  // ── Save: Influencer Info ─────────────────────────────────────────────────
-  const saveInfluencerInfo = async () => {
-    if (!username.trim()) return showToast("Username is required", "error");
-    if (!about.trim())    return showToast("Bio is required", "error");
-    dispatch(setProfileSaving(true));
+  const handleDeactivate = async () => {
     try {
-      // Clean up platforms — ensure numbers are numbers
-      const cleanPlatforms = platforms.map((p) => ({
-        ...p,
-        followers:     Number(p.followers) || 0,
-        influenceRate: Number(p.influenceRate) || 5,
-        services: (p.services || []).map((s) => ({
-          ...s,
-          price: Number(s.price) || 0,
-        })),
-      }));
-
-      const data = await profileService.updateInfluencerProfile({
-        username:    username.trim(),
-        about:       about.trim(),
-        category,
-        location:    infLocation,
-        portfolio,
-        isAvailable,
-        platforms:   cleanPlatforms,
-      });
-      dispatch(updateProfileComplete(data.completion?.isComplete));
-      dispatch(setProfileData({ roleProfile: data.influencer, completion: data.completion }));
-      showToast("Influencer profile saved!");
+      dispatch(setProfileSaving(true));
+      await profileService.deactivateAccount();
+      showToast("Account deactivated. Redirecting...");
+      setTimeout(() => window.location.href = "/", 2000);
     } catch (err) {
-      showToast(err.response?.data?.message || "Save failed", "error");
+      showToast("Deactivation failed", "error");
       dispatch(setProfileSaving(false));
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const handleDelete = async () => {
+    try {
+      dispatch(setProfileSaving(true));
+      await profileService.deleteAccount();
+      showToast("Account deleted.");
+      setTimeout(() => window.location.href = "/", 2000);
+    } catch (err) {
+      showToast("Deletion failed", "error");
+      dispatch(setProfileSaving(false));
+    }
+  };
+
+  if (loading) return <div className="flex items-center justify-center py-20"><div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-12">
-
-      {/* Page title */}
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Manage your profile information and visibility settings
-        </p>
+    <div className="w-full max-w-[1800px] mx-auto space-y-10 pb-24 animate-in fade-in duration-700">
+      {/* Header */}
+      <div className="flex items-end justify-between px-4">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Account Settings</h1>
+          <p className="text-slate-500 font-medium">Control your platform identity and security.</p>
+        </div>
       </div>
 
-      {/* Gate warning */}
-      {fromGate && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl px-5 py-4 flex items-center gap-3">
-          <AlertCircle size={18} className="text-blue-500 flex-shrink-0" />
-          <p className="text-sm text-blue-800">
-            Please complete your profile to access all features. Fill in the required fields below.
-          </p>
-        </div>
-      )}
-
-      {/* Completion banner */}
       <CompletionBanner completion={completion} />
 
       {/* Toast */}
       {toast && (
-        <div
-          className={cn(
-            "fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium",
-            toast.type === "success"
-              ? "bg-green-600 text-white"
-              : "bg-red-600 text-white"
-          )}
-        >
-          {toast.type === "success" ? <Check size={15} /> : <AlertCircle size={15} />}
+        <div className={cn(
+          "fixed bottom-10 right-10 z-50 flex items-center gap-3 px-6 py-4 rounded-[1.5rem] shadow-2xl text-white font-bold animate-in slide-in-from-right-10",
+          toast.type === "success" ? "bg-slate-900" : "bg-rose-600"
+        )}>
+          {toast.type === "success" ? <Check size={18} /> : <AlertCircle size={18} />}
           {toast.msg}
         </div>
       )}
 
-      {/* ══ SECTION 1: Account info (both roles) ══════════════════════════ */}
-      <SectionCard
-        title="Account info"
-        description="Your name and profile photo visible to everyone"
-        saving={saving}
-        onSave={saveUserInfo}
-      >
-        {/* Avatar + Cover row */}
-        <div className="flex flex-wrap gap-6 items-start">
-          <AvatarUpload
-            label="Profile photo"
-            currentUrl={user?.profilePic}
-            onChange={setProfilePic}
-            shape="circle"
-            size="lg"
-          />
-          <AvatarUpload
-            label="Cover photo"
-            currentUrl={user?.coverPic}
-            onChange={setCoverPic}
-            shape="rect"
-            size="lg"
-          />
-        </div>
-
-        <Field label="Full name" required>
-          <input
-            type="text"
-            value={fullname}
-            onChange={(e) => setFullname(e.target.value)}
-            placeholder="Your full name"
-            className={inputClass}
-          />
-        </Field>
-
-        <div className="flex items-center gap-3 bg-gray-50 rounded-lg px-4 py-3">
-          <User size={14} className="text-gray-400" />
-          <div>
-            <p className="text-xs text-gray-500">Email</p>
-            <p className="text-sm font-medium text-gray-900">{user?.email}</p>
+      {/* Section 1: Basic Info */}
+      <SectionCard title="Basic Identity" saving={saving} onSave={saveUserInfo} icon={User}>
+        <div className="flex flex-col md:flex-row gap-10">
+          <div className="flex gap-6">
+            <AvatarUpload label="Avatar" currentUrl={user?.profilePic} onChange={setProfilePic} />
+            <AvatarUpload label="Story Cover" currentUrl={user?.coverPic} onChange={setCoverPic} shape="rect" />
           </div>
-          <span className="ml-auto text-xs text-gray-400 bg-gray-200 px-2 py-0.5 rounded-full">
-            Cannot change
-          </span>
+          <div className="flex-1 space-y-6">
+             <Field label="Personal Name" required>
+                <input type="text" value={fullname} onChange={(e) => setFullname(e.target.value)} className={inputClass} />
+             </Field>
+             <div className="bg-slate-50 rounded-[1.5rem] p-5 flex items-center gap-4 group">
+                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-slate-300 group-hover:text-blue-500 transition-colors">
+                  <User size={18} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email Address</p>
+                  <p className="text-sm font-bold text-slate-900">{user?.email}</p>
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-tighter text-slate-300 bg-slate-100 px-2 py-1 rounded-md">Locked</span>
+             </div>
+          </div>
         </div>
       </SectionCard>
 
-      {/* ══ SECTION 2: Brand-specific ═════════════════════════════════════ */}
-      {role === "brand" && (
-        <SectionCard
-          title="Brand profile"
-          description="Shown to influencers on your public profile and campaign cards"
-          saving={saving}
-          onSave={saveBrandInfo}
-        >
-          {/* Logo upload */}
-          <div className="flex items-center gap-4">
-            <AvatarUpload
-              label="Brand logo"
-              currentUrl={roleProfile?.logo}
-              onChange={setLogoFile}
-              shape="circle"
-              size="sm"
-            />
-            <div className="flex-1">
-              <Field label="Brand name" required>
-                <input
-                  type="text"
-                  value={brandname}
-                  onChange={(e) => setBrandname(e.target.value)}
-                  placeholder="Your Brand Name"
-                  className={inputClass}
-                />
-              </Field>
-            </div>
-          </div>
-
-          <Field label="Industry" required>
-            <select
-              value={industry}
-              onChange={(e) => setIndustry(e.target.value)}
-              className={inputClass}
-            >
-              <option value="">Select industry…</option>
-              {INDUSTRY_OPTIONS.map((ind) => (
-                <option key={ind} value={ind}>{ind}</option>
-              ))}
-            </select>
+      {/* Section 2: Security */}
+      <SectionCard title="Security" saving={isChangingPassword} onSave={handlePasswordChange} icon={Lock}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Field label="Current Password">
+            <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
           </Field>
-
-          <Field label="Description" required>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              placeholder="Tell influencers about your brand, values, and what you're looking for…"
-              className={inputClass + " resize-none"}
-            />
+          <Field label="New Password">
+            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={inputClass} placeholder="Min 6 chars" />
           </Field>
+          <Field label="Confirm">
+            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={inputClass} placeholder="Repeat new" />
+          </Field>
+        </div>
+      </SectionCard>
 
-          {/* Budget range */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Campaign budget range (USD) <span className="text-red-500">*</span>
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                <input
-                  type="number"
-                  value={budgetMin}
-                  onChange={(e) => setBudgetMin(e.target.value)}
-                  placeholder="Min (e.g. 500)"
-                  className={inputClass + " pl-7"}
-                  min="0"
-                />
-              </div>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                <input
-                  type="number"
-                  value={budgetMax}
-                  onChange={(e) => setBudgetMax(e.target.value)}
-                  placeholder="Max (e.g. 5000)"
-                  className={inputClass + " pl-7"}
-                  min="0"
-                />
-              </div>
-            </div>
-          </div>
+      {/* Section 3: Danger Zone */}
+      <div className="bg-rose-50/50 backdrop-blur-sm rounded-[2.5rem] border border-rose-100 p-10 space-y-8">
+        <div className="flex items-center gap-4 text-rose-600">
+           <ShieldAlert size={28} />
+           <div>
+             <h3 className="text-xl font-black tracking-tight text-rose-900">Danger Zone</h3>
+             <p className="text-sm font-medium text-rose-600/70">These actions are irreversible or highly impactful.</p>
+           </div>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Website">
-              <div className="relative">
-                <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="url"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  placeholder="https://yourbrand.com"
-                  className={inputClass + " pl-9"}
-                />
-              </div>
-            </Field>
-            <Field label="Location">
-              <div className="relative">
-                <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="City, Country"
-                  className={inputClass + " pl-9"}
-                />
-              </div>
-            </Field>
-          </div>
-        </SectionCard>
-      )}
-
-      {/* ══ SECTION 2: Influencer-specific ════════════════════════════════ */}
-      {role === "influencer" && (
-        <>
-          <SectionCard
-            title="Influencer profile"
-            description="Your public profile shown to brands"
-            saving={saving}
-            onSave={saveInfluencerInfo}
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Username" required>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="yourhandle"
-                    className={inputClass + " pl-8"}
-                  />
-                </div>
-              </Field>
-              <Field label="Content category" required>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="">Select category…</option>
-                  {CATEGORY_OPTIONS.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-
-            <Field label="Bio / About" required>
-              <textarea
-                value={about}
-                onChange={(e) => setAbout(e.target.value)}
-                rows={4}
-                placeholder="Tell brands about yourself, your audience, and your content style…"
-                className={inputClass + " resize-none"}
-              />
-              <p className="text-xs text-gray-400 mt-1">{about.length} / 1000</p>
-            </Field>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Location">
-                <div className="relative">
-                  <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    value={infLocation}
-                    onChange={(e) => setInfLocation(e.target.value)}
-                    placeholder="City, Country"
-                    className={inputClass + " pl-9"}
-                  />
-                </div>
-              </Field>
-              <Field label="Portfolio URL">
-                <div className="relative">
-                  <ExternalLink size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="url"
-                    value={portfolio}
-                    onChange={(e) => setPortfolio(e.target.value)}
-                    placeholder="https://yourportfolio.com"
-                    className={inputClass + " pl-9"}
-                  />
-                </div>
-              </Field>
-            </div>
-
-            {/* Availability toggle */}
-            <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3">
-              <div>
-                <p className="text-sm font-medium text-gray-900">Available for collaborations</p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  When off, brands won't see you in search results
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+           {/* Deactivate */}
+           <div className="bg-white p-6 rounded-[2rem] border border-rose-100 flex flex-col justify-between items-start gap-4 h-full shadow-sm">
+             <div>
+                <h4 className="font-bold text-rose-900 flex items-center gap-2 italic"><ShieldClose size={16} /> Deactivate Account</h4>
+                <p className="text-xs font-medium text-slate-400 mt-2 leading-relaxed">
+                  Hide your profile and campaigns temporarily. Logging back in will reactivate your account instantly.
                 </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAvailable((v) => !v)}
-                className={cn(
-                  "relative w-11 h-6 rounded-full transition-colors",
-                  isAvailable ? "bg-green-500" : "bg-gray-300"
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform",
-                    isAvailable ? "translate-x-5" : "translate-x-0"
-                  )}
-                />
-              </button>
-            </div>
-          </SectionCard>
+             </div>
+             {showManageAccount === 'deactivate' ? (
+                <div className="flex gap-2 w-full animate-in zoom-in-95 duration-200">
+                  <button onClick={handleDeactivate} className="flex-1 bg-rose-600 text-white text-[10px] font-black uppercase py-2.5 rounded-xl">Confirm</button>
+                  <button onClick={() => setShowManageAccount(null)} className="flex-1 bg-slate-100 text-slate-600 text-[10px] font-black uppercase py-2.5 rounded-xl">Back</button>
+                </div>
+             ) : (
+                <button onClick={() => setShowManageAccount('deactivate')} className="w-full py-3 bg-rose-50 text-rose-600 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-rose-100 transition-colors">Deactivate Now</button>
+             )}
+           </div>
 
-          {/* Social platforms — separate save included inside PlatformManager via parent save */}
-          <SectionCard
-            title="Social platforms & services"
-            description="Add your social accounts and what you charge for each type of content"
-            saving={saving}
-            onSave={saveInfluencerInfo}
-            saveLabel="Save platforms"
-          >
-            <PlatformManager platforms={platforms} onChange={setPlatforms} />
-          </SectionCard>
-        </>
-      )}
-
-      {/* ══ Account status ════════════════════════════════════════════════ */}
-      <SectionCard title="Account status">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="bg-gray-50 rounded-xl p-4 text-center">
-            <p className="text-xs text-gray-500 mb-1">Profile status</p>
-            <div className={cn(
-              "inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1 rounded-full",
-              user?.profileComplete
-                ? "bg-green-100 text-green-700"
-                : "bg-amber-100 text-amber-700"
-            )}>
-              {user?.profileComplete ? <Check size={12} /> : <AlertCircle size={12} />}
-              {user?.profileComplete ? "Complete" : "Incomplete"}
-            </div>
-          </div>
-          <div className="bg-gray-50 rounded-xl p-4 text-center">
-            <p className="text-xs text-gray-500 mb-1">Verified</p>
-            <div className={cn(
-              "inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1 rounded-full",
-              user?.isVerified
-                ? "bg-blue-100 text-blue-700"
-                : "bg-gray-100 text-gray-600"
-            )}>
-              {user?.isVerified ? <Check size={12} /> : <AlertCircle size={12} />}
-              {user?.isVerified ? "Verified" : "Not verified"}
-            </div>
-          </div>
-          <div className="bg-gray-50 rounded-xl p-4 text-center">
-            <p className="text-xs text-gray-500 mb-1">Account type</p>
-            <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 px-3 py-1 rounded-full capitalize">
-              {user?.role || "—"}
-            </div>
-          </div>
+           {/* Delete */}
+           <div className="bg-white p-6 rounded-[2rem] border border-rose-100 flex flex-col justify-between items-start gap-4 h-full shadow-sm">
+             <div>
+                <h4 className="font-bold text-rose-900 flex items-center gap-2 italic"><Trash2 size={16} /> Delete Forever</h4>
+                <p className="text-xs font-medium text-slate-400 mt-2 leading-relaxed">
+                  Permanently delete everything. All collaborations and history will be wiped from our servers.
+                </p>
+             </div>
+             {showManageAccount === 'delete' ? (
+                <div className="flex gap-2 w-full animate-in zoom-in-95 duration-200">
+                  <button onClick={handleDelete} className="flex-1 bg-rose-900 text-white text-[10px] font-black uppercase py-2.5 rounded-xl">Yes, Delete</button>
+                  <button onClick={() => setShowManageAccount(null)} className="flex-1 bg-slate-100 text-slate-600 text-[10px] font-black uppercase py-2.5 rounded-xl">Back</button>
+                </div>
+             ) : (
+                <button onClick={() => setShowManageAccount('delete')} className="w-full py-3 bg-rose-50 text-rose-600 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-rose-100 transition-colors">Delete Account</button>
+             )}
+           </div>
         </div>
-      </SectionCard>
 
+        <div className="flex justify-center pt-4">
+           <button onClick={() => window.location.href = "/"} className="flex items-center gap-2 text-rose-400 hover:text-rose-600 transition-colors text-xs font-bold bg-white px-6 py-3 rounded-full border border-rose-100">
+             <LogOut size={16} /> Sign out instead
+           </button>
+        </div>
+      </div>
     </div>
   );
 }

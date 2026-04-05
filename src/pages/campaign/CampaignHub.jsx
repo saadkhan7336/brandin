@@ -104,7 +104,7 @@ const CampaignHub = () => {
   }
 
   return (
-    <div className="w-full py-8">
+    <div className="w-full max-w-[1800px] mx-auto py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2 font-display">Campaign Hub</h1>
