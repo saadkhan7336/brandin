@@ -27,6 +27,16 @@ const campaignService = {
     return response.data;
   },
 
+  cancelCampaign: async (id, cancelReason) => {
+    const response = await api.patch(`/campaigns/${id}/cancel`, { cancelReason });
+    return response.data.data;
+  },
+
+  extendCampaignDuration: async (id, newEndDate) => {
+    const response = await api.patch(`/campaigns/${id}/extend?newEndDate=${newEndDate}`);
+    return response.data.data;
+  },
+
 };
 
 export default campaignService;

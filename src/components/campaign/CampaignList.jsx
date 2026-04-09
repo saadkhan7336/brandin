@@ -10,7 +10,8 @@ const CampaignList = ({
   page, 
   pages,
   onEdit,
-  onDelete
+  onDelete,
+  onReactivate
 }) => {
   if (loading && campaigns.length === 0) {
     return (
@@ -53,6 +54,7 @@ const CampaignList = ({
             campaign={campaign} 
             onEdit={onEdit}
             onDelete={onDelete}
+            onReactivate={onReactivate}
           />
         ))}
       </div>

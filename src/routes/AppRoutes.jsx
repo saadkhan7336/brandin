@@ -157,11 +157,14 @@ import MyRequests from "../pages/brand/MyRequests";
 import InfluencerProfile from "../pages/brand/InfluencerProfile";
 import MyProfileView from "../pages/brand/MyProfileView";
 import NotificationsPage from "../pages/notifications/NotificationsPage";
+import CollaborationsPage from "../pages/collaboration/CollaborationsPage";
+import DeliverablesPage from "../pages/collaboration/DeliverablesPage";
 
 // Profile settings (shared page, role-aware)
 import ProfileSettings from "../pages/profile/ProfilesSetting";
 
 // Influencer-specific pages
+import InfluencerDashboard from "../pages/dashboard/InfluencerDashboard";
 import MyProfileViewInfluencer from "../pages/influencer/MyProfileView";
 import SearchExplore from "../components/layout/influencer/SearchExplore";
 import CampaignDetail from "../components/layout/influencer/CampaignDetail";
@@ -211,7 +214,8 @@ export default function AppRoutes() {
               <Route path="/brand/dashboard" element={<BrandDashboard />} />
               <Route path="/brand/search" element={<SearchInfluencers />} />
               <Route path="/brand/requests" element={<MyRequests />} />
-              <Route path="/brand/collaborations" element={<BrandDashboard />} />
+              <Route path="/brand/collaborations" element={<CollaborationsPage />} />
+              <Route path="/brand/collaboration/:id/deliverables" element={<DeliverablesPage />} />
               <Route path="/brand/campaigns" element={<CampaignHub />} />
               <Route path="/brand/influencer/:influencerId" element={<InfluencerProfile />} />
               <Route path="/brand/profile" element={<MyProfileView />} />
@@ -225,9 +229,10 @@ export default function AppRoutes() {
         <Route element={<ProtectedRoute allowedRoles={["influencer"]} />}>
           <Route element={<DashboardLayout />}>
             <Route element={<ProtectedRoute allowedRoles={["influencer"]} requireComplete />}>
-              <Route path="/influencer/dashboard" element={<BrandDashboard />} />
+              <Route path="/influencer/dashboard" element={<InfluencerDashboard />} />
               <Route path="/influencer/requests" element={<InfluencerRequests />} />
-              <Route path="/influencer/collaborations" element={<BrandDashboard />} />
+              <Route path="/influencer/collaborations" element={<CollaborationsPage />} />
+              <Route path="/influencer/collaboration/:id/deliverables" element={<DeliverablesPage />} />
               <Route path="/influencer/search" element={<Navigate to="/influencer/search/campaigns" replace />} />
               <Route path="/influencer/search/:tab" element={<SearchExplore />} />
               <Route path="/influencer/search/campaign/:campaignId" element={<CampaignDetail />} />

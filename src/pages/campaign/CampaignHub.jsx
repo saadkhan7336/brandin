@@ -8,6 +8,8 @@ import CampaignList from '../../components/campaign/CampaignList';
 import { Button } from '../../components/common/Button';
 import CreateCampaign from './CreateCampaign';
 import DeleteConfirmationModal from '../../components/campaign/DeleteConfirmationModal';
+import CancelCampaignModal from '../../components/campaign/CancelCampaignModal';
+import ExtendDurationModal from '../../components/campaign/ExtendDurationModal';
 
 import campaignService from '../../services/campaignService';
 import { 
@@ -31,10 +33,48 @@ const CampaignHub = () => {
   const [view, setView] = React.useState('hub'); // 'hub' or 'create'
   const [editData, setEditData] = React.useState(null);
   const [deleteModal, setDeleteModal] = React.useState({ open: false, campaign: null });
+  const [cancelModal, setCancelModal] = React.useState({ open: false, campaign: null });
+  const [extendModal, setExtendModal] = React.useState({ open: false, campaign: null });
 
   const handleDelete = (campaignId) => {
     const campaign = campaigns.find(c => c._id === campaignId);
-    setDeleteModal({ open: true, campaign });
+    
+    // If campaign is active, it must be cancelled, not deleted
+    if (campaign.status === 'active') {
+      setCancelModal({ open: true, campaign });
+    } else {
+      setDeleteModal({ open: true, campaign });
+    }
+  };
+
+  const handleReactivate = (campaign) => {
+    setExtendModal({ open: true, campaign });
+  };
+
+  const confirmExtend = async (campaignId, newEndDate) => {
+    try {
+      dispatch(setLoading(true));
+      await campaignService.extendCampaignDuration(campaignId, newEndDate);
+      fetchCampaigns();
+      setExtendModal({ open: false, campaign: null });
+    } catch (err) {
+      dispatch(setError(err.response?.data?.message || 'Failed to reactivate campaign'));
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+
+  const confirmCancel = async (campaignId, reason) => {
+    try {
+      dispatch(setLoading(true));
+      await campaignService.cancelCampaign(campaignId, reason);
+      fetchCampaigns();
+      setCancelModal({ open: false, campaign: null });
+    } catch (err) {
+      dispatch(setError(err.response?.data?.message || 'Failed to cancel campaign'));
+    } finally {
+      dispatch(setLoading(false));
+    }
   };
 
   const confirmDelete = async () => {
@@ -135,6 +175,7 @@ const CampaignHub = () => {
           onPageChange={handlePageChange}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onReactivate={handleReactivate}
         />
 
         <DeleteConfirmationModal 
@@ -142,6 +183,23 @@ const CampaignHub = () => {
           onClose={() => setDeleteModal({ open: false, campaign: null })}
           onConfirm={confirmDelete}
           campaignName={deleteModal.campaign?.name}
+          loading={loading}
+        />
+
+        {cancelModal.open && (
+          <CancelCampaignModal
+            campaign={cancelModal.campaign}
+            onClose={() => setCancelModal({ open: false, campaign: null })}
+            onConfirm={confirmCancel}
+            loading={loading}
+          />
+        )}
+
+        <ExtendDurationModal
+          isOpen={extendModal.open}
+          campaign={extendModal.campaign}
+          onClose={() => setExtendModal({ open: false, campaign: null })}
+          onConfirm={confirmExtend}
           loading={loading}
         />
     </div>

@@ -52,7 +52,95 @@ const collaborationService = {
     } catch (error) {
       throw error.response?.data || error.message;
     }
-  }
+  },
+
+  /**
+   * Get all collaborations
+   * @param {Object} params - Query params { status, search, page, limit }
+   */
+  getAll: async (params = {}) => {
+    try {
+      const response = await api.get(ENDPOINTS.collaborations.getAll, { params });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * Get single collaboration details
+   * @param {string} id 
+   */
+  getOne: async (id) => {
+    try {
+      const response = await api.get(ENDPOINTS.collaborations.getOne(id));
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * Add a deliverable (Brand only)
+   */
+  addDeliverable: async (id, data) => {
+    try {
+      const response = await api.post(ENDPOINTS.collaborations.addDeliverable(id), data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * Update a deliverable (Brand only for details)
+   */
+  updateDeliverable: async (id, delivId, data) => {
+    try {
+      const response = await api.patch(ENDPOINTS.collaborations.updateDeliverable(id, delivId), data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * Delete a deliverable (Brand only)
+   */
+  deleteDeliverable: async (id, delivId) => {
+    try {
+      const response = await api.delete(ENDPOINTS.collaborations.deleteDeliverable(id, delivId));
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * Submit a deliverable (Influencer only)
+   */
+  submitDeliverable: async (id, delivId, data) => {
+    try {
+      const response = await api.post(ENDPOINTS.collaborations.submitDeliverable(id, delivId), data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * Review a deliverable (Brand only)
+   */
+  reviewDeliverable: async (id, delivId, data) => {
+    try {
+      const response = await api.patch(ENDPOINTS.collaborations.reviewDeliverable(id, delivId), data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  api
 };
 
 export default collaborationService;

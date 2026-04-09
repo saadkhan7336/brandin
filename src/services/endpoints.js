@@ -118,5 +118,10 @@ export const ENDPOINTS = {
     cancelRequest: (id) => `/collaborations/request/${id}/cancel`,
     getAll: "/collaborations",
     getOne: (id) => `/collaborations/${id}`,
+    addDeliverable: (id) => `/collaborations/${id}/deliverables`,
+    updateDeliverable: (id, delivId) => `/collaborations/${id}/deliverables/${delivId}`,
+    deleteDeliverable: (id, delivId) => `/collaborations/${id}/deliverables/${delivId}`,
+    submitDeliverable: (id, delivId) => `/collaborations/${id}/deliverables/${delivId}/submit`,
+    reviewDeliverable: (id, delivId) => `/collaborations/${id}/deliverables/${delivId}/review`,
   }
 };

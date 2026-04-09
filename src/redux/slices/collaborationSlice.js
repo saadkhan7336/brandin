@@ -2,6 +2,10 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   requests: [],
+  // Accepted collaborations (separate from requests)
+  collaborations: [],
+  collaborationsLoading: false,
+  collaborationsError: null,
   stats: {
     all: 0,
     pending: 0,
@@ -69,6 +73,15 @@ const collaborationSlice = createSlice({
     setStats: (state, action) => {
       state.stats = action.payload;
     },
+    setCollaborations: (state, action) => {
+      state.collaborations = action.payload;
+    },
+    setCollaborationsLoading: (state, action) => {
+      state.collaborationsLoading = action.payload;
+    },
+    setCollaborationsError: (state, action) => {
+      state.collaborationsError = action.payload;
+    },
   },
 });
 
@@ -80,6 +93,9 @@ export const {
   setFilters,
   resetFilters,
   setStats,
+  setCollaborations,
+  setCollaborationsLoading,
+  setCollaborationsError,
 } = collaborationSlice.actions;
 
 export default collaborationSlice.reducer;

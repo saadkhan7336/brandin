@@ -254,6 +254,7 @@ const InfluencerRequests = () => {
                 <InfluencerRequestCard 
                   key={request._id} 
                   request={request}
+                  type={filters.type}
                   onAccept={() => handleAccept(request._id)}
                   onReject={() => handleReject(request._id)}
                   onResend={() => handleResend(request)}

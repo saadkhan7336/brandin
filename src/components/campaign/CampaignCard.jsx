@@ -1,8 +1,10 @@
 import React from 'react';
-import { MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { MoreVertical, Edit2, Trash2, X, Handshake } from 'lucide-react';
 import { formatDate } from '../../utils/campaignHelpers';
 
-const CampaignCard = ({ campaign, onEdit, onDelete }) => {
+const CampaignCard = ({ campaign, onEdit, onDelete, onReactivate }) => {
+  const navigate = useNavigate();
   const [showMenu, setShowMenu] = React.useState(false);
   const menuRef = React.useRef(null);
 
@@ -21,45 +23,76 @@ const CampaignCard = ({ campaign, onEdit, onDelete }) => {
     pending: 'text-amber-600 bg-amber-50 border-amber-100',
     completed: 'text-gray-600 bg-gray-50 border-gray-100',
     draft: 'text-gray-500 bg-gray-100 border-gray-200',
+    cancelled: 'text-rose-600 bg-rose-50 border-rose-100',
   };
 
   const status = campaign.status?.toLowerCase() || 'pending';
 
   return (
     <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative group">
-      <div className="absolute top-6 right-6" ref={menuRef}>
-        <button 
-          onClick={() => setShowMenu(!showMenu)}
-          className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-50 transition-colors"
-        >
-          <MoreVertical className="w-5 h-5" />
-        </button>
+      {!campaign.ongoingCollaborationId ? (
+        <div className="absolute top-6 right-6" ref={menuRef}>
+          <button 
+            onClick={() => setShowMenu(!showMenu)}
+            className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-50 transition-colors"
+          >
+            <MoreVertical className="w-5 h-5" />
+          </button>
 
-        {showMenu && (
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in duration-200">
-            <button
-              onClick={() => {
-                onEdit(campaign);
-                setShowMenu(false);
-              }}
-              className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-            >
-              <Edit2 className="w-4 h-4" />
-              <span className="font-semibold">Edit Campaign</span>
-            </button>
-            <button
-              onClick={() => {
-                onDelete(campaign._id);
-                setShowMenu(false);
-              }}
-              className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span className="font-semibold">Delete Campaign</span>
-            </button>
-          </div>
-        )}
-      </div>
+          {showMenu && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in duration-200">
+              <button
+                onClick={() => {
+                  onEdit(campaign);
+                  setShowMenu(false);
+                }}
+                className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              >
+                <Edit2 className="w-4 h-4" />
+                <span className="font-semibold">Edit Campaign</span>
+              </button>
+              <button
+                onClick={() => {
+                  onDelete(campaign._id);
+                  setShowMenu(false);
+                }}
+                className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+              >
+                {status === 'active' ? (
+                  <>
+                    <X className="w-4 h-4" />
+                    <span className="font-semibold">Cancel Campaign</span>
+                  </>
+                ) : status === 'completed' ? (
+                  <div onClick={(e) => {
+                    e.stopPropagation();
+                    onReactivate(campaign);
+                    setShowMenu(false);
+                  }} className="flex items-center space-x-3 text-emerald-600">
+                    <Edit2 className="w-4 h-4" />
+                    <span className="font-semibold">Reactivate Campaign</span>
+                  </div>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span className="font-semibold">Delete Campaign</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="absolute top-6 right-6">
+          <button
+            onClick={() => navigate('/brand/collaborations')}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-100 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Handshake className="w-3.5 h-3.5" />
+            <span>Go to Collaboration</span>
+          </button>
+        </div>
+      )}
 
       <div className="flex items-start gap-6">
         <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
@@ -84,6 +117,13 @@ const CampaignCard = ({ campaign, onEdit, onDelete }) => {
               <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${status === 'draft' ? 'bg-gray-400' : 'bg-current'}`}></span>
               {status}
             </div>
+
+            {campaign.ongoingCollaborationId && (
+              <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg border border-blue-100 animate-in fade-in slide-in-from-left duration-300">
+                <Handshake className="w-3 h-3" />
+                <span className="text-[10px] font-bold tracking-tight uppercase">Ongoing Campaign</span>
+              </div>
+            )}
           </div>
 
           <div>

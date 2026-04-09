@@ -12,7 +12,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 
-const InfluencerRequestCard = ({ request, onAccept, onReject, onResend }) => {
+const InfluencerRequestCard = ({ request, type, onAccept, onReject, onResend }) => {
   const navigate = useNavigate();
   const { 
     brandDetails, 
@@ -173,7 +173,9 @@ const InfluencerRequestCard = ({ request, onAccept, onReject, onResend }) => {
             )}
             
             <div className="flex flex-col items-start md:items-end">
-              <span className="text-[11px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Received</span>
+              <span className="text-[11px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">
+                {type === 'sent' ? 'Sent' : 'Received'}
+              </span>
               <div className="flex items-center text-gray-900 font-bold text-[15px]">
                 <Calendar className="w-3.5 h-3.5 text-blue-500 mr-1" />
                 {date}
