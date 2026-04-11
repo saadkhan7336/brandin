@@ -106,9 +106,9 @@ import {
 } from "lucide-react";
 
 const brandNavItems = [
-  { icon: LayoutDashboard, label: "Dashboard",          path: "/brand/dashboard" },
-  { icon: Search,          label: "Search Influencers", path: "/brand/search" },
-  { icon: FileText,        label: "My Requests",        path: "/brand/requests" },
+  { icon: LayoutDashboard, label: "Dashboard",   path: "/brand/dashboard" },
+  { icon: Search,          label: "Influencer",  path: "/brand/influencer" },
+  { icon: FileText,        label: "My Requests", path: "/brand/requests" },
   { icon: Handshake,       label: "Collaborations",     path: "/brand/collaborations" },
   { icon: Target,          label: "Campaigns",          path: "/brand/campaigns" },
   { icon: Settings,        label: "My Profile",         path: "/brand/profile" },

@@ -17,14 +17,15 @@ function InfluencerDashboard() {
   // Data State
   const [dashboardData, setDashboardData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPeriod, setSelectedPeriod] = useState(30);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null); 
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (days = selectedPeriod) => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await api.get('/influencers/dashboard');
+      const response = await api.get(`/influencers/dashboard?days=${days}`);
       if (response.data?.success) {
         setDashboardData(response.data.data);
       }
@@ -42,8 +43,8 @@ function InfluencerDashboard() {
   };
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    fetchDashboardData(selectedPeriod);
+  }, [selectedPeriod]);
 
   // ── Accept / Decline handlers ──────────────────────────────
   const handleAccept = async (requestId) => {
@@ -99,26 +100,16 @@ function InfluencerDashboard() {
   };
 
   // ── Loading Skeleton ──────────────────────────────────────
-  if (isLoading) {
+  if (isLoading && !dashboardData) {
     return (
-      <div className="inf-dash">
-        <div className="inf-dash__welcome">
-          <h1>Welcome back! <span className="wave">👋</span></h1>
-          <p>Loading your dashboard...</p>
-        </div>
-        <div className="inf-dash__stats">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="inf-dash__skeleton inf-dash__skel-stat" />
-          ))}
-        </div>
-        <div className="inf-dash__grid">
-          <div className="inf-dash__skeleton inf-dash__skel-section" />
-          <div className="inf-dash__skeleton inf-dash__skel-section" />
-        </div>
-        <div className="inf-dash__perf-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="inf-dash__skeleton inf-dash__skel-perf" />
-          ))}
+      <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div className="animate-pulse space-y-8">
+           <div className="h-10 bg-gray-200 rounded w-1/4"></div>
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+             {[1, 2, 3, 4].map(i => <div key={i} className="h-40 bg-gray-200 rounded-2xl"></div>)}
+           </div>
+           <div className="h-32 bg-gray-200 rounded-2xl"></div>
+           <div className="h-64 bg-gray-200 rounded-2xl"></div>
         </div>
       </div>
     );
@@ -126,235 +117,326 @@ function InfluencerDashboard() {
 
   const stats = dashboardData?.stats || {};
   const performance = dashboardData?.performance || {};
+  const analytics = dashboardData?.analytics || {};
   const allRequests = dashboardData?.allRequests || [];
-  const collaborations = dashboardData?.collaborations || [];
+  const growth = analytics.growth || {};
+
+  const formatNumber = (num) => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num?.toLocaleString() || '0';
+  };
+
+  const renderGrowthBadge = (value) => {
+    const isPositive = value >= 0;
+    return (
+      <span className={`text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1 ${
+        isPositive ? 'text-emerald-500 bg-emerald-50' : 'text-rose-500 bg-rose-50'
+      }`}>
+        {isPositive ? '+' : ''}{value}%
+      </span>
+    );
+  };
 
   return (
-    <div className="inf-dash">
-      {/* ── Welcome Header ──────────────────────────────────── */}
-      <div className="inf-dash__welcome">
-        <h1>
-          Welcome back, {firstName}! <span className="wave">👋</span>
-        </h1>
-        <p>Here's a quick overview of your collaborations.</p>
+    <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {/* ── Header ──────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Analytics & Insights</h1>
+          <p className="text-sm font-medium text-gray-500 mt-1">Track your performance and earnings</p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <select 
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all cursor-pointer"
+          >
+            <option value={30}>Last 30 days</option>
+            <option value={90}>Last 90 days</option>
+            <option value={365}>This Year</option>
+          </select>
+          <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-2 hover:bg-gray-50 transition-all shadow-sm">
+            <Download size={16} />
+            Export
+          </button>
+        </div>
       </div>
 
-      {/* ── Error Banner ────────────────────────────────────── */}
       {error && (
-        <div className="inf-dash__error">
+        <div className="bg-red-50 text-red-600 p-4 rounded-2xl flex items-center gap-2 text-sm font-bold">
           <AlertCircle size={18} />
-          <span>{error}</span>
+          {error}
         </div>
       )}
 
-      {/* ── Stats Cards ─────────────────────────────────────── */}
-      <div className="inf-dash__stats">
-        {/* Collaborations */}
-        <div className="inf-dash__stat-card">
-          <div className="inf-dash__stat-icon inf-dash__stat-icon--campaigns">
-            <Award size={22} />
-          </div>
-          <span className="inf-dash__stat-label">Collaborations</span>
-          <span className="inf-dash__stat-value">{collaborations.length || 0}</span>
+      {/* ── Top Metric Cards ─────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between h-40">
+           <div className="flex justify-between items-start">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
+                <Star size={20} />
+              </div>
+              {renderGrowthBadge(growth.reach || 0)}
+           </div>
+           <div>
+             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Reach</p>
+             <h3 className="text-3xl font-black text-gray-900 tracking-tight">{formatNumber(analytics.totalReach || 0)}</h3>
+           </div>
         </div>
 
-        {/* Requests Hub */}
-        <div className="inf-dash__stat-card">
-          <div className="inf-dash__stat-icon inf-dash__stat-icon--pending">
-            <ClipboardList size={22} />
-          </div>
-          <span className="inf-dash__stat-label">Requests</span>
-          <span className="inf-dash__stat-value">{stats.totalRequests || 0}</span>
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between h-40">
+           <div className="flex justify-between items-start">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500">
+                <Award size={20} />
+              </div>
+              {renderGrowthBadge(growth.engagement || 0)}
+           </div>
+           <div>
+             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Engagement Rate</p>
+             <h3 className="text-3xl font-black text-gray-900 tracking-tight">{analytics.engagementRate || '0.0'}%</h3>
+           </div>
         </div>
 
-        {/* Completed */}
-        <div className="inf-dash__stat-card">
-          <div className="inf-dash__stat-icon inf-dash__stat-icon--completed">
-            <CheckCircle2 size={22} />
-          </div>
-          <span className="inf-dash__stat-label">Completed</span>
-          <span className="inf-dash__stat-value">{stats.completedCollaborations || 0}</span>
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between h-40">
+           <div className="flex justify-between items-start">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
+                <CheckCircle2 size={20} />
+              </div>
+              {renderGrowthBadge(growth.tasks || 0)}
+           </div>
+           <div>
+             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tasks Completed</p>
+             <h3 className="text-3xl font-black text-gray-900 tracking-tight">
+               {analytics.tasksCompleted?.completed || 0}
+               <span className="text-xl text-gray-400">/{analytics.tasksCompleted?.total || 0}</span>
+             </h3>
+           </div>
         </div>
-      </div>
 
-      {/* ── Two-Column: Collaborations + Requests Hub ── */}
-      <div className="inf-dash__grid">
-        {/* Left: Collaborations */}
-        <div className="inf-dash__section">
-          <div className="inf-dash__section-header">
-            <h3 className="inf-dash__section-title">Collaborations</h3>
-            <button
-              className="inf-dash__view-all"
-              onClick={() => navigate('/influencer/collaborations')}
-            >
-              View All <ChevronRight size={14} />
-            </button>
-          </div>
-
-          {collaborations.length > 0 ? (
-            <div className="inf-dash__list">
-              {collaborations.map((collab) => {
-                const brandName = collab.brand?.fullname || 'Brand';
-                const avatar = collab.brand?.profilePic
-                  || `https://ui-avatars.com/api/?name=${encodeURIComponent(brandName)}&background=random&bold=true`;
-                const progress = collab.progress || 0;
-                
-                return (
-                  <div 
-                    key={collab._id} 
-                    className="inf-dash__card inf-dash__collab-card"
-                    onClick={() => navigate(`/influencer/collaborations`)} 
-                  >
-                    <div className="inf-dash__card-top">
-                      <div className="inf-dash__card-brand">
-                        <img src={avatar} alt={brandName} className="inf-dash__card-avatar" />
-                        <div className="inf-dash__card-info">
-                          <h4>{collab.title || collab.campaign?.name || 'Untitled'}</h4>
-                          <p>{brandName}</p>
-                        </div>
-                      </div>
-                      <span className={`inf-dash__badge ${getStatusColor(collab.status)}`}>
-                        {collab.status?.replace('_', ' ')}
-                      </span>
-                    </div>
-
-                    <div className="inf-dash__card-progress">
-                      <div className="inf-dash__progress-header">
-                        <span>Progress</span>
-                        <span>{progress}%</span>
-                      </div>
-                      <div className="inf-dash__progress-track">
-                        <div 
-                          className="inf-dash__progress-thumb" 
-                          style={{ width: `${progress}%` }} 
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="inf-dash__empty">
-              <div className="inf-dash__empty-icon">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between h-40">
+           <div className="flex justify-between items-start">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
                 <Briefcase size={20} />
               </div>
-              <p>No collaborations yet</p>
-            </div>
-          )}
-        </div>
-
-        {/* Right: Requests hub */}
-        <div className="inf-dash__section">
-          <div className="inf-dash__section-header">
-            <h3 className="inf-dash__section-title">Requests</h3>
-            <button
-              className="inf-dash__view-all"
-              onClick={() => navigate('/influencer/requests')}
-            >
-              View All <ChevronRight size={14} />
-            </button>
-          </div>
-
-          {allRequests.length > 0 ? (
-            <div className="inf-dash__list">
-              {allRequests.map((request) => {
-                const brandName = request.brandDetails?.fullname || 'Brand';
-                const avatar = request.brandDetails?.profilePic
-                  || `https://ui-avatars.com/api/?name=${encodeURIComponent(brandName)}&background=random&bold=true`;
-                const campaignName = request.campaign?.name || 'Collaboration';
-                const isActioning = actionLoading === request._id;
-                const showButtons = request.type === 'received' && request.status === 'pending';
-
-                return (
-                  <div 
-                    key={request._id} 
-                    className="inf-dash__card inf-dash__req-card"
-                    onClick={() => navigate('/influencer/requests')}
-                  >
-                    <div className="inf-dash__card-top">
-                      <div className="inf-dash__card-brand">
-                        <img src={avatar} alt={brandName} className="inf-dash__card-avatar" />
-                        <div className="inf-dash__card-info">
-                          <h4 className="inf-dash__card-title-flex">
-                            {campaignName}
-                            <span className={`inf-dash__type-badge inf-dash__type-badge--${request.type}`}>
-                              {request.type === 'sent' ? <Send size={10} /> : <Download size={10} />}
-                              {request.type}
-                            </span>
-                          </h4>
-                          <p>{brandName}</p>
-                        </div>
-                      </div>
-                      <span className={`inf-dash__badge ${getStatusColor(request.status)}`}>
-                        {request.status}
-                      </span>
-                    </div>
-
-                    <div className="inf-dash__card-footer">
-                       <span className="inf-dash__card-budget">{formatBudget(request.proposedBudget)}</span>
-                       
-                       {showButtons && (
-                        <div className="inf-dash__card-actions" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            className="inf-dash__btn inf-dash__btn--accept"
-                            onClick={() => handleAccept(request._id)}
-                            disabled={isActioning}
-                          >
-                            {isActioning ? '...' : 'Accept'}
-                          </button>
-                          <button
-                            className="inf-dash__btn inf-dash__btn--decline"
-                            onClick={() => handleDecline(request._id)}
-                            disabled={isActioning}
-                          >
-                            Decline
-                          </button>
-                        </div>
-                       )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="inf-dash__empty">
-              <div className="inf-dash__empty-icon">
-                <Inbox size={20} />
-              </div>
-              <p>No requests right now</p>
-            </div>
-          )}
+              {renderGrowthBadge(growth.collaborations || 0)}
+           </div>
+           <div>
+             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Collaborations</p>
+             <h3 className="text-3xl font-black text-gray-900 tracking-tight">{analytics.collaborationCount || 0}</h3>
+           </div>
         </div>
       </div>
 
       {/* ── Performance Overview ──────────────── */}
-      <div className="inf-dash__performance">
-        <h3 className="inf-dash__performance-title">Performance Overview</h3>
-        <div className="inf-dash__perf-grid">
-          {/* Average Rating */}
-          <div className="inf-dash__perf-card inf-dash__perf-card--rating">
-            <div className="inf-dash__perf-value">
-              <Star size={20} fill="currentColor" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="bg-[#f8fafc] border border-gray-100 rounded-2xl p-6 flex items-center justify-between shadow-sm">
+          <div>
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Average Rating</div>
+            <div className="text-2xl font-black text-violet-600 flex items-center gap-2">
+              <Star size={24} className="fill-current text-violet-600" />
               {performance.averageRating || '0.0'}
             </div>
-            <div className="inf-dash__perf-label">Average Rating</div>
           </div>
-
-          {/* Completion Rate */}
-          <div className="inf-dash__perf-card inf-dash__perf-card--completion">
-            <div className="inf-dash__perf-value">{performance.completionRate || '0%'}</div>
-            <div className="inf-dash__perf-label">Completion Rate</div>
+        </div>
+        <div className="bg-[#fdfde8] border border-yellow-100 rounded-2xl p-6 flex items-center justify-between shadow-sm">
+          <div>
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Completion Rate</div>
+            <div className="text-2xl font-black text-yellow-600 flex items-center gap-2">
+              <CheckCircle2 size={24} />
+              {performance.completionRate || '0%'}
+            </div>
           </div>
-
-          {/* Avg. Response Time */}
-          <div className="inf-dash__perf-card inf-dash__perf-card--response">
-            <div className="inf-dash__perf-value">
-              <Clock size={18} />
+        </div>
+        <div className="bg-[#fff1f2] border border-rose-100 rounded-2xl p-6 flex items-center justify-between shadow-sm">
+          <div>
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Avg. Response Time</div>
+            <div className="text-2xl font-black text-rose-600 flex items-center gap-2">
+              <Clock size={24} />
               {performance.averageResponseTime || 'N/A'}
             </div>
-            <div className="inf-dash__perf-label">Avg. Response Time</div>
           </div>
+        </div>
+      </div>
+
+      {/* ── Dual Panel Layout ─────────────────────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        
+        {/* ── LEFT COLUMN (Engagement + Table) ── */}
+        <div className="xl:col-span-2 flex flex-col gap-6">
+          
+          {/* Engagement Overview */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h3 className="text-base font-bold text-gray-900 mb-6">Engagement Overview</h3>
+            <div className="space-y-6">
+              {[
+                { label: 'Likes', value: analytics.engagementOverview?.likes || 0 },
+                { label: 'Comments', value: analytics.engagementOverview?.comments || 0 },
+                { label: 'Shares', value: analytics.engagementOverview?.shares || 0 },
+                { label: 'Impressions', value: analytics.engagementOverview?.impressions || 0 },
+              ].map((stat, i) => {
+                const maxVal = Math.max(
+                  analytics.engagementOverview?.impressions || 100, 
+                  analytics.engagementOverview?.likes || 10,
+                  100
+                );
+                const percentage = (stat.value / maxVal) * 100;
+                return (
+                  <div key={i} className="space-y-2">
+                    <div className="flex justify-between items-center text-xs font-bold text-gray-500">
+                      <span className="flex items-center gap-2"><Star size={12}/>{stat.label}</span>
+                      <span className="text-gray-900">{stat.value.toLocaleString()}</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div className="bg-blue-500 h-2 rounded-full transition-all duration-1000" style={{ width: `${Math.min(percentage, 100)}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Collaboration Performance Table */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-1">
+            <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+              <h3 className="text-base font-bold text-gray-900">Collaboration Performance</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50/50">
+                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Brand</th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Reach</th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Engagement</th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Earnings</th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Deliverables</th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {analytics.collaborationPerformance?.length > 0 ? analytics.collaborationPerformance.map((collab, i) => (
+                    <tr key={i} className="hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => navigate(`/influencer/collaboration/${collab.id}`)}>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-bold text-gray-900">{collab.brand}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-medium text-gray-600">{formatNumber(collab.reach)}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-xs font-bold bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md">{collab.engagement}%</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-bold text-emerald-600">{formatBudget(collab.earnings)}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-medium text-gray-600">{collab.deliverablesCount} posts</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); navigate(`/influencer/collaboration/${collab.id}`); }} 
+                          className="text-xs font-bold flex flex-row items-center justify-center text-gray-700 border border-gray-200 bg-white px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-all shadow-sm"
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-12 text-center text-sm font-medium text-gray-400 italic">No collaboration records found</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── RIGHT COLUMN (Brands + Requests Sidebar) ── */}
+        <div className="xl:col-span-1 flex flex-col gap-6">
+          
+          {/* Top Brands */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 overflow-hidden">
+            <h3 className="text-base font-bold text-gray-900 mb-6">Top Brands</h3>
+            <div className="space-y-5">
+              {analytics.topBrands?.length > 0 ? analytics.topBrands.map((brand, index) => (
+                <div key={index} className="flex items-center gap-4">
+                  <div className="w-8 h-8 shrink-0 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold shadow-md shadow-blue-500/20">
+                    {index + 1}
+                  </div>
+                  <div className="w-10 h-10 shrink-0 rounded-xl overflow-hidden border border-gray-100">
+                    <img src={brand.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(brand.name)}`} alt={brand.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-bold text-gray-900 truncate">{brand.name}</h4>
+                    <p className="text-xs font-medium text-gray-500 truncate">{formatBudget(brand.earnings)} earned</p>
+                  </div>
+                  <div className="text-xs font-bold bg-gray-50 text-gray-600 px-2.5 py-1 rounded-lg border border-gray-100 shrink-0">
+                    {brand.rate}%
+                  </div>
+                </div>
+              )) : (
+                <div className="text-sm text-gray-400 font-medium py-8 text-center italic border border-dashed border-gray-100 rounded-xl">No active brands yet</div>
+              )}
+            </div>
+          </div>
+
+          {/* Pending Requests Hub */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex-1">
+             <div className="flex justify-between items-center mb-6">
+               <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                 <Inbox size={18} className="text-blue-500" />
+                 Pending Requests
+               </h3>
+               <button onClick={() => navigate('/influencer/requests')} className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline">
+                 View All
+               </button>
+             </div>
+
+             <div className="flex flex-col gap-4">
+                {allRequests.filter(req => req.status === 'pending').length > 0 ? allRequests.filter(req => req.status === 'pending').slice(0, 4).map(request => (
+                   <div 
+                     key={request._id} 
+                     onClick={() => navigate('/influencer/requests')}
+                     className="border border-gray-100 bg-[#f8fafc] rounded-xl p-4 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer"
+                   >
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-sm font-bold text-gray-900">{request.campaign?.name || 'Collaboration'}</h4>
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-orange-50 text-orange-600 px-2 py-0.5 rounded-md border border-orange-100">
+                          Pending
+                        </span>
+                      </div>
+                      <p className="text-xs font-medium text-gray-500 mb-3">{request.brandDetails?.fullname || 'Brand'}</p>
+                      
+                      <div className="flex items-center justify-between">
+                         <span className="text-sm font-bold text-emerald-600">{formatBudget(request.proposedBudget)}</span>
+                         {request.type === 'received' && (
+                           <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                              <button 
+                                onClick={() => handleAccept(request._id)}
+                                disabled={actionLoading === request._id}
+                                className="text-xs font-bold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
+                              >
+                                {actionLoading === request._id ? '...' : 'Accept'}
+                              </button>
+                              <button 
+                                onClick={() => handleDecline(request._id)}
+                                disabled={actionLoading === request._id}
+                                className="text-xs font-bold bg-red-50 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors"
+                              >
+                                Decline
+                              </button>
+                           </div>
+                         )}
+                      </div>
+                   </div>
+                )) : (
+                  <div className="text-sm text-gray-400 font-medium py-8 text-center italic border border-dashed border-gray-100 rounded-xl">No pending requests</div>
+                )}
+             </div>
+          </div>
+          
         </div>
       </div>
     </div>

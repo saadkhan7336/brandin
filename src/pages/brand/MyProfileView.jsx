@@ -99,7 +99,7 @@ const InlineInput = ({
 }) => (
   <div className="space-y-1.5 w-full">
     {label && (
-      <p className="text-[10px] font-black uppercase tracking-tighter text-slate-400 ml-1">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 ml-1">
         {label}
       </p>
     )}
@@ -116,8 +116,8 @@ const InlineInput = ({
         onChange={onChange}
         placeholder={placeholder}
         className={cn(
-          "w-full bg-slate-50 border-0 border-b-2 border-transparent focus:border-blue-500 focus:bg-white focus:ring-0 text-sm font-bold transition-all py-2.5",
-          Icon ? "pl-9" : "px-3",
+          "w-full bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:bg-white focus:border-blue-500 text-sm font-bold transition-all py-2.5 shadow-sm outline-none px-4",
+          Icon ? "pl-9" : "px-4",
         )}
       />
     </div>
@@ -125,9 +125,9 @@ const InlineInput = ({
 );
 
 const InlineTextarea = ({ value, onChange, placeholder, label }) => (
-  <div className="space-y-2">
+  <div className="space-y-1.5">
     {label && (
-      <p className="text-[10px] font-black uppercase tracking-tighter text-slate-400 ml-1">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 ml-1">
         {label}
       </p>
     )}
@@ -136,20 +136,20 @@ const InlineTextarea = ({ value, onChange, placeholder, label }) => (
       onChange={onChange}
       placeholder={placeholder}
       rows={4}
-      className="w-full bg-slate-50 border-0 border-b-2 border-transparent focus:border-blue-500 focus:bg-white focus:ring-0 text-sm font-medium transition-all py-3 px-4 resize-none leading-relaxed"
+      className="w-full bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:bg-white focus:border-blue-500 text-sm font-medium transition-all py-3 px-4 resize-none leading-relaxed shadow-sm outline-none"
     />
   </div>
 );
 
 const SectionHeader = ({ title, icon: Icon, color = "blue" }) => (
-  <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-3 tracking-tight">
+  <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-3 tracking-tight">
     <div
       className={cn(
-        "w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200",
-        `bg-${color}-600`,
+        "w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-sm",
+        color === "blue" ? "bg-blue-600" : `bg-${color}-600`,
       )}
     >
-      <Icon size={16} />
+      <Icon size={18} />
     </div>
     {title}
   </h3>
@@ -364,18 +364,15 @@ const MyProfileView = () => {
   };
 
   return (
-    <div className="w-full max-w-[1800px] mx-auto space-y-10 pb-24 animate-in fade-in duration-700">
+    <div className="w-full max-w-[1800px] mx-auto space-y-10 pb-24 px-4 md:px-8">
       {/* ── HEADER ACTIONS ────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 px-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pt-8 border-b border-gray-100 pb-8">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">
-            Public Profile
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            Brand Public Profile
           </h1>
-          <p className="text-slate-500 text-sm font-medium mt-1">
-            This is how{" "}
-            <span className="text-blue-600 font-bold">Influencers</span> and{" "}
-            <span className="text-slate-900 font-bold">Talents</span> see your
-            brand.
+          <p className="text-gray-500 text-sm font-medium mt-1">
+            How your brand appears to influencers and collaborators.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -383,37 +380,37 @@ const MyProfileView = () => {
             <>
               <button
                 onClick={() => setIsEditing(false)}
-                className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 shadow-sm"
+                className="px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-50 transition-all flex items-center gap-2 active:scale-95 shadow-sm"
               >
                 <X size={14} /> Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-2xl shadow-slate-200 hover:bg-slate-800 disabled:opacity-50 flex items-center gap-2.5 transition-all active:scale-95"
+                className="px-8 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm hover:bg-black disabled:opacity-50 flex items-center gap-2.5 transition-all active:scale-95"
               >
                 {saving ? (
                   <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <Save size={14} />
                 )}
-                {saving ? "Wait..." : "Save Changes"}
+                {saving ? "Saving..." : "Save Changes"}
               </button>
             </>
           ) : (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-8 py-3 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-700 transition-all flex items-center gap-2.5 active:scale-95"
+              className="px-8 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm hover:bg-blue-700 transition-all flex items-center gap-2.5 active:scale-95"
             >
-              <Edit3 size={14} /> Refine Profile
+              <Edit3 size={14} /> Edit Profile
             </button>
           )}
         </div>
       </div>
 
       {/* ── HERO BANNER ────────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/40 overflow-hidden group/card transition-all hover:shadow-slate-300/30">
-        <div className="h-80 bg-slate-100 relative group/cover cursor-default">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden group/card transition-all">
+        <div className="h-64 md:h-80 bg-gray-100 relative group/cover cursor-default">
           <img
             src={
               previews.coverPic ||
@@ -423,12 +420,12 @@ const MyProfileView = () => {
             alt="Cover"
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-40" />
 
           {isEditing && (
             <button
               onClick={() => fileRefs.coverPic.current.click()}
-              className="absolute inset-0 bg-black/40 opacity-0 group-hover/cover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 text-white font-black uppercase text-[10px] tracking-widest"
+              className="absolute inset-0 bg-black/40 opacity-0 group-hover/cover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 text-white font-bold uppercase text-[10px] tracking-wider"
             >
               <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-1">
                 <Camera size={18} />
@@ -444,11 +441,11 @@ const MyProfileView = () => {
           />
         </div>
 
-        <div className="px-12 pb-12">
-          <div className="flex flex-col md:flex-row items-end gap-12 -mt-16 relative z-10">
+        <div className="px-10 pb-10">
+          <div className="flex flex-col md:flex-row items-end gap-10 -mt-12 relative z-10">
             {/* LOGO AREA */}
-            <div className="relative group/logo">
-              <div className="w-44 h-44 rounded-[2.5rem] overflow-hidden border-[10px] border-white shadow-2xl bg-white flex items-center justify-center relative translate-y-2">
+            <div className="relative group/logo shrink-0">
+              <div className="w-40 h-40 rounded-2xl overflow-hidden border-[6px] border-white shadow-lg bg-white flex items-center justify-center relative ring-1 ring-gray-100">
                 {previews.logo ||
                 previews.profilePic ||
                 brand.logo ||
@@ -464,25 +461,25 @@ const MyProfileView = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-5xl font-black text-slate-100 drop-shadow-sm select-none">
+                  <span className="text-5xl font-bold text-gray-200">
                     {name[0]}
                   </span>
                 )}
               </div>
               {isEditing && (
-                <div className="absolute inset-x-0 bottom-0 top-2 flex flex-col items-center justify-center gap-2 opacity-0 group-hover/logo:opacity-100 transition-opacity bg-black/50 rounded-[2.5rem] text-white">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-0 group-hover/logo:opacity-100 transition-opacity bg-black/50 rounded-2xl text-white">
                   <button
                     onClick={() => fileRefs.logo.current.click()}
-                    className="text-[10px] font-black uppercase tracking-tighter hover:text-blue-400 transition-colors"
+                    className="text-[10px] font-bold uppercase tracking-tight hover:text-blue-400 transition-colors"
                   >
-                    Brand Logo
+                    Logo
                   </button>
                   <div className="w-8 h-px bg-white/20" />
                   <button
                     onClick={() => fileRefs.profilePic.current.click()}
-                    className="text-[10px] font-black uppercase tracking-tighter hover:text-blue-400 transition-colors"
+                    className="text-[10px] font-bold uppercase tracking-tight hover:text-blue-400 transition-colors"
                   >
-                    User Avatar
+                    Avatar
                   </button>
                 </div>
               )}
@@ -501,7 +498,7 @@ const MyProfileView = () => {
             </div>
 
             {/* IDENTITY AREA */}
-            <div className="flex-1 pb-4 space-y-6">
+            <div className="flex-1 pb-2 space-y-4">
               <div className="flex items-center gap-4">
                 {isEditing ? (
                   <div className="w-full max-w-md">
@@ -517,14 +514,14 @@ const MyProfileView = () => {
                     />
                   </div>
                 ) : (
-                  <div className="flex items-center gap-4">
-                    <h2 className="text-4xl font-black text-slate-900 tracking-tighter italic uppercase">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
                       {name}
                     </h2>
                     {userDoc.isVerified && (
-                      <div className="bg-blue-600 p-1.5 rounded-full text-white shadow-lg shadow-blue-200">
+                      <div className="bg-blue-600 p-1 rounded-full text-white">
                         <CheckCircle
-                          size={14}
+                          size={12}
                           fill="currentColor"
                           stroke="white"
                         />
@@ -535,17 +532,17 @@ const MyProfileView = () => {
               </div>
 
               {/* INFO BAR WITH LABELS */}
-              <div className="flex flex-wrap items-center gap-10 pt-8">
+              <div className="flex flex-wrap items-center gap-8 pt-2">
                 {/* Location */}
-                <div className="flex items-center gap-3.5 group/info">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 transition-all group-hover/info:scale-110 shadow-sm border border-blue-100/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
                     <MapPin size={16} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-0.5">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-none mb-1">
                       Location
                     </p>
-                    <div className="text-sm font-black text-slate-800">
+                    <div className="text-sm font-bold text-gray-700">
                       {isEditing ? (
                         <input
                           value={editedBrand.address}
@@ -555,28 +552,28 @@ const MyProfileView = () => {
                               address: e.target.value,
                             }))
                           }
-                          className="bg-transparent border-0 border-b border-slate-200 p-0 focus:ring-0 w-24 text-sm font-bold"
+                          className="bg-transparent border-0 border-b border-gray-200 p-0 focus:ring-0 w-24 text-sm font-bold"
                           placeholder="Set Location"
                         />
                       ) : (
-                        brand.address || "Global HQ"
+                        brand.address || "Global"
                       )}
                     </div>
                   </div>
                 </div>
 
                 {/* Industry */}
-                <div className="flex items-center gap-3.5 group/info">
-                  <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600 transition-all group-hover/info:scale-110 shadow-sm border border-orange-100/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
                     <Briefcase size={16} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-0.5">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-none mb-1">
                       Category
                     </p>
-                    <div className="text-sm font-black text-slate-800">
+                    <div className="text-sm font-bold text-gray-700">
                       {isEditing ? (
-                        <div className="flex flex-col gap-1.5 relative z-10 w-32">
+                        <div className="flex flex-col gap-1 w-32">
                           <select
                             value={
                               INDUSTRIES.includes(editedBrand.industry)
@@ -597,10 +594,10 @@ const MyProfileView = () => {
                                   industry: e.target.value,
                                 }));
                             }}
-                            className="bg-white border text-slate-700 border-slate-200 focus:border-blue-500 focus:ring-0 w-full text-xs font-bold py-1.5 px-2 rounded-xl shadow-sm transition-all"
+                            className="bg-white border text-gray-700 border-gray-200 focus:border-blue-500 focus:ring-0 w-full text-xs font-bold py-1 px-2 rounded-lg"
                           >
                             <option value="" disabled>
-                              Select Industry
+                              Select
                             </option>
                             {INDUSTRIES.map((ind) => (
                               <option key={ind} value={ind}>
@@ -608,24 +605,6 @@ const MyProfileView = () => {
                               </option>
                             ))}
                           </select>
-                          {!INDUSTRIES.includes(editedBrand.industry) &&
-                            editedBrand.industry && (
-                              <input
-                                value={
-                                  editedBrand.industry === "Custom"
-                                    ? ""
-                                    : editedBrand.industry
-                                }
-                                onChange={(e) =>
-                                  setEditedBrand((prev) => ({
-                                    ...prev,
-                                    industry: e.target.value,
-                                  }))
-                                }
-                                className="bg-white border border-slate-200 focus:border-blue-500 p-1.5 px-2 rounded-lg focus:ring-0 w-full text-xs font-bold shadow-sm placeholder:text-slate-300"
-                                placeholder="Type custom..."
-                              />
-                            )}
                         </div>
                       ) : (
                         brand.industry || "General"
@@ -634,16 +613,16 @@ const MyProfileView = () => {
                   </div>
                 </div>
 
-                {/* Portfolio */}
-                <div className="flex items-center gap-3.5 group/info">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 transition-all group-hover/info:scale-110 shadow-sm border border-emerald-100/50">
+                {/* Website */}
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
                     <Globe size={16} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-0.5">
-                      Portfolio
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-none mb-1">
+                      Website
                     </p>
-                    <div className="text-sm font-black text-slate-800">
+                    <div className="text-sm font-bold text-gray-700">
                       {isEditing ? (
                         <input
                           value={editedBrand.website}
@@ -653,19 +632,19 @@ const MyProfileView = () => {
                               website: e.target.value,
                             }))
                           }
-                          className="bg-transparent border-0 border-b border-slate-200 p-0 focus:ring-0 w-32 text-sm font-bold text-blue-600"
-                          placeholder="Website URL"
+                          className="bg-transparent border-0 border-b border-gray-200 p-0 focus:ring-0 w-32 text-sm font-bold text-blue-600"
+                          placeholder="URL"
                         />
-                      ) : (
+                      ) : brand.website ? (
                         <a
                           href={brand.website}
                           target="_blank"
                           rel="noreferrer"
                           className="text-blue-600 hover:underline"
                         >
-                          Launch Site
+                          Visit Site
                         </a>
-                      )}
+                      ) : 'Not set'}
                     </div>
                   </div>
                 </div>
@@ -680,10 +659,9 @@ const MyProfileView = () => {
         {/* LEFT COLUMN: STATS & SOCIALS */}
         <div className="lg:col-span-4 space-y-8 animate-in slide-in-from-left-4 duration-1000">
           {/* CORE METRICS */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-2xl shadow-slate-200/30 space-y-10 group">
-            <h3 className="text-sm font-black text-slate-900 tracking-widest uppercase flex items-center gap-3">
-              <TrendingUp size={16} className="text-blue-600" /> Platform
-              Insights
+          <div className="bg-white rounded-2xl border border-gray-100 p-10 shadow-sm space-y-10">
+            <h3 className="text-xs font-bold text-gray-900 tracking-widest uppercase flex items-center gap-3">
+              <TrendingUp size={16} className="text-blue-600" /> Platform Insights
             </h3>
             <div className="space-y-8">
               {[
@@ -694,20 +672,20 @@ const MyProfileView = () => {
                   color: "blue",
                 },
                 {
-                  label: "Talent Connections",
+                  label: "Collaborations",
                   val: metrics.collaborations,
                   icon: Users,
                   color: "orange",
                 },
                 {
-                  label: "Est. Budget Peak",
+                  label: "Budget Range",
                   val: metrics.avgBudget,
                   icon: DollarSign,
                   color: "emerald",
                   isEditable: true,
                 },
                 {
-                  label: "Campaign Footprint",
+                  label: "Total Campaigns",
                   val: metrics.totalCampaigns,
                   icon: TrendingUp,
                   color: "violet",
@@ -716,13 +694,17 @@ const MyProfileView = () => {
                 <div key={i} className="flex items-center gap-6 group/stat">
                   <div
                     className={cn(
-                      `w-12 h-12 rounded-2xl flex items-center justify-center text-${stat.color}-600 bg-${stat.color}-50 group-hover/stat:scale-110 transition-all duration-500 shadow-sm`,
+                      "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-tiny",
+                      stat.color === "blue" ? "bg-blue-50 text-blue-600" :
+                      stat.color === "orange" ? "bg-orange-50 text-orange-600" :
+                      stat.color === "emerald" ? "bg-emerald-50 text-emerald-600" :
+                      "bg-violet-50 text-violet-600"
                     )}
                   >
                     <stat.icon size={20} />
                   </div>
                   <div className="flex-1">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 leading-none">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 leading-none">
                       {stat.label}
                     </p>
                     {isEditing && stat.isEditable ? (
@@ -736,12 +718,10 @@ const MyProfileView = () => {
                               budgetMin: e.target.value,
                             }))
                           }
-                          className="w-16 bg-slate-50 border-0 rounded-lg text-[10px] font-black focus:ring-1 focus:ring-blue-500 h-8 text-center"
+                          className="w-20 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold focus:ring-1 focus:ring-blue-500 h-8 text-center outline-none"
                           placeholder="MIN"
                         />
-                        <span className="text-slate-300 text-xs font-black">
-                          ─
-                        </span>
+                        <span className="text-gray-300 text-xs font-bold">─</span>
                         <input
                           type="number"
                           value={editedBrand.budgetMax}
@@ -751,12 +731,12 @@ const MyProfileView = () => {
                               budgetMax: e.target.value,
                             }))
                           }
-                          className="w-16 bg-slate-50 border-0 rounded-lg text-[10px] font-black focus:ring-1 focus:ring-blue-500 h-8 text-center"
+                          className="w-20 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold focus:ring-1 focus:ring-blue-500 h-8 text-center outline-none"
                           placeholder="MAX"
                         />
                       </div>
                     ) : (
-                      <p className="text-lg font-black text-slate-900 tracking-tight italic">
+                      <p className="text-lg font-bold text-gray-900 tracking-tight italic">
                         {stat.val}
                       </p>
                     )}
@@ -766,47 +746,48 @@ const MyProfileView = () => {
             </div>
           </div>
 
-          {/* SOCIAL HANDLINGS - USER FEEDBACK SECTION */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-2xl shadow-slate-200/30 space-y-8">
-            <h3 className="text-sm font-black text-slate-900 tracking-widest uppercase flex items-center gap-3">
-              <Globe size={16} className="text-emerald-600" /> Digital Ecosystem
+          <div className="bg-white rounded-2xl border border-gray-100 p-10 shadow-sm space-y-8">
+            <h3 className="text-xs font-bold text-gray-900 tracking-widest uppercase flex items-center gap-3">
+              <Globe size={16} className="text-emerald-600" /> Web Presence
             </h3>
             <div className="flex flex-col gap-3">
               {[
                 {
                   id: "instagram",
-                  label: "Instagram Handle",
+                  label: "Instagram",
                   name: "INSTAGRAM",
                   color: "pink",
                 },
                 {
                   id: "tiktok",
-                  label: "TikTok User",
+                  label: "TikTok",
                   name: "TIKTOK",
-                  color: "slate",
+                  color: "gray",
                 },
                 {
                   id: "twitter",
-                  label: "Twitter Post",
+                  label: "Twitter / X",
                   name: "TWITTER",
                   color: "blue",
                 },
                 {
                   id: "linkedin",
-                  label: "LinkedIn Page",
+                  label: "LinkedIn",
                   name: "LINKEDIN",
                   color: "indigo",
                 },
               ].map((social) => (
                 <div
                   key={social.id}
-                  className="flex items-center justify-between p-3.5 bg-slate-50/50 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50 transition-all group/soc overflow-hidden"
+                  className="flex items-center justify-between p-3.5 bg-gray-50/50 rounded-xl border border-transparent hover:border-gray-100 hover:bg-gray-50 transition-all group/soc"
                 >
                   <div className="flex items-center gap-4 w-full">
                     <div
                       className={cn(
-                        `w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-white shadow-sm transition-transform group-hover/soc:rotate-6`,
-                        `text-${social.color}-600`,
+                        "w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-white shadow-sm border border-gray-50",
+                        social.color === "pink" ? "text-pink-600" :
+                        social.color === "blue" ? "text-blue-600" :
+                        social.color === "indigo" ? "text-indigo-600" : "text-gray-900"
                       )}
                     >
                       <SocialIcon name={social.id} size={18} />
@@ -814,7 +795,7 @@ const MyProfileView = () => {
                     <div className="flex-1 min-w-0">
                       {isEditing ? (
                         <div className="flex flex-col">
-                          <p className="text-[10px] font-black text-slate-400 tracking-widest leading-none mb-1 uppercase">
+                          <p className="text-[9px] font-bold text-gray-400 tracking-widest leading-none mb-1 uppercase">
                             {social.name}
                           </p>
                           <input
@@ -825,16 +806,16 @@ const MyProfileView = () => {
                                 [social.id]: e.target.value,
                               }))
                             }
-                            className="bg-transparent border-0 border-b border-slate-300 p-0 focus:ring-0 focus:border-blue-500 text-xs font-bold w-full transition-all"
-                            placeholder={`e.g. username or URL`}
+                            className="bg-transparent border-0 border-b border-gray-200 p-0 focus:ring-0 focus:border-blue-500 text-xs font-bold w-full transition-all outline-none"
+                            placeholder="handle or url"
                           />
                         </div>
                       ) : (
                         <>
-                          <p className="text-[10px] font-black text-slate-400 tracking-widest leading-none mb-1 uppercase">
+                          <p className="text-[9px] font-bold text-gray-400 tracking-widest leading-none mb-1 uppercase">
                             {social.name}
                           </p>
-                          <p className="text-xs font-bold text-slate-600 truncate pr-2">
+                          <p className="text-xs font-bold text-gray-700 truncate pr-2">
                             {brand.socialMedia?.[social.id]
                               ? brand.socialMedia[social.id].startsWith("http")
                                 ? brand.socialMedia[social.id]
@@ -854,7 +835,7 @@ const MyProfileView = () => {
                       }
                       target="_blank"
                       rel="noreferrer"
-                      className="w-8 h-8 shrink-0 rounded-lg bg-slate-200/50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all border-none"
+                      className="w-8 h-8 shrink-0 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all"
                     >
                       <ExternalLink size={12} />
                     </a>
@@ -867,24 +848,24 @@ const MyProfileView = () => {
 
         {/* RIGHT COLUMN: CONTENT AREAS */}
         <div className="lg:col-span-8 space-y-8 animate-in slide-in-from-right-4 duration-1000">
-          <div className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/30 overflow-hidden flex flex-col h-full">
-            <div className="border-b border-slate-50 px-10 flex gap-12 bg-slate-50/10">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[600px]">
+            <div className="border-b border-gray-100 px-10 flex gap-8 bg-gray-50/30">
               {["about", "campaigns"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={cn(
-                    "py-6 text-xs font-black uppercase tracking-[0.2em] border-b-[3px] transition-all relative outline-none",
+                    "py-5 text-[11px] font-bold uppercase tracking-widest border-b-2 transition-all relative outline-none",
                     activeTab === tab
-                      ? "border-slate-900 text-slate-900"
-                      : "border-transparent text-slate-400 hover:text-slate-600",
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-400 hover:text-gray-600",
                   )}
                 >
                   {tab === "about"
-                    ? "Strategic Overview"
-                    : "Live Opportunities"}
+                    ? "About Brand"
+                    : "Open Campaigns"}
                   {tab === "campaigns" && campaigns.length > 0 && (
-                    <span className="absolute top-4 -right-6 w-5 h-5 bg-blue-600 text-[10px] text-white flex items-center justify-center rounded-full border-2 border-white">
+                    <span className="ml-2 bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded text-[10px] font-bold">
                       {campaigns.length}
                     </span>
                   )}
@@ -897,7 +878,7 @@ const MyProfileView = () => {
                 <div className="space-y-12 animate-in fade-in zoom-in-95 duration-500">
                   {/* STORY SECTION */}
                   <div className="space-y-6">
-                    <SectionHeader title="Brand Narrative" icon={Edit3} />
+                    <SectionHeader title="Our Story" icon={Edit3} />
                     {isEditing ? (
                       <InlineTextarea
                         value={editedBrand.description}
@@ -907,13 +888,13 @@ const MyProfileView = () => {
                             description: e.target.value,
                           }))
                         }
-                        placeholder="Define your brand's mission, values, and why influencers should work with you..."
+                        placeholder="Tell your brand's mission and values..."
                       />
                     ) : (
-                      <div className="relative pl-6 border-l-4 border-slate-100">
-                        <p className="text-slate-600 leading-relaxed text-base font-medium whitespace-pre-wrap">
+                      <div className="pl-6 border-l-2 border-blue-600/10">
+                        <p className="text-gray-600 leading-relaxed text-[15px] font-medium whitespace-pre-wrap">
                           {brand.description ||
-                            "Inspiration under maintenance. Please check the 'Refine Profile' section to share your story."}
+                            "No description provided yet. Edit your profile to add one."}
                         </p>
                       </div>
                     )}
@@ -922,17 +903,17 @@ const MyProfileView = () => {
                   {/* IDEAL COLLABORATORS (LOOKING FOR) */}
                   <div className="space-y-6 pt-6">
                     <SectionHeader
-                      title="Ideal Collaborators"
+                      title="Looking For"
                       icon={Target}
                       color="orange"
                     />
                     {isEditing ? (
                       <div className="space-y-6">
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                           {NICHES.map((niche) => (
                             <label
                               key={niche}
-                              className="flex items-center gap-3 text-sm font-bold text-slate-700 cursor-pointer group bg-slate-50/50 hover:bg-slate-50 p-2.5 rounded-xl border border-transparent hover:border-slate-100 transition-all select-none"
+                              className="flex items-center gap-3 text-xs font-bold text-gray-600 cursor-pointer group bg-gray-50 hover:bg-gray-100 p-2.5 rounded-lg border border-gray-100 transition-all select-none"
                             >
                               <input
                                 type="checkbox"
@@ -951,9 +932,9 @@ const MyProfileView = () => {
                                       ),
                                     }));
                                 }}
-                                className="w-4 h-4 rounded-md border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
                               />
-                              <span className="group-hover:text-blue-600 transition-colors uppercase tracking-[0.1em] text-[10px]">
+                              <span className="uppercase tracking-wide">
                                 {niche}
                               </span>
                             </label>
@@ -961,7 +942,7 @@ const MyProfileView = () => {
                         </div>
                         <div className="pt-2">
                           <InlineInput
-                            label="ADD CUSTOM NICHES (Comma Separated)"
+                            label="Add Custom Tags (Comma Separated)"
                             value={editedBrand.customLookingFor || ""}
                             onChange={(e) =>
                               setEditedBrand((prev) => ({
@@ -969,24 +950,24 @@ const MyProfileView = () => {
                                 customLookingFor: e.target.value,
                               }))
                             }
-                            placeholder="e.g. Real Estate, Music, AI..."
+                            placeholder="e.g. Design, Crypto, Outdoor..."
                           />
                         </div>
                       </div>
                     ) : (
-                      <div className="flex flex-wrap gap-3">
+                      <div className="flex flex-wrap gap-2.5">
                         {brand.lookingFor && brand.lookingFor.length > 0 ? (
                           brand.lookingFor.map((tag, idx) => (
                             <span
                               key={idx}
-                              className="bg-slate-50 border border-slate-100 text-slate-600 px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all cursor-default"
+                              className="bg-gray-50 border border-gray-100 text-gray-600 px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-gray-100 transition-all cursor-default"
                             >
                               #{tag}
                             </span>
                           ))
                         ) : (
-                          <p className="text-slate-400 italic text-sm">
-                            No specific niches defined.
+                          <p className="text-gray-400 italic text-sm">
+                            No categories defined.
                           </p>
                         )}
                       </div>
@@ -994,70 +975,58 @@ const MyProfileView = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-black text-slate-900 tracking-widest uppercase flex items-center gap-3">
-                      <Briefcase size={16} className="text-blue-600" /> Handler
-                      Campaigns
+                <div className="space-y-10 animate-in fade-in duration-500">
+                  <div className="flex items-center justify-between border-b border-gray-50 pb-6">
+                    <h3 className="text-xs font-bold text-gray-900 tracking-widest uppercase flex items-center gap-3">
+                      <Briefcase size={16} className="text-blue-600" /> Live Campaigns
                     </h3>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                      Showing {campaigns.length} Result
-                      {campaigns.length !== 1 ? "s" : ""}
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                      {campaigns.length} results
                     </p>
                   </div>
 
                   {campaigns.length === 0 ? (
-                    <div className="py-32 text-center bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200 group">
-                      <div className="w-16 h-16 rounded-full bg-white mx-auto flex items-center justify-center text-slate-100 mb-4 shadow-sm group-hover:scale-110 transition-all duration-500">
+                    <div className="py-24 text-center">
+                      <div className="w-16 h-16 rounded-full bg-gray-50 mx-auto flex items-center justify-center text-gray-200 mb-4">
                         <Briefcase size={28} />
                       </div>
-                      <h4 className="text-slate-900 font-black uppercase text-xs tracking-[0.2em] mb-1">
-                        No Active Reach
+                      <h4 className="text-gray-900 font-bold uppercase text-xs tracking-widest mb-1">
+                        No active campaigns
                       </h4>
-                      <p className="text-slate-400 font-medium text-xs max-w-[180px] mx-auto leading-relaxed">
-                        Your brand is currently not recruiting for live
-                        campaigns.
+                      <p className="text-gray-400 font-medium text-xs max-w-[200px] mx-auto">
+                        Your brand hasn't posted any live campaigns yet.
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {campaigns.map((c) => (
                         <div
                           key={c._id}
-                          className="p-8 bg-slate-50/30 border border-slate-100/50 rounded-[3rem] hover:bg-white hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-100 hover:-translate-y-2 transition-all duration-500 group"
+                          className="p-8 bg-gray-50/50 border border-gray-100 rounded-2xl hover:bg-white hover:shadow-md transition-all group"
                         >
-                          <div className="flex justify-between items-start mb-6">
+                          <div className="flex justify-between items-start mb-4">
                             <div className="space-y-1">
-                              <p className="text-[10px] font-black text-blue-600 tracking-widest uppercase">
-                                Open Opportunity
+                              <p className="text-[10px] font-bold text-blue-600 tracking-widest uppercase">
+                                Campaign
                               </p>
-                              <h4 className="text-lg font-black text-slate-900 tracking-tighter group-hover:text-blue-700 transition-colors uppercase italic leading-none">
+                              <h4 className="text-base font-bold text-gray-900 tracking-tight group-hover:text-blue-600 transition-colors uppercase">
                                 {c.name}
                               </h4>
                             </div>
-                            <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-500 text-white px-3 py-1.5 rounded-xl shadow-lg shadow-emerald-200">
+                            <span className="text-[9px] font-bold uppercase tracking-widest bg-emerald-500 text-white px-2.5 py-1 rounded-lg">
                               LIVE
                             </span>
                           </div>
-                          <p className="text-slate-500 text-sm font-medium line-clamp-2 mb-8 leading-relaxed h-10">
+                          <p className="text-gray-500 text-sm font-medium line-clamp-2 mb-6 leading-relaxed">
                             {c.description}
                           </p>
-                          <div className="flex items-center justify-between pt-6 border-t border-slate-100/50">
-                            <div className="flex items-center gap-2 font-black text-slate-900 text-sm italic">
-                              <DollarSign
-                                size={14}
-                                className="text-emerald-500 not-italic"
-                              />
-                              {c.budget?.min?.toLocaleString()} -{" "}
-                              {c.budget?.max?.toLocaleString()}
+                          <div className="flex items-center justify-between pt-6 border-t border-gray-200/50">
+                            <div className="flex items-center gap-2 font-bold text-gray-900 text-sm italic">
+                              <DollarSign size={14} className="text-emerald-500 not-italic" />
+                              {c.budget?.min?.toLocaleString()} - {c.budget?.max?.toLocaleString()}
                             </div>
-                            <button className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center self-end opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                              <SocialIcon
-                                name="github"
-                                size={12}
-                                className="rotate-45"
-                              />{" "}
-                              {/* Using social icon as arrow placeholder if needed */}
+                            <button className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all outline-none">
+                               <TrendingUp size={14} className="rotate-45" />
                             </button>
                           </div>
                         </div>

@@ -1,75 +1,93 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { Shield, Lock, Mail } from "lucide-react";
-import { getDashboardByRole } from "../../routes/ProtectedRoute";
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { Shield, Lock, Mail } from 'lucide-react';
+import { getDashboardByRole } from '../../routes/ProtectedRoute';
 
-import { Input } from "../../components/common/FormComponents";
-import { Button } from "../../components/common/Button";
+import { Input } from '../../components/common/FormComponents';
+import { Button } from '../../components/common/Button';
 
-import api from "../../services/api";
-import { ENDPOINTS } from "../../services/endpoints";
-import {
-  setLoading,
-  setError,
-  setAuthUser,
-  clearAuthState,
-} from "../../redux/slices/authSlice";
+import api from '../../services/api';
+import { ENDPOINTS } from '../../services/endpoints';
+import { setLoading, setAuthUser, clearAuthState } from '../../redux/slices/authSlice';
+
+const validate = (field, value) => {
+  switch (field) {
+    case 'email':
+      if (!value.trim()) return 'Email is required';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Enter a valid email address';
+      return '';
+    case 'password':
+      if (!value) return 'Password is required';
+      return '';
+    default:
+      return '';
+  }
+};
 
 export default function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { loading, error, isAuthenticated, user } = useSelector(
-    (state) => state.auth,
-  );
+  const { loading, isAuthenticated, user } = useSelector((state) => state.auth);
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
     dispatch(clearAuthState());
   }, [dispatch]);
 
-  // If already authenticated, redirect to role-based dashboard
   useEffect(() => {
     if (isAuthenticated && user) {
       navigate(getDashboardByRole(user.role));
     }
   }, [isAuthenticated, user, navigate]);
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (touched[name]) {
+      setFieldErrors(prev => ({ ...prev, [name]: validate(name, value) }));
+    }
+    setSubmitError('');
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    setFieldErrors(prev => ({ ...prev, [name]: validate(name, value) }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const allTouched = { email: true, password: true };
+    setTouched(allTouched);
+    const errors = {
+      email: validate('email', formData.email),
+      password: validate('password', formData.password),
+    };
+    setFieldErrors(errors);
+    if (Object.values(errors).some(Boolean)) return;
+
     try {
       dispatch(setLoading(true));
+      setSubmitError('');
 
-      // Step 1: Login → cookies set
       await api.post(ENDPOINTS.LOGIN, formData);
-
-      // Step 2: Get user profile from backend
       const res = await api.get(ENDPOINTS.ME);
       const { user: authUser } = res.data.data;
 
-      // Step 3: Store in Redux
       dispatch(setAuthUser(authUser));
-
-      // Step 4: Role-based redirect
       navigate(getDashboardByRole(authUser.role));
     } catch (err) {
-      dispatch(setError(err.response?.data?.message || "Login failed"));
+      setSubmitError(err.response?.data?.message || 'Invalid email or password. Please try again.');
     } finally {
       dispatch(setLoading(false));
     }
-  };
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
   };
 
   return (
@@ -82,16 +100,17 @@ export default function Login() {
             </div>
           </div>
           <h1 className="text-2xl font-bold text-[#111827]">Welcome Back</h1>
-          <p className="text-[#6b7280]">Login to your Brandly account</p>
+          <p className="text-[#6b7280] font-medium text-sm mt-1">Login to your Brandly account</p>
         </div>
 
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm border border-red-100">
-            {error}
+        {submitError && (
+          <div className="bg-red-50 text-red-600 p-3.5 rounded-xl mb-5 text-sm border border-red-100 flex items-start gap-2.5">
+            <span className="mt-0.5 shrink-0 w-4 h-4 rounded-full bg-red-100 flex items-center justify-center text-red-500 text-[10px] font-bold">!</span>
+            {submitError}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-1">
           <Input
             label="Email Address"
             name="email"
@@ -99,11 +118,13 @@ export default function Login() {
             placeholder="name@company.com"
             value={formData.email}
             onChange={handleChange}
+            onBlur={handleBlur}
             required
-            icon={<Mail className="w-5 h-5 text-gray-400" />}
+            error={touched.email ? fieldErrors.email : ''}
+            icon={<Mail className="w-4 h-4 text-gray-400" />}
           />
 
-          <div className="space-y-1">
+          <div>
             <Input
               label="Password"
               name="password"
@@ -111,15 +132,13 @@ export default function Login() {
               placeholder="••••••••"
               value={formData.password}
               onChange={handleChange}
+              onBlur={handleBlur}
               required
-              icon={<Lock className="w-5 h-5 text-gray-400" />}
+              error={touched.password ? fieldErrors.password : ''}
+              icon={<Lock className="w-4 h-4 text-gray-400" />}
             />
-            <div className="flex justify-end">
-              <Link
-                to="/forgot-password"
-                size="sm"
-                className="text-sm text-[#3b82f6] hover:underline"
-              >
+            <div className="flex justify-end -mt-2 mb-2">
+              <Link to="/forgot-password" className="text-sm text-[#3b82f6] hover:underline font-medium">
                 Forgot password?
               </Link>
             </div>
@@ -130,13 +149,10 @@ export default function Login() {
           </Button>
         </form>
 
-        <div className="mt-8 text-center">
-          <p className="text-[#6b7280]">
-            Don't have an account?{" "}
-            <Link
-              to="/register"
-              className="text-[#3b82f6] font-semibold hover:underline"
-            >
+        <div className="mt-6 text-center">
+          <p className="text-[#6b7280] text-sm">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-[#3b82f6] font-semibold hover:underline">
               Create Account
             </Link>
           </p>

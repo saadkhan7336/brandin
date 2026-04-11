@@ -23,7 +23,7 @@ function App() {
 
   useEffect(() => {
     fetchUser(); // 🔥 auto login on refresh
-  }, []);
+  }, [fetchUser]);
 
   return <AppRoutes />;
 }

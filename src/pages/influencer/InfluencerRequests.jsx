@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useParams, NavLink } from 'react-router-dom';
 import { 
   Search, 
   Filter, 
@@ -22,6 +23,7 @@ import ApplyCampaignModal from '../../components/layout/influencer/ApplyCampaign
 
 const InfluencerRequests = () => {
   const dispatch = useDispatch();
+  const { type, status } = useParams();
   const { requests, loading, error, filters, total, page, pages, counts } = useSelector(
     (state) => state.collaboration
   );
@@ -29,6 +31,13 @@ const InfluencerRequests = () => {
   const [localSearch, setLocalSearch] = useState(filters.search);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [resendingRequest, setResendingRequest] = useState(null);
+
+  // Sync URL params to Redux filters
+  useEffect(() => {
+    if (type && (type !== filters.type || status !== filters.status)) {
+      dispatch(setFilters({ type, status: status || 'all', page: 1 }));
+    }
+  }, [type, status, dispatch, filters.type, filters.status]);
 
   const fetchRequests = useCallback(async () => {
     try {
@@ -60,14 +69,6 @@ const InfluencerRequests = () => {
     }, 500);
     return () => clearTimeout(timer);
   }, [localSearch, dispatch]);
-
-  const handleMainTabChange = (type) => {
-    dispatch(setFilters({ type, status: 'all', page: 1 }));
-  };
-
-  const handleStatusTabChange = (status) => {
-    dispatch(setFilters({ status, page: 1 }));
-  };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pages) {
@@ -128,11 +129,11 @@ const InfluencerRequests = () => {
       {/* Main Category Tabs */}
       <div className="flex items-center gap-10 border-b border-gray-200 mb-8 overflow-x-auto scrollbar-hide">
         {mainTabs.map((tab) => (
-          <button
+          <NavLink
             key={tab.id}
-            onClick={() => handleMainTabChange(tab.id)}
-            className={`pb-4 text-[14px] font-bold transition-all relative whitespace-nowrap px-1 flex items-center gap-2 ${
-              filters.type === tab.id
+            to={`/influencer/requests/${tab.id}`}
+            className={({ isActive }) => `pb-4 text-[14px] font-bold transition-all relative whitespace-nowrap px-1 flex items-center gap-2 ${
+              isActive
                 ? 'text-blue-600'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
@@ -146,7 +147,7 @@ const InfluencerRequests = () => {
             {filters.type === tab.id && (
               <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-blue-600 rounded-t-full" />
             )}
-          </button>
+          </NavLink>
         ))}
       </div>
 
@@ -218,11 +219,11 @@ const InfluencerRequests = () => {
         {/* Status Sub-Tabs */}
         <div className="flex items-center gap-4 overflow-x-auto scrollbar-hide">
           {statusTabs.map((tab) => (
-            <button
+            <NavLink
               key={tab.id}
-              onClick={() => handleStatusTabChange(tab.id)}
-              className={`px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all flex items-center gap-2 ${
-                filters.status === tab.id
+              to={`/influencer/requests/${type || filters.type}/${tab.id}`}
+              className={({ isActive }) => `px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all flex items-center gap-2 ${
+                isActive
                   ? 'bg-blue-50 text-blue-600'
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
@@ -235,7 +236,7 @@ const InfluencerRequests = () => {
                   {tab.count}
                 </span>
               )}
-            </button>
+            </NavLink>
           ))}
         </div>
       </div>

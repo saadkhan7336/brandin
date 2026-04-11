@@ -1,275 +1,332 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import {
-  FileText, CheckCircle, Clock, Users,
-  Instagram, Youtube, ShieldCheck, Twitter, Linkedin,
-  AlertCircle
+  Eye, Heart, Users, Share2, 
+  Download, Handshake, Send,
+  TrendingUp,
+  Calendar
 } from 'lucide-react';
 import api from '../../services/api';
 
 function BrandDashboard() {
-  const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
 
   // Data State
-  const [stats, setStats] = useState({
-    totalRequests: 0,
+  const [analytics, setAnalytics] = useState({
+    totalReach: "0",
+    avgEngagementRate: "0%",
     activeCampaigns: 0,
-    pendingRequests: 0,
-    totalInfluencersContacted: 0,
-    totalCampaigns: 0,
-    completedCampaigns: 0,
-    successRate: 0
+    engagementOverview: {
+      likes: 0,
+      comments: 0,
+      shares: 0,
+      impressions: 0
+    },
+    platformStats: {
+      instagram: { reach: 0, engagement: 0, posts: 0, followers: 0 },
+      youtube: { reach: 0, engagement: 0, posts: 0, followers: 0 },
+      tiktok: { reach: 0, engagement: 0, posts: 0, followers: 0 }
+    },
+    campaignPerformance: [],
+    topPerformers: [],
+    collaborationCount: 0,
+    requestStats: {
+      sent: 0,
+      received: 0,
+      accepted: 0,
+      pending: 0,
+      total: 0
+    }
   });
-  const [influencers, setInfluencers] = useState([]);
 
-  // UI States
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchAnalytics = async () => {
       try {
         setIsLoading(true);
-        setError(null);
+        const response = await api.get('/brands/analytics');
+        if (response.data?.success) {
+          const data = response.data.data;
+          
+          // Format values for display (e.g. 2.4M)
+          const formatNumber = (num) => {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+          };
 
-        // Concurrently fetch all dashboard widgets using allSettled to prevent one failure from breaking everything
-        const results = await Promise.allSettled([
-          api.get('/brands/dashboard'),
-          api.get('/brands/influencers?limit=3'),
-          api.get('/brands/activity?limit=3')
-        ]);
-
-        const statsResult = results[0];
-        const influencersResult = results[1];
-        const activitiesResult = results[2];
-
-        // Map Stats Data
-        if (statsResult.status === 'fulfilled' && statsResult.value.data?.success) {
-          const statsData = statsResult.value.data.data;
-          const total = statsData.totalCampaigns || 0;
-          const completed = statsData.completedCampaigns || 0;
-          const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-          setStats({
-            totalRequests: statsData.totalRequests || 0,
-            activeCampaigns: statsData.activeCampaigns || 0,
-            pendingRequests: statsData.pendingRequests || 0,
-            totalInfluencersContacted: statsData.totalInfluencersContacted || 0,
-            totalCampaigns: total,
-            completedCampaigns: completed,
-            successRate: rate
+          setAnalytics({
+            ...data,
+            totalReach: formatNumber(data.totalReach),
+            avgEngagementRate: data.avgEngagementRate + "%"
           });
-        } else if (statsResult.status === 'rejected') {
-          const status = statsResult.reason?.response?.status;
-          if (status === 404) {
-            setError("Your brand profile was not found. Please complete your profile in settings to see dashboard stats.");
-          } else {
-            console.error("Dashboard stats error:", statsResult.reason);
-          }
         }
-
-        // Map Influencers Data
-        if (influencersResult.status === 'fulfilled' && influencersResult.value.data?.success) {
-          setInfluencers(influencersResult.value.data.data.influencers || []);
-        }
-
-        // Automatically mark activities as read on fetch
-        if (activitiesResult.status === 'fulfilled' && activitiesResult.value.data?.success) {
-          try {
-            // Backend endpoint for marking all as read (if exists) or we could call mark as read for each
-            // For now, if the user requested automatic "read on viewing", and we are fetching them, 
-            // we should ideally tell the backend they are viewed.
-            // Assuming there's a bulk mark as read endpoint or we can implement it.
-            // Based on my research, there's router.patch("/activity/:id/read")
-            // I'll add a helper to mark all unread ones.
-            const unread = activitiesResult.value.data.data.activities?.filter(a => !a.isRead) || [];
-            if (unread.length > 0) {
-              await Promise.all(unread.map(a => api.patch(`/brands/activity/${a._id}/read`)));
-            }
-          } catch (activityErr) {
-            console.error("Error marking activities as read:", activityErr);
-          }
-        }
-
       } catch (err) {
-        console.error("Unexpected error in dashboard:", err);
-        setError("An unexpected error occurred while loading the dashboard.");
+        console.error("Analytics fetch error:", err);
       } finally {
         setIsLoading(false);
       }
     };
-
-    fetchDashboardData();
+    fetchAnalytics();
   }, []);
 
-  // UI mapping array for stats
-  const displayStats = [
-    {
-      id: 1,
-      title: "Success Rate",
-      value: `${stats.successRate}%`,
-      icon: <CheckCircle className="w-6 h-6 text-green-500" />,
-      bgClass: "bg-green-50"
-    },
-    {
-      id: 2,
-      title: "Active Campaigns",
-      value: stats.activeCampaigns,
-      icon: <FileText className="w-6 h-6 text-blue-500" />,
-      bgClass: "bg-blue-50"
-    },
-    {
-      id: 3,
-      title: "Total Campaigns",
-      value: stats.totalCampaigns,
-      icon: <ShieldCheck className="w-6 h-6 text-indigo-500" />,
-      bgClass: "bg-indigo-50"
-    },
-    {
-      id: 4,
-      title: "Pending Requests",
-      value: stats.pendingRequests,
-      icon: <Clock className="w-6 h-6 text-yellow-500" />,
-      bgClass: "bg-yellow-50"
-    }
-  ];
+  // --- CSV Export Logic ---
+  const handleExport = () => {
+    try {
+      if (!analytics) return;
 
-  // Helper function to map platform name to icon
-  const getPlatformIcon = (platformName) => {
-    const name = platformName?.toLowerCase() || '';
-    if (name.includes('instagram')) return <Instagram className="w-4 h-4 mr-1 text-gray-500" />;
-    if (name.includes('youtube')) return <Youtube className="w-4 h-4 mr-1 text-gray-500" />;
-    if (name.includes('twitter') || name.includes('x')) return <Twitter className="w-4 h-4 mr-1 text-gray-500" />;
-    if (name.includes('linkedin')) return <Linkedin className="w-4 h-4 mr-1 text-gray-500" />;
-    // default
-    return <Users className="w-4 h-4 mr-1 text-gray-500" />;
+      const headers = ["Metric", "Value"];
+      const rows = [
+        ["Total Reach", analytics.totalReach],
+        ["Engagement Rate", analytics.avgEngagementRate],
+        ["Active Campaigns", analytics.activeCampaigns],
+        ["Collaborations", analytics.collaborationCount],
+        ["Total Requests", analytics.requestStats.total],
+        ["Sent Requests", analytics.requestStats.sent],
+        ["Received Requests", analytics.requestStats.received],
+        ["Accepted Requests", analytics.requestStats.accepted],
+        ["Pending Requests", analytics.requestStats.pending],
+        ["", ""],
+        ["Engagement Breakdown", ""],
+        ["Likes", analytics.engagementOverview.likes],
+        ["Comments", analytics.engagementOverview.comments],
+        ["Shares", analytics.engagementOverview.shares],
+        ["Impressions", analytics.engagementOverview.impressions]
+      ];
+
+      const csvContent = [headers, ...rows]
+        .map(row => row.join(","))
+        .join("\n");
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `dashboard_report_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("Export error:", err);
+    }
   };
 
-  return (
-    <div className="flex flex-col gap-8 w-full max-w-[1800px] mx-auto pb-10">
-      {/* Header Section */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-          Welcome, {user?.name || "Brand Manager"}!
-        </h1>
-        <p className="text-gray-500 mt-1">
-          Here's what's happening with your campaigns today.
-        </p>
+  if (isLoading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center bg-gray-50/30">
+        <div className="relative">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="absolute inset-0 blur-lg bg-blue-600/10 animate-pulse rounded-full" />
+        </div>
       </div>
+    );
+  }
 
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md flex items-start">
-          <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 mr-3 shrink-0" />
-          <p className="text-red-700">{error}</p>
+  return (
+    <div className="flex flex-col gap-6 w-full max-w-[1800px] mx-auto pb-10 px-4 md:px-8">
+      
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-8 border-b border-gray-100 pb-8">
+        <div>
+          <p className="text-blue-600 font-bold text-xs uppercase tracking-wider mb-1">Welcome back, {user?.name || 'Partner'}!</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Dashboard Analytics</h1>
+          <p className="text-gray-500 font-medium text-sm mt-1">Monitor your campaign performance and platform growth.</p>
         </div>
-      )}
-
-      {/* Stats Cards Section */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-100 p-5 flex items-center gap-4 animate-pulse">
-              <div className="w-12 h-12 rounded-xl bg-gray-200 shrink-0"></div>
-              <div className="flex flex-col w-full py-1">
-                <div className="h-3 bg-gray-200 rounded w-24 mb-2"></div>
-                <div className="h-6 bg-gray-200 rounded w-10"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {displayStats.map((stat) => (
-            <div key={stat.id} className="bg-white rounded-xl shadow-sm border border-gray-100/60 p-5 flex flex-col justify-center relative overflow-hidden transition-all hover:shadow-md">
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${stat.bgClass}`}>
-                  {stat.icon}
-                </div>
-                <div className="flex flex-col">
-                  <p className="text-[13px] text-gray-500 font-medium mb-0.5">{stat.title}</p>
-                  <h3 className="text-2xl font-bold text-gray-900 leading-none">{stat.value}</h3>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Recommended Influencers Section */}
-      <div>
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-bold text-gray-900">Recommended Influencers</h2>
-          <button
-            onClick={() => navigate('/brand/search')}
-            className="text-blue-600 border border-blue-200 hover:border-blue-600 hover:bg-blue-50 transition-colors font-medium text-sm rounded-full px-5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
-            View All
+        
+        <div className="flex items-center gap-3">
+          <div className="relative group">
+            <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <select className="bg-white border border-gray-200 rounded-xl pl-10 pr-6 py-2.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all cursor-pointer">
+              <option>Last 30 days</option>
+              <option>Last 90 days</option>
+              <option>Last Year</option>
+            </select>
+          </div>
+          
+          <button 
+            onClick={handleExport}
+            className="flex items-center gap-2 bg-[#1A1A1A] text-white rounded-xl px-5 py-2.5 text-xs font-bold hover:bg-black transition-all shadow-sm"
+          >
+            <Download size={15} />
+            Export CSV
           </button>
         </div>
+      </div>
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-xl border border-gray-100 p-6 flex flex-col items-center animate-pulse">
-                <div className="w-16 h-16 rounded-full bg-gray-200 mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-28 mb-3"></div>
-                <div className="h-3 bg-gray-200 rounded w-20 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-24 mb-6"></div>
-                <div className="w-full h-10 bg-gray-200 rounded-full mt-auto"></div>
+      {/* Top Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+        {[
+          { label: "Total Reach", value: analytics.totalReach, sub: "+12%", icon: <Eye size={22} />, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Engagement Rate", value: analytics.avgEngagementRate, sub: "+2%", icon: <Heart size={22} />, color: "text-red-600", bg: "bg-red-50" },
+          { label: "Active Campaigns", value: analytics.activeCampaigns, sub: "Live", icon: <Users size={22} />, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Collaborations", value: analytics.collaborationCount, sub: "Active", icon: <Handshake size={22} />, color: "text-purple-600", bg: "bg-purple-50" },
+          { label: "Requests", value: analytics.requestStats.total, sub: `${analytics.requestStats.pending} Pending`, icon: <Send size={22} />, color: "text-orange-600", bg: "bg-orange-50" }
+        ].map((stat, idx) => (
+          <div key={idx} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
+            <div className="flex justify-between items-start mb-4">
+              <div className={`p-3.5 ${stat.bg} ${stat.color} rounded-xl`}>
+                {stat.icon}
+              </div>
+              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">{stat.sub}</span>
+            </div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{stat.label}</p>
+            <h2 className="text-2xl font-bold text-gray-900">{stat.value}</h2>
+          </div>
+        ))}
+      </div>
+
+      {/* Engagement Overview & Top Performers */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Engagement Overview */}
+        <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-lg font-bold text-gray-900">Engagement Breakdown</h3>
+            <TrendingUp size={18} className="text-gray-400" />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+            {[
+              { label: "Likes", value: analytics.engagementOverview.likes, color: "bg-blue-500", track: "bg-blue-50" },
+              { label: "Comments", value: analytics.engagementOverview.comments, color: "bg-indigo-500", track: "bg-indigo-50" },
+              { label: "Shares", value: analytics.engagementOverview.shares, color: "bg-violet-500", track: "bg-violet-50" },
+              { label: "Impressions", value: analytics.engagementOverview.impressions, color: "bg-emerald-500", track: "bg-emerald-50" }
+            ].map((item, idx) => (
+              <div key={idx} className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{item.label}</p>
+                  <p className="text-lg font-bold text-gray-900">{item.value?.toLocaleString()}</p>
+                </div>
+                <div className={`w-full ${item.track} h-2 rounded-full overflow-hidden`}>
+                  <div className={`${item.color} h-full rounded-full`} style={{ width: '75%' }} />
+                </div>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {influencers.length > 0 ? (
-              influencers.map((influencer) => {
-                const mainPlatform = influencer.platforms && influencer.platforms.length > 0 ? influencer.platforms[0] : null;
-                const followers = mainPlatform?.followers ? `${(mainPlatform.followers / 1000).toFixed(1)}k followers` : '';
+        </div>
 
-                return (
-                  <div key={influencer._id} className="bg-white rounded-xl shadow-sm border border-gray-100/60 p-6 flex flex-col items-center text-center transition-all hover:shadow-md">
-                    <img
-                      src={influencer.profilePicture || `https://ui-avatars.com/api/?name=${influencer.username}&background=random`}
-                      alt={influencer.username}
-                      className="w-16 h-16 rounded-full object-cover mb-4 ring-[3px] ring-gray-50"
-                    />
-
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <h3 className="text-[15px] font-bold text-gray-900">{influencer.username}</h3>
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#e8f5e9] text-[#2e7d32]">
-                        <ShieldCheck className="w-3 h-3 mr-0.5" />
-                        Verified
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col items-center text-[13px] text-gray-500 space-y-0.5 mb-5 w-full">
-                      <div className="flex items-center">
-                        {getPlatformIcon(mainPlatform?.name)}
-                        <span className="capitalize">{mainPlatform?.name || 'Social Media'}</span>
-                      </div>
-                      {followers && <span>{followers}</span>}
-                      {influencer.category && <span className="capitalize">{influencer.category}</span>}
-                    </div>
-
-                    <button
-                      onClick={() => navigate(`/brand/influencer/${influencer._id}`)}
-                      className="w-full bg-[#1A73E8] hover:bg-[#1557B0] text-white text-[13px] font-medium rounded-full py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1A73E8] focus:ring-offset-2 mt-auto">
-                      View Profile
-                    </button>
+        {/* Top Creators */}
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-bold text-gray-900 mb-6">Top Performers</h3>
+          <div className="space-y-3">
+            {analytics.topPerformers.map((performer, idx) => (
+              <div 
+                key={idx} 
+                onClick={() => navigate(`/brand/influencer/${performer.id || 'mock'}`)}
+                className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-xl transition-all cursor-pointer group"
+              >
+                <div className="flex items-center gap-3">
+                  <img src={performer.avatar} alt="" className="w-10 h-10 rounded-lg object-cover shadow-sm" />
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{performer.name}</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{performer.reach} Reach</p>
                   </div>
-                )
-              })
-            ) : (
-              <div className="col-span-1 md:col-span-3 text-center py-10 bg-white rounded-xl border border-dashed border-gray-200">
-                <p className="text-gray-500">No recommended influencers found at this time.</p>
+                </div>
+                <div className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
+                  {performer.engagement}
+                </div>
               </div>
-            )}
+            ))}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Recent Activity Section Removed as per request */}
+      {/* Campaign Performance Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-gray-900">Campaign Intelligence</h3>
+          <button 
+            onClick={() => navigate('/brand/collaborations/all')}
+            className="text-xs font-bold text-blue-600 hover:underline"
+          >
+            View All Projects
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase tracking-wider">
+              <tr>
+                <th className="px-8 py-4">Campaign</th>
+                <th className="px-6 py-4">Reach</th>
+                <th className="px-6 py-4">Engagement</th>
+                <th className="px-6 py-4">ROI</th>
+                <th className="px-6 py-4">Budget</th>
+                <th className="px-8 py-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {analytics.campaignPerformance.map((campaign, idx) => (
+                <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-8 py-5">
+                    <p className="font-bold text-gray-900 text-sm">{campaign.name}</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Active</p>
+                  </td>
+                  <td className="px-6 py-5 text-sm font-bold text-gray-600">{campaign.reach?.toLocaleString()}</td>
+                  <td className="px-6 py-5">
+                    <span className="bg-gray-100 px-2 py-0.5 rounded-lg text-[10px] font-bold text-gray-600">{campaign.engagement}%</span>
+                  </td>
+                  <td className="px-6 py-5 text-sm font-bold text-emerald-600">{campaign.roi}%</td>
+                  <td className="px-6 py-5 text-sm font-bold text-gray-600">${campaign.budget?.toLocaleString()}</td>
+                  <td className="px-8 py-5 text-right">
+                    <button 
+                      onClick={() => navigate(`/brand/campaigns`)}
+                      className="text-[10px] font-bold text-gray-900 border border-gray-200 rounded-lg px-4 py-1.5 hover:bg-gray-50 transition-all"
+                    >
+                      View Logic
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Platform Statistics */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-bold text-gray-900 ml-1">Channel Analytics</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { name: "Instagram", color: "text-pink-600", bg: "bg-pink-50/30", data: analytics.platformStats.instagram },
+            { name: "YouTube", color: "text-red-600", bg: "bg-red-50/30", data: analytics.platformStats.youtube },
+            { name: "TikTok", color: "text-black", bg: "bg-gray-50/50", data: analytics.platformStats.tiktok }
+          ].map((platform, idx) => (
+            <div key={idx} className={`p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all`}>
+              <div className="flex items-center justify-between mb-6">
+                <h4 className={`text-sm font-bold uppercase tracking-wider ${platform.color}`}>{platform.name}</h4>
+                <Share2 size={16} className="text-gray-300" />
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase tracking-wider">Posts</span>
+                  <span className="font-bold text-gray-900">{platform.data.posts}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase tracking-wider">Reach</span>
+                  <span className="font-bold text-gray-900">{(platform.data.reach / 1000).toFixed(1)}K</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase tracking-wider">Engagement</span>
+                  <span className="font-bold text-emerald-600">%{platform.data.engagement}</span>
+                </div>
+                <div className="pt-2 border-t border-gray-50 mt-2">
+                  <div className="flex justify-between items-end mb-1">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Follower Gain</span>
+                    <span className="text-xs font-bold text-blue-600">+{platform.data.followers?.toLocaleString()}</span>
+                  </div>
+                  <div className="w-full bg-gray-50 h-1 rounded-full overflow-hidden">
+                    <div className="bg-blue-600 h-full w-[60%]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
     </div>
   );
 }

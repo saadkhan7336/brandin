@@ -91,7 +91,7 @@ const ExtendDurationModal = ({ isOpen, onClose, onConfirm, campaign, loading }) 
               <Button
                 type="submit"
                 className="flex-1 rounded-xl shadow-lg shadow-blue-200"
-                loading={loading}
+                isLoading={loading}
               >
                 Reactivate
               </Button>
