@@ -119,7 +119,7 @@ const influencerNavItems = [
   { icon: Building2,       label: "Search Brands",          path: "/influencer/search/campaigns" },
   { icon: FileText,        label: "Collaboration Requests", path: "/influencer/requests" },
   { icon: Handshake,       label: "Collaborations",         path: "/influencer/collaborations" },
-  { icon: Settings,        label: "Edit Profile",           path: "/influencer/settings" },
+  { icon: Settings,        label: "My Profile",             path: "/influencer/profile" },
 ];
 
 const adminNavItems = [

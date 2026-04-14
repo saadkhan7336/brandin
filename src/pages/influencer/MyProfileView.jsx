@@ -278,7 +278,7 @@ export default function MyProfileView() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 px-4">
         <div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tight">
-            Public Profile
+            Influencer Public Profile
           </h1>
           <p className="text-slate-500 text-sm font-medium mt-1">
             This is how <span className="text-blue-600 font-bold">Brands</span>{" "}
@@ -312,9 +312,9 @@ export default function MyProfileView() {
           ) : (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-8 py-3 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 border-none"
+              className="px-8 py-3 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 border-none flex items-center gap-2.5"
             >
-              Refine Profile
+              <Edit3 size={14} /> Edit Profile
             </button>
           )}
         </div>
