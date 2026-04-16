@@ -33,43 +33,46 @@ const MessageBubble = ({ message, isOwnMessage, onReply, onEdit, onDeleteMe, onD
   return (
     <div
       className={clsx(
-        "flex w-full mt-2" + (showAvatar ? " mt-4" : " mt-0.5"),
-        "space-x-3 max-w-lg relative group transition-all",
-        isOwnMessage ? "ml-auto justify-end" : "",
-        isSelected ? "bg-indigo-50/50 p-2 rounded-xl" : "",
-        selectMode ? "pl-8" : "" // give space for checkbox if in bulk select mode
+        "flex w-full items-center group transition-all relative py-1 px-4",
+        isSelected ? "bg-indigo-50/30" : "hover:bg-gray-50/30",
+        selectMode ? "pl-12" : "" 
       )}
     >
-      {/* Bulk Select Checkbox overlay */}
+      {/* Bulk Select Checkbox overlay - always on the far left */}
       {selectMode && (
         <div 
-          className="absolute left-1 top-1/2 -translate-y-1/2 cursor-pointer z-10" 
+          className="absolute left-4 top-1/2 -translate-y-1/2 cursor-pointer z-10" 
           onClick={() => onSelect(message._id)}
         >
-           <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300 hover:border-indigo-400'}`}>
+           <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300 bg-white hover:border-indigo-400'}`}>
               {isSelected && <Check className="w-3 h-3" />}
            </div>
         </div>
       )}
-      {!isOwnMessage && (
-        <div className="flex-shrink-0 w-10">
-          {showAvatar ? (
-            <div className="h-10 w-10 rounded-xl bg-indigo-100 overflow-hidden flex items-center justify-center font-bold text-indigo-800 shadow-sm border border-white">
-              {message.sender?.profilePic ? (
-                <img
-                  src={message.sender.profilePic}
-                  alt="Profile"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span>{message.sender?.fullname?.charAt(0) || "U"}</span>
-              )}
-            </div>
-          ) : (
-            <div className="h-10 w-10" />
-          )}
-        </div>
-      )}
+
+      <div className={clsx(
+        "flex w-full space-x-3 max-w-2xl",
+        isOwnMessage ? "ml-auto justify-end" : "justify-start"
+      )}>
+        {!isOwnMessage && (
+          <div className="flex-shrink-0 w-10">
+            {showAvatar ? (
+              <div className="h-10 w-10 rounded-xl bg-indigo-100 overflow-hidden flex items-center justify-center font-bold text-indigo-800 shadow-sm border border-white">
+                {message.sender?.profilePic ? (
+                  <img
+                    src={message.sender.profilePic}
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span>{message.sender?.fullname?.charAt(0) || "U"}</span>
+                )}
+              </div>
+            ) : (
+              <div className="h-10 w-10" />
+            )}
+          </div>
+        )}
       
       <div className="flex flex-col">
         <div className="relative group/bubble flex items-center">
@@ -218,9 +221,9 @@ const MessageBubble = ({ message, isOwnMessage, onReply, onEdit, onDeleteMe, onD
            </div>
         )}
       </div>
-      
     </div>
-  );
+  </div>
+);
 };
 
 export default MessageBubble;

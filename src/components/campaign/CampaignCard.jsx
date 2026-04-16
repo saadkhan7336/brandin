@@ -113,15 +113,16 @@ const CampaignCard = ({ campaign, onEdit, onDelete, onReactivate }) => {
             <p className="text-xs text-gray-500">
               Created on {formatDate(campaign.createdAt)}
             </p>
-            <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusColors[status] || statusColors.pending}`}>
-              <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${status === 'draft' ? 'bg-gray-400' : 'bg-current'}`}></span>
-              {status}
-            </div>
 
-            {campaign.ongoingCollaborationId && (
-              <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg border border-blue-100 animate-in fade-in slide-in-from-left duration-300">
+            {campaign.ongoingCollaborationId ? (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100 animate-in fade-in duration-300">
                 <Handshake className="w-3 h-3" />
-                <span className="text-[10px] font-bold tracking-tight uppercase">Ongoing Campaign</span>
+                <span className="text-[10px] font-bold tracking-tight uppercase">Ongoing Collaboration</span>
+              </div>
+            ) : (
+              <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusColors[status] || statusColors.pending}`}>
+                <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${status === 'draft' ? 'bg-gray-400' : 'bg-current'}`}></span>
+                {status}
               </div>
             )}
           </div>

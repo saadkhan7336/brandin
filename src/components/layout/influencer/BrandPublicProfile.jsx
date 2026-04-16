@@ -16,10 +16,13 @@ import {
   Star,
   Instagram,
   Twitter,
+  LayoutDashboard,
   ShieldClose,
 } from "lucide-react";
 import api from "../../../services/api";
+import collaborationService from "../../../services/collaborationService";
 import SendCollabModal from "./SendCollabModal";
+import { cn } from "../../../utils/helper";
 
 const BrandPublicProfile = () => {
   const { brandId } = useParams();
@@ -30,6 +33,10 @@ const BrandPublicProfile = () => {
   const [activeTab, setActiveTab] = useState("about");
   const [saved, setSaved] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [activeCollab, setActiveCollab] = useState(null);
+  const [isRequested, setIsRequested] = useState(false);
+  const [appliedCampaignIds, setAppliedCampaignIds] = useState([]);
+  const [activeCollabMap, setActiveCollabMap] = useState({}); // { [campaignId]: collabId }
 
   useEffect(() => {
     const fetchBrand = async () => {
@@ -37,6 +44,52 @@ const BrandPublicProfile = () => {
       try {
         const res = await api.get(`/brands/${brandId}/public`);
         setData(res.data.data);
+        
+        // Check for active collaboration
+        const brandUserId = res.data.data.brand?.user?._id;
+        if (brandUserId) {
+          try {
+            const [collabRes, sentReqRes, activeCollabsRes] = await Promise.all([
+              collaborationService.getLatestWithUser(brandUserId),
+              collaborationService.getRequests({ type: "sent", limit: 100 }),
+              collaborationService.getAll({ status: "active", limit: 100 })
+            ]);
+
+            if (collabRes.success && collabRes.data) {
+              if (collabRes.data.status === 'active') {
+                setActiveCollab(collabRes.data);
+              } else if (collabRes.data.status === 'pending') {
+                setIsRequested(true);
+              }
+            }
+
+            if (sentReqRes.success) {
+              const ids = sentReqRes.data.requests
+                ?.filter(r => r.campaign)
+                .map(r => (r.campaign?._id || r.campaign));
+              setAppliedCampaignIds(ids || []);
+            }
+
+            if (activeCollabsRes.success) {
+              const map = {};
+              activeCollabsRes.data.collaborations
+                ?.filter(c => c.campaign)
+                .forEach(c => {
+                  // Use robust ID extraction
+                  const getStrId = (val) => {
+                    if (!val) return '';
+                    if (typeof val === 'string') return val;
+                    return String(val.id || val._id || val);
+                  };
+                  const campId = getStrId(c.campaign);
+                  map[campId] = getStrId(c._id);
+                });
+              setActiveCollabMap(map);
+            }
+          } catch (collabErr) {
+            console.error("Error fetching relationship data:", collabErr);
+          }
+        }
       } catch (err) {
         setError(err.response?.data?.message || "Brand not found");
       } finally {
@@ -96,9 +149,9 @@ const BrandPublicProfile = () => {
   }
 
   const { brand, campaigns } = data;
-  const name = brand.brandname || "Brand";
-  const logo = brand.logo;
-  const user = brand.user || {};
+  const user = brand?.user || data?.user || {};
+  const name = brand?.brandname || user?.fullname || "Brand";
+  const logo = brand?.logo || user?.profilePic;
 
   // Real metrics from backend stats object
   const metrics = {
@@ -127,18 +180,55 @@ const BrandPublicProfile = () => {
   const tags = [brand.industry, ...(brand.lookingFor?.slice(0, 2) || [])].filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* ── Back Nav ──────────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-3">
-        <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-white">
+      {/* ── HEADER ACTIONS ── */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 animate-in fade-in duration-700">
+        <div>
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium"
+            className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors mb-4 border-none bg-transparent p-0"
           >
-            <ArrowLeft size={16} /> Back to Search
+            <ArrowLeft className="w-4 h-4" /> Back to Search
           </button>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight italic uppercase">
+            {name}
+          </h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSaved(!saved)}
+            className={cn(
+              "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border shadow-sm",
+              saved
+                ? "bg-red-50 border-red-200 text-red-600"
+                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+            )}
+          >
+            <Heart size={14} fill={saved ? "currentColor" : "none"} /> {saved ? "Saved" : "Save"}
+          </button>
+          
+          {activeCollab ? (
+            <button 
+              onClick={() => navigate(`/influencer/collaboration/${activeCollab._id}`)}
+              className="px-6 py-3 bg-indigo-600 border border-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-sm shadow-indigo-100"
+            >
+              <LayoutDashboard size={14} /> Collaboration
+            </button>
+          ) : isRequested ? (
+            <div className="px-6 py-3 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
+              <CheckCircle size={14} className="text-emerald-500" /> Requested
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowApplyModal(true)}
+              className="px-8 py-3 bg-amber-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-2xl shadow-amber-100 hover:bg-amber-600 transition-all flex items-center gap-2.5 active:scale-95 border-none"
+            >
+              <Send size={14} /> Send Collab Request
+            </button>
+          )}
         </div>
       </div>
+
 
       {/* ── Hero Banner ───────────────────────────────────────────────────── */}
       <div className="relative">
@@ -154,8 +244,7 @@ const BrandPublicProfile = () => {
           }} />
         </div>
 
-        {/* Profile Card Overlay */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      </div>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 -mt-16 relative z-10 px-8 pt-24 pb-8">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               {/* Logo + Info */}
@@ -178,10 +267,9 @@ const BrandPublicProfile = () => {
                 {/* Name + Meta */}
                 <div className="pt-1">
                   <div className="flex items-center gap-2">
-                    <h1 className="text-xl font-bold text-gray-900">{name}</h1>
                     {user.isVerified && (
-                      <div className="flex items-center gap-1 bg-blue-50 text-blue-600 text-xs font-semibold px-2 py-0.5 rounded-full border border-blue-100">
-                        <CheckCircle size={12} fill="currentColor" stroke="white" /> Verified
+                      <div className="flex items-center gap-1 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-100 uppercase tracking-tight">
+                        <CheckCircle size={10} fill="currentColor" stroke="white" /> Verified Entity
                       </div>
                     )}
                   </div>
@@ -225,29 +313,9 @@ const BrandPublicProfile = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 sm:mt-0 mt-2">
-                <button
-                  onClick={() => setSaved(!saved)}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                    saved
-                      ? "bg-red-50 border-red-200 text-red-600"
-                      : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  <Heart size={16} fill={saved ? "currentColor" : "none"} /> {saved ? "Saved" : "Save"}
-                </button>
-                <button
-                  onClick={() => setShowApplyModal(true)}
-                  className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-sm"
-                >
-                  <Send size={15} /> Send Request
-                </button>
-              </div>
-            </div>
+              {/* Stats / Description section remains below */}
           </div>
         </div>
-      </div>
 
       {/* ── Metrics Bar ───────────────────────────────────────────────────── */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 mt-4">
@@ -430,19 +498,39 @@ const BrandPublicProfile = () => {
                         year: "numeric",
                       })
                     : null;
+                  const collabId = activeCollabMap[String(c._id)];
+                  const isOngoingCollab = !!collabId;
                   return (
                     <div
                       key={c._id}
-                      onClick={() => navigate(`/influencer/search/campaign/${c._id}`)}
+                      onClick={() => {
+                        if (isOngoingCollab) {
+                          navigate(`/influencer/collaboration/${collabId}`);
+                        } else {
+                          navigate(`/influencer/search/campaign/${c._id}`);
+                        }
+                      }}
                       className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all cursor-pointer group p-5 space-y-3"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <h3 className="font-semibold text-gray-900 text-sm group-hover:text-purple-700 transition-colors line-clamp-2">
                           {c.name}
                         </h3>
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex-shrink-0 capitalize">
-                          {c.status}
-                        </span>
+                        <div className="flex flex-col items-end gap-1.5 shrink-0">
+                          {isOngoingCollab ? (
+                            <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-600 text-white px-2 py-0.5 rounded shadow-sm">
+                              Ongoing Collaboration
+                            </span>
+                          ) : appliedCampaignIds.includes(c._id) ? (
+                            <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-500 text-white px-2 py-0.5 rounded shadow-sm">
+                              Applied
+                            </span>
+                          ) : (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full capitalize">
+                              {c.status}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {c.description && (
@@ -479,8 +567,15 @@ const BrandPublicProfile = () => {
                         )}
                       </div>
 
-                      <p className="text-xs text-purple-600 font-medium group-hover:text-purple-800">
-                        View & apply →
+                      <p className={cn(
+                        "text-xs font-bold transition-colors",
+                        isOngoingCollab ? "text-indigo-600" :
+                        appliedCampaignIds.includes(c._id) ? "text-emerald-600" : 
+                        "text-purple-600 group-hover:text-purple-800"
+                      )}>
+                        {isOngoingCollab ? "Go to Collaboration →" :
+                         appliedCampaignIds.includes(c._id) ? "View Application →" :
+                         "View & apply →"}
                       </p>
                     </div>
                   );

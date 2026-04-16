@@ -32,7 +32,9 @@ export default function Navbar({
   // removed messages logic from here
 
   // Dynamic avatars
-  const avatarUrl = isBrand ? (roleProfile?.logo || user?.profilePic) : (user?.profilePic);
+  const avatarUrl = isBrand 
+    ? (roleProfile?.logo || user?.profilePic) 
+    : (roleProfile?.profilePicture || user?.profilePic);
   
   const roleLabel = 
     userRole === 'admin' ? 'ADMIN' : 

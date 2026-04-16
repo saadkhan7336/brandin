@@ -5,7 +5,6 @@ import {
   Youtube, 
   Twitter, 
   Linkedin, 
-  MessageSquare, 
   Check, 
   X,
   ExternalLink,
@@ -186,9 +185,7 @@ const RequestCard = ({ request, onAccept, onReject, onViewProfile, onResend }) =
                 View Profile
               </button>
               
-              <button className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-all border border-gray-200">
-                <MessageSquare className="w-4.5 h-4.5" />
-              </button>
+
 
               {status === 'pending' && !isSentRequest && (
                 <div className="flex items-center gap-2 ml-1">

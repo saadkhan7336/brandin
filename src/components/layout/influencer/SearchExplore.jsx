@@ -20,12 +20,26 @@ import {
   Send,
 } from "lucide-react";
 import api from "../../../services/api";
+import collaborationService from "../../../services/collaborationService";
 import ApplyCampaignModal from "./ApplyCampaignModal";
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+const cn = (...inputs) => twMerge(clsx(inputs));
 
 
 
 // ── Campaign Card ─────────────────────────────────────────────────────────────
-const CampaignCard = ({ campaign, onViewDetails, onApply }) => {
+const CampaignCard = ({ 
+  campaign, 
+  isApplied, 
+  isViewed, 
+  isCollaboration, 
+  collaborationId,
+  onViewDetails, 
+  onApply,
+  onViewCollaboration
+}) => {
   const budgetMin = campaign.budget?.min?.toLocaleString() || 0;
   const budgetMax = campaign.budget?.max?.toLocaleString() || 0;
   const brandName = campaign.brandProfile?.brandname || campaign.brandUser?.fullname || "Brand";
@@ -61,9 +75,24 @@ const CampaignCard = ({ campaign, onViewDetails, onApply }) => {
             <p className="text-xs text-gray-500 font-medium">by {brandName}</p>
           </div>
         </div>
-        <button className="text-gray-300 hover:text-red-500 transition-colors p-1">
-          <Heart size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          {isCollaboration ? (
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm">
+              Ongoing Collaboration
+            </span>
+          ) : isApplied ? (
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+              Applied
+            </span>
+          ) : isViewed && (
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
+              Viewed
+            </span>
+          )}
+          <button className="text-gray-300 hover:text-red-500 transition-colors p-1">
+            <Heart size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Info */}
@@ -88,7 +117,7 @@ const CampaignCard = ({ campaign, onViewDetails, onApply }) => {
             {p}
           </span>
         ))}
-        {campaign.status === "active" && (
+        {campaign.status === "active" && !isCollaboration && (
           <span className="text-xs font-medium bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">
             Active
           </span>
@@ -125,23 +154,55 @@ const CampaignCard = ({ campaign, onViewDetails, onApply }) => {
       <div className="flex gap-2 pt-2 mt-auto">
         <button 
           onClick={() => onViewDetails(campaign)}
-          className="flex-1 py-2.5 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all"
+          className={cn(
+            "flex-1 py-2.5 text-sm font-semibold rounded-lg border transition-all",
+            isViewed 
+              ? "bg-gray-50 border-gray-200 text-gray-400" 
+              : "border-gray-200 text-gray-700 hover:bg-gray-50"
+          )}
         >
-          View Details
+          {isCollaboration ? "Collaboration Overview" : (isViewed ? "Viewed" : "View Details")}
         </button>
+
         <button 
-          onClick={() => onApply(campaign)}
-          className="flex-1 py-2.5 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all"
+          onClick={() => isCollaboration ? onViewCollaboration(collaborationId) : (!isApplied && onApply(campaign))}
+          disabled={isApplied && !isCollaboration}
+          className={cn(
+            "flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5",
+            isCollaboration
+              ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200"
+              : isApplied
+                ? "bg-emerald-50 text-emerald-600 border border-emerald-100 cursor-default"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+          )}
         >
-          Apply Now
+          {isCollaboration ? (
+            <>Collaboration</>
+          ) : (
+            <>
+              {isApplied && <CheckCircle size={14} />}
+              {isApplied ? "Applied" : "Apply Now"}
+            </>
+          )}
         </button>
+
       </div>
     </div>
   );
 };
 
 // ── Brand Card ────────────────────────────────────────────────────────────────
-const BrandCard = ({ brand, onViewProfile, onSendRequest }) => {
+const BrandCard = ({ 
+  brand, 
+  isRequested, 
+  isViewed, 
+  isCollaboration,
+  collaborationId,
+  onViewProfile, 
+  onSendRequest,
+  onViewCollaboration,
+  activeCampaignName
+}) => {
   const name = brand.brandname || "Brand";
   const logo = brand.logo;
 
@@ -169,9 +230,31 @@ const BrandCard = ({ brand, onViewProfile, onSendRequest }) => {
             )}
           </div>
         </div>
-        <button className="text-gray-300 hover:text-red-500 transition-colors pt-1">
-          <Heart size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+           {isCollaboration ? (
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
+                  Collaborating
+                </span>
+                {activeCampaignName && (
+                  <span className="text-[9px] font-bold text-indigo-400 uppercase truncate max-w-[110px]" title={activeCampaignName}>
+                    via: {activeCampaignName}
+                  </span>
+                )}
+              </div>
+            ) : isRequested ? (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                Requested
+              </span>
+            ) : isViewed && (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
+                Viewed
+              </span>
+            )}
+          <button className="text-gray-300 hover:text-red-500 transition-colors pt-1">
+            <Heart size={18} />
+          </button>
+        </div>
       </div>
 
         {brand.industry && (
@@ -212,17 +295,38 @@ const BrandCard = ({ brand, onViewProfile, onSendRequest }) => {
       <div className="flex gap-2 mt-auto">
         <button 
           onClick={() => onViewProfile(brand)}
-          className="flex-1 py-2.5 text-sm font-semibold border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+          className={cn(
+            "flex-1 py-2.5 text-sm font-semibold border rounded-lg transition-colors",
+            isViewed
+              ? "bg-gray-50 border-gray-200 text-gray-400"
+              : "border-gray-200 text-gray-700 hover:bg-gray-50"
+          )}
         >
-          View Profile
+          {isViewed ? "Viewed" : "View Profile"}
         </button>
+
         <button 
-          onClick={() => onSendRequest(brand)}
-          className="flex-1 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-1.5"
+          onClick={() => isCollaboration ? onViewCollaboration(collaborationId) : (!isRequested && onSendRequest(brand))}
+          disabled={isRequested && !isCollaboration}
+          className={cn(
+            "flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5",
+            isCollaboration
+              ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200"
+              : isRequested
+                ? "bg-emerald-50 text-emerald-600 border border-emerald-100 cursor-default"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+          )}
         >
-          <Send size={15} />
-          Send Request
+          {isCollaboration ? (
+            <>Collaboration</>
+          ) : (
+            <>
+              {isRequested ? <CheckCircle size={15} /> : <Send size={15} />}
+              {isRequested ? "Requested" : "Send Request"}
+            </>
+          )}
         </button>
+
       </div>
     </div>
   );
@@ -290,6 +394,14 @@ const SearchExplore = () => {
   const [selectedApplicationCampaign, setSelectedApplicationCampaign] = useState(null);
   const [selectedBrand, setSelectedBrand] = useState(null);
 
+  // States for feedback tracking
+  const [viewedIds, setViewedIds] = useState([]);
+  const [appliedCampaignIds, setAppliedCampaignIds] = useState([]);
+  const [requestedBrandIds, setRequestedBrandIds] = useState([]);
+  
+  // Collaboration tracking
+  const [activeCollaborations, setActiveCollaborations] = useState([]); // List of { campaignId, brandId, collaborationId }
+
   // Filters
   const [search, setSearch] = useState("");
   const [industry, setIndustry] = useState("All");
@@ -298,6 +410,82 @@ const SearchExplore = () => {
   // Pagination
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
+
+  // Load viewed state from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("influencer_viewed_ids");
+    if (saved) {
+      try {
+        setViewedIds(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse viewed IDs", e);
+      }
+    }
+  }, []);
+
+  // Sync viewed state to localStorage
+  useEffect(() => {
+    if (viewedIds.length > 0) {
+      localStorage.setItem("influencer_viewed_ids", JSON.stringify(viewedIds));
+    }
+  }, [viewedIds]);
+
+  // Fetch influencer's sent requests to mark applied/requested cards
+  useEffect(() => {
+    const fetchExistingRequests = async () => {
+      try {
+        const res = await collaborationService.getRequests({ type: "sent", limit: 100 });
+        if (res.success) {
+          const sentRequests = res.data.requests || [];
+          const appliedIds = sentRequests
+            .filter(r => r.campaign)
+            .map(r => r.campaign._id || r.campaign);
+          const requestedIds = sentRequests
+            .filter(r => r.receiverDetails?.role === 'brand' || r.receiver)
+            .map(r => r.receiver?._id || r.receiver);
+          
+          setAppliedCampaignIds(appliedIds);
+          setRequestedBrandIds(requestedIds);
+        }
+      } catch (err) {
+        console.error("Failed to fetch existing requests", err);
+      }
+    };
+
+    const fetchCollaborations = async () => {
+      try {
+        // Fetch all non-completed collaborations
+        const res = await collaborationService.getAll({ limit: 100 });
+        if (res.success) {
+          const collabs = (res.data.collaborations || []).filter(
+            c => !['completed', 'cancelled'].includes(c.status)
+          );
+          
+          const mapping = collabs.map(c => {
+            // Helper to extract ID from potential object or string
+            const getStrId = (val) => {
+              if (!val) return '';
+              if (typeof val === 'string') return val;
+              return String(val.id || val._id || val);
+            };
+
+            return {
+              id: getStrId(c._id),
+              campaignId: getStrId(c.campaign),
+              brandId: getStrId(c.brand),
+              campaignName: c.campaign?.name || c.campaign?.title || 'Collaboration'
+            };
+          });
+          setActiveCollaborations(mapping);
+        }
+      } catch (err) {
+        console.error("Failed to fetch active collaborations", err);
+      }
+    };
+
+    fetchExistingRequests();
+    fetchCollaborations();
+  }, []);
 
   // ── Fetch campaigns ─────────────────────────────────────────────────────────
   const fetchCampaigns = useCallback(async () => {
@@ -357,6 +545,12 @@ const SearchExplore = () => {
     setIndustry("All");
     setPlatform("All");
     setPage(1);
+  };
+
+  const markAsViewed = (id) => {
+    if (!viewedIds.includes(id)) {
+      setViewedIds(prev => [...prev, id]);
+    }
   };
 
   const hasActiveFilters = search || industry !== "All" || platform !== "All";
@@ -555,32 +749,67 @@ const SearchExplore = () => {
         {/* Campaign cards grid */}
         {!loading && activeTab === "campaigns" && campaigns.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {campaigns.map((c) => (
-              <CampaignCard
-                key={c._id}
-                campaign={c}
-                onViewDetails={(campaign) =>
-                  navigate(`/influencer/search/campaign/${campaign._id}`)
-                }
-                onApply={(campaign) => setSelectedApplicationCampaign(campaign)}
-              />
-            ))}
+            {campaigns.map((c) => {
+              // Use String() to safely compare MongoDB ObjectIds
+              const collab = activeCollaborations.find(
+                ac => ac.campaignId === String(c._id)
+              );
+              const isCollab = !!collab;
+              return (
+                <CampaignCard
+                  key={c._id}
+                  campaign={c}
+                  // If it's a collaboration, don't show it as just "applied"
+                  isApplied={!isCollab && appliedCampaignIds.map(String).includes(String(c._id))}
+                  isViewed={viewedIds.includes(c._id)}
+                  isCollaboration={isCollab}
+                  collaborationId={collab?.id}
+                  onViewDetails={(campaign) => {
+                     markAsViewed(campaign._id);
+                     navigate(`/influencer/search/campaign/${campaign._id}`);
+                  }}
+                  onApply={(campaign) => setSelectedApplicationCampaign(campaign)}
+                  onViewCollaboration={(collabId) => {
+                    navigate(`/influencer/collaboration/${collabId}`);
+                  }}
+                />
+              );
+            })}
+
+
           </div>
         )}
 
         {/* Brand cards grid */}
         {!loading && activeTab === "brands" && brands.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {brands.map((b) => (
-              <BrandCard
-                key={b._id}
-                brand={b}
-                onViewProfile={(brand) =>
-                  navigate(`/influencer/search/brand/${brand._id}`)
-                }
-                onSendRequest={(brand) => setSelectedBrand(brand)}
-              />
-            ))}
+            {brands.map((b) => {
+              const collab = activeCollaborations.find(
+                ac => ac.brandId === String(b._id) || ac.brandId === String(b.user || '')
+              );
+              const isBrandCollab = !!collab;
+              return (
+                <BrandCard
+                  key={b._id}
+                  brand={b}
+                  isRequested={!isBrandCollab && requestedBrandIds.map(String).includes(String(b._id))}
+                  isViewed={viewedIds.includes(b._id)}
+                  isCollaboration={isBrandCollab}
+                  collaborationId={collab?.id}
+                  activeCampaignName={collab?.campaignName}
+                  onViewProfile={(brand) => {
+                    markAsViewed(brand._id);
+                    navigate(`/influencer/search/brand/${brand._id}`);
+                  }}
+                  onSendRequest={(brand) => setSelectedBrand(brand)}
+                  onViewCollaboration={(collabId) => {
+                    navigate(`/influencer/collaboration/${collabId}`);
+                  }}
+                />
+              );
+            })}
+
+
           </div>
         )}
 
@@ -614,7 +843,10 @@ const SearchExplore = () => {
           campaign={selectedApplicationCampaign}
           targetType="campaign"
           onClose={() => setSelectedApplicationCampaign(null)}
-          onSuccess={() => setSelectedApplicationCampaign(null)}
+          onSuccess={() => {
+            setAppliedCampaignIds(prev => [...prev, selectedApplicationCampaign._id]);
+            setSelectedApplicationCampaign(null);
+          }}
         />
       )}
 
@@ -624,9 +856,13 @@ const SearchExplore = () => {
           brand={selectedBrand}
           targetType="brand"
           onClose={() => setSelectedBrand(null)}
-          onSuccess={() => setSelectedBrand(null)}
+          onSuccess={() => {
+            setRequestedBrandIds(prev => [...prev, selectedBrand._id]);
+            setSelectedBrand(null);
+          }}
         />
       )}
+
     </div>
   );
 };

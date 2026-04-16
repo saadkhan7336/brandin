@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import {
   FileText, CheckCircle, Clock, Users,
   Instagram, Youtube, ShieldCheck, Twitter, Linkedin,
-  Search, ChevronLeft, ChevronRight, X
+  Search, ChevronLeft, ChevronRight, X,
+  Briefcase
 } from 'lucide-react';
 import api from '../../services/api';
+import collaborationService from '../../services/collaborationService';
 
 function Influencers() {
   const navigate = useNavigate();
@@ -34,6 +36,8 @@ function Influencers() {
     page: 1,
     pages: 1
   });
+  const [activeCollaborations, setActiveCollaborations] = useState([]);
+  const [requestedInfluencerIds, setRequestedInfluencerIds] = useState([]);
 
   // UI States
   const [isLoadingStats, setIsLoadingStats] = useState(true);
@@ -63,6 +67,38 @@ function Influencers() {
       }
     };
     fetchStats();
+  }, []);
+
+  // --- Fetch Collaborations & Requests ---
+  useEffect(() => {
+    const fetchExistingData = async () => {
+      try {
+        const [collabRes, reqRes] = await Promise.all([
+          collaborationService.getAll({ status: "active", limit: 100 }),
+          collaborationService.getRequests({ type: "sent", limit: 100 })
+        ]);
+
+        if (collabRes.success) {
+          const mapping = (collabRes.data.collaborations || []).map(c => ({
+            id: c._id,
+            influencerId: c.influencer?._id || c.influencer,
+            campaignId: c.campaign?._id || c.campaign,
+            campaignName: c.campaign?.name || c.campaign?.title
+          }));
+          setActiveCollaborations(mapping);
+        }
+
+        if (reqRes.success) {
+          const ids = (reqRes.data.requests || [])
+            .filter(r => r.receiverDetails?.role === 'influencer' || r.receiver)
+            .map(r => r.receiver?._id || r.receiver);
+          setRequestedInfluencerIds(ids);
+        }
+      } catch (err) {
+        console.error("Error fetching partnership data:", err);
+      }
+    };
+    fetchExistingData();
   }, []);
 
   // --- Fetch Influencers (Search) ---
@@ -288,11 +324,31 @@ function Influencers() {
           {influencers.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {influencers.map(influencer => {
+                const collab = activeCollaborations.find(ac => ac.influencerId === influencer._id);
+                const isRequested = requestedInfluencerIds.includes(influencer._id);
                 const mainPlatform = influencer.platforms?.[0];
                 const followers = mainPlatform?.followers >= 1000 ? `${(mainPlatform.followers / 1000).toFixed(0)}k` : mainPlatform?.followers || 0;
 
                 return (
-                  <div key={influencer._id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center transition-all hover:shadow-md">
+                  <div key={influencer._id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center transition-all hover:shadow-md relative overflow-hidden">
+                    {/* Status Badge */}
+                    <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+                      {collab ? (
+                        <div className="flex flex-col items-end">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100 uppercase tracking-wider">
+                            Active Partner
+                          </span>
+                          <span className="text-[8px] font-bold text-indigo-400 uppercase truncate max-w-[80px] mt-0.5">
+                            {collab.campaignName}
+                          </span>
+                        </div>
+                      ) : isRequested ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase tracking-wider">
+                          Requested
+                        </span>
+                      ) : null}
+                    </div>
+
                     <img
                       src={influencer.profilePicture || `https://ui-avatars.com/api/?name=${influencer.username}&background=random`}
                       alt={influencer.username}
@@ -314,10 +370,12 @@ function Influencers() {
                       {influencer.category && <span className="capitalize">{influencer.category}</span>}
                     </div>
                     <button
-                      onClick={() => navigate(`/brand/influencer/${influencer._id}`)}
-                      className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white text-[13px] font-medium rounded-full py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-2 mt-auto"
+                      onClick={() => collab ? navigate(`/brand/collaboration/${collab.id}`) : navigate(`/brand/influencer/${influencer._id}`)}
+                      className={`w-full text-white text-[13px] font-bold rounded-full py-2.5 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 mt-auto ${
+                        collab ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 shadow-indigo-100' : 'bg-[#3B82F6] hover:bg-[#2563EB] focus:ring-[#3B82F6]'
+                      }`}
                     >
-                      View Profile
+                      {collab ? 'Collaborate' : 'View Profile'}
                     </button>
                   </div>
                 );

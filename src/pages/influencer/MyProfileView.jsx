@@ -277,10 +277,21 @@ export default function MyProfileView() {
       {/* ── HEADER ACTIONS ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 px-4">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">
-            Influencer Public Profile
-          </h1>
-          <p className="text-slate-500 text-sm font-medium mt-1">
+          <div className="flex items-center gap-4 mb-1">
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight italic uppercase">
+              {name}
+            </h1>
+            {data.user?.isVerified && (
+              <div className="bg-blue-600 p-1.5 rounded-full text-white shadow-lg shadow-blue-200">
+                <CheckCircle
+                  size={14}
+                  fill="currentColor"
+                  stroke="white"
+                />
+              </div>
+            )}
+          </div>
+          <p className="text-slate-500 text-sm font-medium">
             This is how <span className="text-blue-600 font-bold">Brands</span>{" "}
             and{" "}
             <span className="text-slate-900 font-bold">Talent Managers</span>{" "}
@@ -373,7 +384,7 @@ export default function MyProfileView() {
             </div>
 
             <div className="flex-1 pb-4 space-y-6">
-              {isEditing ? (
+              {isEditing && (
                 <div className="flex gap-4 w-full max-w-2xl">
                   <InlineInput
                     value={editedUser.fullname}
@@ -392,21 +403,6 @@ export default function MyProfileView() {
                     }
                     label="USERNAME"
                   />
-                </div>
-              ) : (
-                <div className="flex items-center gap-4">
-                  <h2 className="text-4xl font-black text-slate-900 tracking-tighter italic uppercase">
-                    {name}
-                  </h2>
-                  {data.user?.isVerified && (
-                    <div className="bg-blue-600 p-1.5 rounded-full text-white shadow-lg shadow-blue-200">
-                      <CheckCircle
-                        size={14}
-                        fill="currentColor"
-                        stroke="white"
-                      />
-                    </div>
-                  )}
                 </div>
               )}
 

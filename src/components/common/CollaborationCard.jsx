@@ -2,7 +2,8 @@ import React from 'react';
 import {
   MessageCircle,
   ExternalLink,
-  ClipboardList
+  ClipboardList,
+  Briefcase
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -103,6 +104,23 @@ const CollaborationCard = ({ collaboration, userRole }) => {
                 {collaboration.status || 'ONGOING'}
               </span>
             </div>
+            
+            {/* Campaign Name */}
+            {collaboration.campaign && (
+              <div 
+                className="flex items-center gap-1.5 mb-1 hover:text-blue-600 transition-colors cursor-pointer w-fit"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/${userRole}/search/campaign/${collaboration.campaign._id || collaboration.campaign}`);
+                }}
+              >
+                <Briefcase size={12} className="text-gray-400" />
+                <p className="text-xs font-bold text-gray-700 uppercase tracking-tight">
+                  {collaboration.campaign.name || 'View Campaign Details'}
+                </p>
+              </div>
+            )}
+
             <p className="text-xs font-medium text-gray-500">
               {formatDate(collaboration.startDate)} to {formatDate(collaboration.endDate)} • <span className="text-blue-600 font-bold">${collaboration.agreedBudget?.toLocaleString()}</span>
             </p>

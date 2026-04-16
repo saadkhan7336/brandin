@@ -7,7 +7,6 @@ import {
   DollarSign,
   Briefcase,
   ExternalLink,
-  MessageSquare,
   ChevronRight,
   RotateCcw
 } from 'lucide-react';
@@ -135,8 +134,7 @@ const InfluencerRequestCard = ({ request, type, onAccept, onReject, onResend }) 
           </button>
           
           {note && (
-            <div className="flex items-start gap-2 mt-1">
-              <MessageSquare className="w-3.5 h-3.5 text-gray-300 mt-1 shrink-0" />
+            <div className="mt-1">
               <p className="text-[13px] text-gray-500 italic line-clamp-1">
                 "{note}"
               </p>

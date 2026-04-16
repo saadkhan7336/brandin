@@ -20,8 +20,11 @@ import {
   Briefcase,
   TrendingUp,
   Edit3,
+  LayoutDashboard,
+  CheckCircle,
 } from "lucide-react";
 import api from "../../services/api";
+import collaborationService from "../../services/collaborationService";
 import SendCollabModal from "../../components/layout/influencer/SendCollabModal";
 import { cn } from "../../utils/helper";
 
@@ -86,6 +89,8 @@ const InfluencerProfile = () => {
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState("about");
+  const [activeCollab, setActiveCollab] = useState(null);
+  const [isRequested, setIsRequested] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -95,6 +100,23 @@ const InfluencerProfile = () => {
         const res = await api.get(`/brands/influencers/${influencerId}`);
         if (res.data?.success) {
           setData(res.data.data);
+          
+          // Check for active collaboration using the user ID
+          const userId = res.data.data.influencer?.user?._id;
+          if (userId) {
+            try {
+              const collabRes = await collaborationService.getLatestWithUser(userId);
+              if (collabRes.success && collabRes.data) {
+                if (collabRes.data.status === 'active') {
+                  setActiveCollab(collabRes.data);
+                } else if (collabRes.data.status === 'pending') {
+                  setIsRequested(true);
+                }
+              }
+            } catch (collabErr) {
+              console.error("No active collaboration found:", collabErr);
+            }
+          }
         } else {
           setError("Failed to load influencer profile.");
         }
@@ -201,15 +223,25 @@ const InfluencerProfile = () => {
           </h1>
         </div>
         <div className="flex items-center gap-3">
-          <button className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
-            <MessageSquare size={14} /> Message
-          </button>
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-8 py-3 bg-[#1A73E8] text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-[#1557B0] transition-all flex items-center gap-2.5 active:scale-95 border-none"
-          >
-            <Send size={14} /> Send Collab Request
-          </button>
+          {activeCollab ? (
+            <button 
+              onClick={() => navigate(`/brand/collaboration/${activeCollab._id}`)}
+              className="px-6 py-3 bg-indigo-600 border border-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-sm shadow-indigo-100"
+            >
+              <LayoutDashboard size={14} /> Collaborate
+            </button>
+          ) : isRequested ? (
+            <div className="px-6 py-3 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
+              <CheckCircle size={14} className="text-emerald-500" /> Requested
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-8 py-3 bg-[#1A73E8] text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-[#1557B0] transition-all flex items-center gap-2.5 active:scale-95 border-none"
+            >
+              <Send size={14} /> Send Collab Request
+            </button>
+          )}
         </div>
       </div>
 

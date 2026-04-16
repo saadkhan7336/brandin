@@ -5,6 +5,7 @@ import {
   Check, Send, Users, LayoutDashboard, Target, TrendingUp
 } from "lucide-react";
 import api from "../../../services/api";
+import collaborationService from "../../../services/collaborationService";
 import ApplyCampaignModal from "./ApplyCampaignModal";
 
 const CampaignDetail = () => {
@@ -15,13 +16,35 @@ const CampaignDetail = () => {
   const [error, setError] = useState(null);
   const [showApply, setShowApply] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [activeCollab, setActiveCollab] = useState(null);
   
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
       try {
-        const res = await api.get(`/campaigns/${campaignId}`);
-        setCampaign(res.data.data);
+        const [campaignRes, requestsRes, collabsRes] = await Promise.all([
+          api.get(`/campaigns/${campaignId}`),
+          collaborationService.getRequests({ type: "sent", limit: 100 }),
+          collaborationService.getAll({ status: "active", limit: 100 })
+        ]);
+
+        setCampaign(campaignRes.data.data);
+
+        // Check if applied
+        if (requestsRes.success) {
+          const hasApplied = requestsRes.data.requests?.some(
+            r => (r.campaign?._id || r.campaign) === campaignId
+          );
+          setApplied(hasApplied);
+        }
+
+        // Check if active collaboration
+        if (collabsRes.success) {
+          const collab = collabsRes.data.collaborations?.find(
+            c => (c.campaign?._id || c.campaign) === campaignId
+          );
+          setActiveCollab(collab);
+        }
       } catch (err) {
         setError(err.response?.data?.message || "Campaign not found");
       } finally {
@@ -220,11 +243,23 @@ const CampaignDetail = () => {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <h3 className="font-bold text-gray-900 text-lg mb-4">Ready to Apply?</h3>
               
-              {applied ? (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-                  <CheckCircle size={28} className="text-green-500 mx-auto mb-2" />
-                  <p className="text-green-800 font-semibold text-sm">Application sent!</p>
-                  <p className="text-green-600 text-xs mt-1">Check your dashboard for updates.</p>
+              {activeCollab ? (
+                <button
+                  onClick={() => navigate(`/influencer/collaboration/${activeCollab._id}`)}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors shadow-lg shadow-indigo-100"
+                >
+                  <LayoutDashboard size={18} />
+                  Go to Collaboration
+                </button>
+              ) : applied ? (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+                  <div className="flex items-center justify-center gap-2 text-emerald-700 font-bold mb-1">
+                    <CheckCircle size={20} className="text-emerald-500" />
+                    <span>Application Sent</span>
+                  </div>
+                  <p className="text-emerald-600 text-[11px] leading-tight">
+                    The brand is currently reviewing your profile. You'll be notified of any updates.
+                  </p>
                 </div>
               ) : (
                 <button

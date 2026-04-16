@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   fetchConversations,
   fetchMessages,
@@ -30,6 +31,7 @@ const ENDPOINT = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 const ChatLayout = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { conversations, messages, activeConversation, loading } = useSelector(
     (state) => state.chat
@@ -277,6 +279,10 @@ const ChatLayout = () => {
   };
   const onSelect = (messageId) => {
     setSelectMode(true);
+    const activeMessages = messages[activeConversation._id] || [];
+    const msg = activeMessages.find(m => m._id === messageId);
+    if (!msg) return;
+
     setSelectedMessageIds(prev => 
       prev.includes(messageId) ? prev.filter(id => id !== messageId) : [...prev, messageId]
     );
@@ -730,9 +736,20 @@ const ChatLayout = () => {
                       )}
                     </div>
                     <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">{chatOtherUser?.fullname}</h3>
-                    <p className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-[0.2em]">
+                    <p className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-[0.2em] mb-3">
                       {chatOtherUser?.role === 'brand' ? 'Brand Partner' : 'Influencer'}
                     </p>
+                    <button 
+                      onClick={() => {
+                        const targetUrl = chatOtherUser?.role === 'brand' 
+                          ? `/influencer/search/brand/${chatOtherUser?._id}`
+                          : `/brand/influencer/${chatOtherUser?._id}`;
+                        navigate(targetUrl);
+                      }}
+                      className="px-6 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-indigo-100"
+                    >
+                      View {chatOtherUser?.role === 'brand' ? 'Brand' : 'Influencer'} Profile
+                    </button>
                     
                     <div className="flex items-center gap-6 mt-6 w-full justify-center">
                        <div className="text-center">
