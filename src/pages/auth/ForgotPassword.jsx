@@ -27,15 +27,15 @@ export default function ForgotPassword() {
     try {
       dispatch(setLoading(true));
       const response = await api.post(ENDPOINTS.FORGOT_PASSWORD, { email });
-      
+
       dispatch(setMessage(response.data.message || "OTP sent to your email"));
       dispatch(setResetEmail(email));
-      
+
       // Delay navigation a bit to show message
       setTimeout(() => {
         navigate('/reset-password');
       }, 2000);
-      
+
     } catch (err) {
       dispatch(setError(err.response?.data?.message || "Something went wrong"));
     } finally {

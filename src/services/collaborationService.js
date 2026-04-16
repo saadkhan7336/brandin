@@ -81,6 +81,19 @@ const collaborationService = {
   },
 
   /**
+   * Get latest active collaboration with a specific user
+   * @param {string} otherUserId 
+   */
+  getLatestWithUser: async (otherUserId) => {
+    try {
+      const response = await api.get(ENDPOINTS.collaborations.getLatestWithUser(otherUserId));
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
    * Add a deliverable (Brand only)
    */
   addDeliverable: async (id, data) => {

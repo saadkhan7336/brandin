@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useAuth } from '../../hooks/useAuth';
 import Navbar from './Navbar';
@@ -7,12 +7,14 @@ import Sidebar from './Sidebar';
 import NotificationPanel from './NotificationPanel';
 import ProfileDropdown from './ProfileDropdown';
 import { fetchNotifications } from '../../redux/slices/notificationSlice';
+import { fetchConversations } from '../../redux/slices/chatSlice';
 import profileService from '../../services/profileService';
 import { setProfileData } from '../../redux/slices/Profileslice';
 import CompletionBanner from '../common/CompletionBanner';
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const { logout } = useAuth();
   const { user } = useSelector((state) => state.auth);
@@ -27,6 +29,7 @@ export default function DashboardLayout() {
 
   useEffect(() => {
     dispatch(fetchNotifications({ limit: 5 }));
+    dispatch(fetchConversations());
     
     // Fetch profile completion status
     const fetchProfileData = async () => {
@@ -89,12 +92,13 @@ export default function DashboardLayout() {
         <Sidebar
           userRole={userRole}
           isOpen={isSidebarOpen}
+          isCollapsed={location.pathname === '/messages'}
           onClose={() => setIsSidebarOpen(false)}
           onLogout={handleLogout}
         />
 
         {/* Main content — dynamic pages via <Outlet> */}
-        <main className="flex-1 p-5 sm:p-6 lg:p-8 min-w-0 overflow-y-auto">
+        <main className={`flex-1 min-w-0 overflow-y-auto ${location.pathname === '/messages' ? 'p-0' : 'p-5 sm:p-6 lg:p-8'}`}>
           {/* Global Completion Banner */}
           {completion && !completion.isComplete && (
             <div className="mb-8">

@@ -11,12 +11,15 @@ import {
   TrendingUp,
   AlertCircle
 } from 'lucide-react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import collaborationService from '../../services/collaborationService';
+import { chatService } from '../../services/chatService';
+import { setActiveConversation } from '../../redux/slices/chatSlice';
 
 const CollabDetailView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [collaboration, setCollaboration] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -76,6 +79,18 @@ const CollabDetailView = () => {
   const delivCompleted = deliverables.filter(d => d.status === 'APPROVED').length;
   const progress = delivTotal > 0 ? Math.round((delivCompleted / delivTotal) * 100) : 0;
 
+  const handleChatClick = async () => {
+    try {
+      const partnerId = partner?._id || partner?.id;
+      if (!partnerId) return;
+      const res = await chatService.createOrGetConversation(partnerId);
+      dispatch(setActiveConversation(res.data || res));
+      navigate('/messages');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="w-full max-w-[1800px] mx-auto pb-10 px-4 md:px-8">
       {/* Back Button & Top Meta */}
@@ -87,7 +102,9 @@ const CollabDetailView = () => {
           <ArrowLeft size={20} />
         </button>
         <div className="flex items-center gap-3">
-           <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
+           <button 
+             onClick={handleChatClick}
+             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
              <MessageCircle size={14} className="text-blue-500" />
              Chat with Partner
            </button>

@@ -118,10 +118,20 @@ export const ENDPOINTS = {
     cancelRequest: (id) => `/collaborations/request/${id}/cancel`,
     getAll: "/collaborations",
     getOne: (id) => `/collaborations/${id}`,
+    getLatestWithUser: (otherUserId) => `/collaborations/latest/${otherUserId}`,
     addDeliverable: (id) => `/collaborations/${id}/deliverables`,
     updateDeliverable: (id, delivId) => `/collaborations/${id}/deliverables/${delivId}`,
     deleteDeliverable: (id, delivId) => `/collaborations/${id}/deliverables/${delivId}`,
     submitDeliverable: (id, delivId) => `/collaborations/${id}/deliverables/${delivId}/submit`,
     reviewDeliverable: (id, delivId) => `/collaborations/${id}/deliverables/${delivId}/review`,
+  },
+
+  // Messages
+  messages: {
+    getConversations: "/messages/conversations",
+    createConversation: "/messages/conversations",
+    getMessages: (id) => `/messages/${id}`,
+    sendMessage: "/messages",
+    markAsRead: (id) => `/messages/${id}/read`,
   }
 };

@@ -32,7 +32,7 @@ const CampaignCard = ({ campaign, onEdit, onDelete, onReactivate }) => {
     <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative group">
       {!campaign.ongoingCollaborationId ? (
         <div className="absolute top-6 right-6" ref={menuRef}>
-          <button 
+          <button
             onClick={() => setShowMenu(!showMenu)}
             className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-50 transition-colors"
           >
@@ -141,7 +141,7 @@ const CampaignCard = ({ campaign, onEdit, onDelete, onReactivate }) => {
           <div>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Budget</p>
             <p className="text-sm font-bold text-gray-900">
-              {campaign.budget?.min && campaign.budget?.max 
+              {campaign.budget?.min && campaign.budget?.max
                 ? `$${campaign.budget.min} - $${campaign.budget.max}`
                 : campaign.budget ? `$${campaign.budget}` : 'Not set'}
             </p>

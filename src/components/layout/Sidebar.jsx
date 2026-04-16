@@ -102,7 +102,7 @@ import { NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
   LayoutDashboard, Search, FileText, Settings,
-  LogOut, Target, Handshake, Building2, AlertCircle,
+  LogOut, Target, Handshake, Building2, AlertCircle, MessageCircle
 } from "lucide-react";
 
 const brandNavItems = [
@@ -111,6 +111,7 @@ const brandNavItems = [
   { icon: FileText,        label: "My Requests", path: "/brand/requests" },
   { icon: Handshake,       label: "Collaborations",     path: "/brand/collaborations" },
   { icon: Target,          label: "Campaigns",          path: "/brand/campaigns" },
+  { icon: MessageCircle,   label: "Messages",           path: "/messages" },
   { icon: Settings,        label: "My Profile",         path: "/brand/profile" },
 ];
 
@@ -119,6 +120,7 @@ const influencerNavItems = [
   { icon: Building2,       label: "Search Brands",          path: "/influencer/search/campaigns" },
   { icon: FileText,        label: "Collaboration Requests", path: "/influencer/requests" },
   { icon: Handshake,       label: "Collaborations",         path: "/influencer/collaborations" },
+  { icon: MessageCircle,   label: "Messages",               path: "/messages" },
   { icon: Settings,        label: "My Profile",             path: "/influencer/profile" },
 ];
 
@@ -128,9 +130,20 @@ const adminNavItems = [
   { icon: Settings,        label: "Settings",  path: "/admin/settings" },
 ];
 
-export default function Sidebar({ userRole, isOpen, onClose, onLogout }) {
+export default function Sidebar({ userRole, isOpen, onClose, onLogout, isCollapsed }) {
   const { user } = useSelector((state) => state.auth);
   const { completion } = useSelector((state) => state.profile);
+  const { conversations } = useSelector((state) => state.chat || { conversations: [] });
+
+  const unreadMessageCount = conversations.reduce((count, conv) => {
+    if (conv.lastMessage && !conv.lastMessage.isRead) {
+      const senderId = conv.lastMessage.sender?._id || conv.lastMessage.sender;
+      if (String(senderId) !== String(user?._id)) {
+        return count + 1;
+      }
+    }
+    return count;
+  }, 0);
 
   const navItems =
     userRole === "brand"      ? brandNavItems :
@@ -138,16 +151,17 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout }) {
     adminNavItems;
 
   const showCompletionWarning =
-    user && !user.profileComplete && userRole !== "admin";
+    user && !user.profileComplete && userRole !== "admin" && !isCollapsed;
   const percent = completion?.percent ?? 0;
 
   return (
     <>
       <aside
         className={`
-          fixed lg:static inset-y-0 left-0 z-30 w-72 bg-white border-r border-gray-200
-          flex flex-col transition-transform duration-300 ease-in-out
+          fixed lg:static inset-y-0 left-0 z-30 bg-white border-r border-gray-200
+          flex flex-col transition-all duration-300 ease-in-out
           lg:translate-x-0 top-[80px] lg:top-0 h-[calc(100vh-80px)] lg:h-screen
+          ${isCollapsed ? "w-20" : "w-72"}
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
@@ -170,7 +184,7 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout }) {
           </div>
         )}
 
-        <nav className="flex-1 flex flex-col px-3 py-4 space-y-1 overflow-y-auto">
+        <nav className={`flex-1 flex flex-col ${isCollapsed ? 'px-2' : 'px-3'} py-4 space-y-1 overflow-y-auto overflow-x-hidden`}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isProfilePage = item.path.includes("profile");
@@ -179,8 +193,9 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout }) {
                 key={item.path}
                 to={item.path}
                 onClick={onClose}
+                title={isCollapsed ? item.label : ""}
                 className={({ isActive }) =>
-                  `relative flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium
+                  `relative flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-4'} py-2.5 rounded-lg text-sm font-medium
                   transition-colors duration-200
                   ${isActive
                     ? "bg-blue-50 text-blue-600"
@@ -188,11 +203,22 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout }) {
                   }`
                 }
               >
-                <Icon className="w-[18px] h-[18px] flex-shrink-0" />
-                <span>{item.label}</span>
+                <Icon className={`${isCollapsed ? 'w-6 h-6' : 'w-[18px] h-[18px]'} flex-shrink-0`} />
+                {!isCollapsed && <span className="flex-1 truncate">{item.label}</span>}
+                
                 {/* Red dot on profile when profile incomplete */}
-                {isProfilePage && showCompletionWarning && (
+                {isProfilePage && showCompletionWarning && !isCollapsed && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full" />
+                )}
+                
+                {/* Unread message badge */}
+                {item.label === "Messages" && unreadMessageCount > 0 && (
+                  <span className={`
+                    ${isCollapsed ? 'absolute top-1 right-1' : 'ml-2'}
+                    min-w-[20px] h-[20px] bg-indigo-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1
+                  `}>
+                    {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                  </span>
                 )}
               </NavLink>
             );
@@ -203,11 +229,12 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout }) {
           {/* Logout */}
           <button
             onClick={onLogout}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium
-              text-red-500 hover:bg-red-50 transition-colors duration-200"
+            title={isCollapsed ? "Logout" : ""}
+            className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-4'} py-2.5 rounded-lg text-sm font-medium
+              text-red-500 hover:bg-red-50 transition-colors duration-200 mt-auto`}
           >
-            <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
-            <span>Logout</span>
+            <LogOut className={`${isCollapsed ? 'w-6 h-6' : 'w-[18px] h-[18px]'} flex-shrink-0`} />
+            {!isCollapsed && <span>Logout</span>}
           </button>
         </nav>
       </aside>

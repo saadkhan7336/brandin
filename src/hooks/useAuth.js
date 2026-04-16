@@ -96,27 +96,27 @@ export const useAuth = () => {
   // }, [dispatch]);
 
 
-  
- /**
-  * 
-   * fetchUser — called on app mount (App.js useEffect).
-   * Calls GET /users/me which returns { user, roleProfile, completion }.
-   * Stores the full user (including profileComplete) in authSlice
-   * and completion/roleProfile in profileSlice.
-   */
+
+  /**
+   * 
+    * fetchUser — called on app mount (App.js useEffect).
+    * Calls GET /users/me which returns { user, roleProfile, completion }.
+    * Stores the full user (including profileComplete) in authSlice
+    * and completion/roleProfile in profileSlice.
+    */
   const fetchUser = useCallback(async () => {
     try {
       dispatch(setLoading(true));
- 
+
       const response = await api.get(ENDPOINTS.ME);
       const { user, roleProfile, completion } = response.data.data;
- 
+
       // Store user doc (includes profileComplete) in auth state
       dispatch(setAuthUser(user));
- 
+
       // Store role profile + completion in profile slice
       dispatch(setProfileData({ roleProfile, completion }));
- 
+
     } catch (err) {
       // Session expired or not logged in — clear auth state
       dispatch(logoutSuccess());
@@ -124,7 +124,7 @@ export const useAuth = () => {
       dispatch(setLoading(false));
     }
   }, [dispatch]);
- 
+
 
 
   // 🔥 Logout

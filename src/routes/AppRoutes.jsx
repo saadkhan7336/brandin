@@ -167,6 +167,9 @@ import DeliverableBoard from "../pages/collaboration/DeliverableBoard";
 // Profile settings (shared page, role-aware)
 import ProfileSettings from "../pages/profile/ProfilesSetting";
 
+// Messages
+import MessagesPage from "../pages/MessagesPage";
+
 // Influencer-specific pages
 import InfluencerDashboard from "../pages/dashboard/InfluencerDashboard";
 import MyProfileViewInfluencer from "../pages/influencer/MyProfileView";
@@ -292,6 +295,7 @@ export default function AppRoutes() {
         <Route element={<ProtectedRoute allowedRoles={["brand", "influencer", "admin"]} />}>
           <Route element={<DashboardLayout />}>
             <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/messages" element={<MessagesPage />} />
           </Route>
         </Route>
 

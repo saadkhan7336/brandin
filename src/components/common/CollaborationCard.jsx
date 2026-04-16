@@ -5,8 +5,11 @@ import {
   ClipboardList
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { chatService } from '../../services/chatService';
+import { setActiveConversation } from '../../redux/slices/chatSlice';
 
 const cn = (...inputs) => twMerge(clsx(inputs));
 
@@ -21,6 +24,7 @@ const formatDate = (d) => {
 
 const CollaborationCard = ({ collaboration, userRole }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   if (!collaboration) return null;
 
@@ -33,14 +37,14 @@ const CollaborationCard = ({ collaboration, userRole }) => {
 
   if (userRole === 'influencer') {
     const brand = collaboration.brand || {};
-    partnerName = brand.name || 'Unknown Brand';
-    partnerAvatar = brand.avatar || null;
-    partnerId = brand.id;
+    partnerName = brand.name || brand.fullname || 'Unknown Brand';
+    partnerAvatar = brand.avatar || brand.profilePic || null;
+    partnerId = brand._id || brand.id;
   } else {
     const influencer = collaboration.influencer || {};
-    partnerName = influencer.name || influencer.username || 'Unknown Influencer';
-    partnerAvatar = influencer.avatar || null;
-    partnerId = influencer.id;
+    partnerName = influencer.name || influencer.username || influencer.fullname || 'Unknown Influencer';
+    partnerAvatar = influencer.avatar || influencer.profilePic || null;
+    partnerId = influencer._id || influencer.id;
   }
 
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(partnerName)}&background=random&size=150`;
@@ -58,6 +62,18 @@ const CollaborationCard = ({ collaboration, userRole }) => {
     if (s === 'active' || s === 'ongoing') return 'bg-blue-50 text-blue-600 border-blue-100';
     if (s === 'completed') return 'bg-gray-100 text-gray-600 border-gray-200';
     return 'bg-amber-50 text-amber-600 border-amber-100';
+  };
+
+  const handleChatClick = async (e) => {
+    e.stopPropagation();
+    try {
+      if (!partnerId) return;
+      const res = await chatService.createOrGetConversation(partnerId);
+      dispatch(setActiveConversation(res.data || res));
+      navigate('/messages');
+    } catch (err) {
+      console.error('Chat routing error:', err);
+    }
   };
 
   return (
@@ -168,7 +184,9 @@ const CollaborationCard = ({ collaboration, userRole }) => {
         {/* Action Buttons */}
         <div className="space-y-4">
           <div className="flex gap-3">
-            <button className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 py-2.5 rounded-xl text-xs font-bold text-gray-900 hover:bg-gray-50 transition-colors shadow-sm">
+            <button 
+              onClick={handleChatClick}
+              className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 py-2.5 rounded-xl text-xs font-bold text-gray-900 hover:bg-gray-50 transition-colors shadow-sm">
               <MessageCircle size={14} className="text-gray-900" />
               Chat
             </button>

@@ -1,5 +1,6 @@
-import React from 'react';
-import { Bell, Menu, X, Shield } from 'lucide-react';
+import { Bell, Menu, X, Shield, MessageCircle } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 export default function Navbar({
   userRole,
@@ -26,6 +27,9 @@ export default function Navbar({
 
   const userEmail = user?.email || '';
   const initial = displayName.charAt(0).toUpperCase();
+
+  const navigate = useNavigate();
+  // removed messages logic from here
 
   // Dynamic avatars
   const avatarUrl = isBrand ? (roleProfile?.logo || user?.profilePic) : (user?.profilePic);
@@ -84,6 +88,7 @@ export default function Navbar({
               </span>
             )}
           </button>
+
 
           {/* Profile trigger */}
           <button
