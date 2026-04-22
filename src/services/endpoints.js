@@ -65,6 +65,8 @@ export const ENDPOINTS = {
   RESET_PASSWORD: "/auth/reset-password",
   CHANGE_PASSWORD: "/auth/change-password",
   LOGOUT: "/auth/logout",
+  SEND_OTP: "/auth/send-otp",
+  VERIFY_OTP: "/auth/verify-otp",
 
   // User (shared)
   ME: "/users/me",            // GET  — merged user + roleProfile + completion
@@ -133,5 +135,14 @@ export const ENDPOINTS = {
     getMessages: (id) => `/messages/${id}`,
     sendMessage: "/messages",
     markAsRead: (id) => `/messages/${id}/read`,
-  }
+  },
+
+  // OAuth Platform Verification
+  oauth: {
+    status: "/oauth/status",
+    simulate: (platform) => `/oauth/${platform}/simulate`,
+    revoke: (platform) => `/oauth/${platform}/revoke`,
+    // connect is a full-page redirect (not an API call), so we use the backend URL directly
+    connectUrl: (platform) => `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/v1/oauth/${platform}/connect`,
+  },
 };

@@ -5,6 +5,9 @@ import {
   Camera, Save, Trash2, Check, AlertCircle, User,
   Lock, ShieldAlert,
   ShieldClose, LogOut,
+  Plus, Instagram, Twitter, Linkedin, Youtube, Globe, Facebook,
+  MoreHorizontal, Shield, ShieldCheck, Zap, Info, ExternalLink,
+  ChevronRight, Loader2, X
 } from "lucide-react";
 import { updateProfileComplete, updateUserFields } from "../../redux/slices/authSlice";
 import {
@@ -109,7 +112,7 @@ function Field({ label, required, children, icon: Icon }) {
       <div className="relative">
         {Icon && <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />}
         <div>
-           {children}
+          {children}
         </div>
       </div>
     </div>
@@ -120,21 +123,26 @@ const inputClass = "w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-
   "placeholder:text-gray-300 placeholder:font-medium focus:ring-2 focus:ring-blue-500/10 focus:bg-white focus:border-blue-500 transition-all focus:outline-none shadow-sm";
 
 export default function ProfileSettings() {
-  const dispatch   = useDispatch();
-  const { user }   = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const { completion, saving, loading } = useSelector((state) => state.profile);
 
   // Form states
   const [fullname, setFullname] = useState("");
+  const [username, setUsername] = useState(""); // Influencer only
+  const [about, setAbout] = useState("");       // Influencer only
+  const [category, setCategory] = useState(""); // Influencer only
   const [profilePic, setProfilePic] = useState(null);
   const [coverPic, setCoverPic] = useState(null);
+
+  // Social Links state
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const [showManageAccount, setShowManageAccount] = useState(null); 
+  const [showManageAccount, setShowManageAccount] = useState(null);
 
   // Toast
   const [toast, setToast] = useState(null);
@@ -143,12 +151,63 @@ export default function ProfileSettings() {
     setTimeout(() => setToast(null), 3500);
   };
 
+  // Verified Platforms state — { youtube: true, instagram: false, ... }
+  const [verifiedPlatforms, setVerifiedPlatforms] = useState({});
+  const [selectedPlatforms, setSelectedPlatforms] = useState([]);
+  const [connectingPlatform, setConnectingPlatform] = useState(null);
+
+  // Email OTP state
+  const [isOTPsent, setIsOTPsent] = useState(false);
+  const [otpValue, setOtpValue] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+
+  useEffect(() => {
+    let timer;
+    if (otpCooldown > 0) {
+      timer = setInterval(() => setOtpCooldown(prev => prev - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [otpCooldown]);
+
   const loadData = useCallback(async () => {
     dispatch(setProfileLoading(true));
     try {
       const data = await profileService.getMe();
-      dispatch(setProfileData({ roleProfile: data.roleProfile, completion: data.completion }));
+      const roleProfile = data.roleProfile || {};
+      dispatch(setProfileData({ roleProfile, completion: data.completion }));
       setFullname(data.user?.fullname || "");
+      setUsername(roleProfile.username || "");
+      setAbout(roleProfile.about || "");
+      setCategory(roleProfile.category || "");
+
+
+      // Load verified platforms from user data
+      if (data.user?.verifiedPlatforms) {
+        // verifiedPlatforms is an ARRAY from the backend
+        const vpArray = Array.from(data.user.verifiedPlatforms || []);
+        const vpMap = {};
+        vpArray.forEach(p => {
+          if (p.platform && p.verified) vpMap[p.platform] = p;
+        });
+        setVerifiedPlatforms(vpMap);
+
+        // Initialize selected platforms from verified platforms and legacy socialMedia
+        const sm = roleProfile.socialMedia || {};
+        const platforms = new Set([
+          ...Object.keys(vpMap),
+          ...Object.keys(sm).filter(k => sm[k] || sm[k] === "") // Include all keys in Map
+        ]);
+        
+        // Filter to only include supported platforms
+        const supported = ['youtube', 'instagram', 'tiktok', 'linkedin', 'twitter', 'facebook'];
+        setSelectedPlatforms(Array.from(platforms).filter(p => supported.includes(p)));
+      } else {
+        // Fallback for socialMedia if verifiedPlatforms doesn't exist
+        const sm = roleProfile.socialMedia || {};
+        const supported = ['youtube', 'instagram', 'tiktok', 'linkedin', 'twitter', 'facebook'];
+        setSelectedPlatforms(Object.keys(sm).filter(p => supported.includes(p)));
+      }
     } catch (err) {
       dispatch(setProfileError("Failed to load profile"));
     }
@@ -159,26 +218,88 @@ export default function ProfileSettings() {
   const saveUserInfo = async () => {
     dispatch(setProfileSaving(true));
     try {
-      const fd = new FormData();
-      if (fullname.trim()) fd.append("fullname", fullname.trim());
-      if (profilePic) fd.append("profilePic", profilePic);
-      if (coverPic) fd.append("coverPic", coverPic);
+      // 1. Update Core User Info
+      const userFd = new FormData();
+      if (fullname.trim()) userFd.append("fullname", fullname.trim());
+      if (profilePic) userFd.append("profilePic", profilePic);
+      if (coverPic) userFd.append("coverPic", coverPic);
 
-      const data = await profileService.updateUserInfo(fd);
-      dispatch(updateUserFields(data.user));
-      dispatch(updateProfileComplete(data.completion?.isComplete));
-      dispatch(setProfileData({ completion: data.completion }));
+      const userData = await profileService.updateUserInfo(userFd);
+      dispatch(updateUserFields(userData.user));
+
+      if (user?.role === 'brand') {
+        const brandFd = new FormData();
+        brandFd.append("socialMediaUpdate", "true");
+        // Pass selected platforms as socialMedia[platformName] = "" 
+        // this allows the backend to know which keys to keep in the Map
+        selectedPlatforms.forEach(p => {
+          brandFd.append(`socialMedia[${p}]`, "");
+        });
+        
+        const brandRes = await profileService.updateBrandProfile(brandFd);
+        dispatch(setProfileData({ roleProfile: brandRes.brand, completion: brandRes.completion }));
+        if (brandRes.user) {
+          dispatch(updateUserFields(brandRes.user));
+          dispatch(updateProfileComplete(brandRes.completion?.isComplete));
+        }
+      } else if (user?.role === 'influencer') {
+        const influencerData = {
+          username,
+          about,
+          category,
+          socialMediaUpdate: true,
+          socialMedia: {}
+        };
+        // Populate socialMedia object with selected platforms
+        selectedPlatforms.forEach(p => {
+          influencerData.socialMedia[p] = "";
+        });
+
+        const infRes = await profileService.updateInfluencerProfile(influencerData);
+        dispatch(setProfileData({ roleProfile: infRes.influencer, completion: infRes.completion }));
+        if (infRes.user) {
+          dispatch(updateUserFields(infRes.user));
+          dispatch(updateProfileComplete(infRes.completion?.isComplete));
+        }
+      }
+
+      dispatch(updateProfileComplete(userData.completion?.isComplete));
       showToast("Settings updated!");
     } catch (err) {
       showToast("Update failed", "error");
+    } finally {
       dispatch(setProfileSaving(false));
     }
   };
 
+
+  // ── OAuth connect handler ───────────────────────────────────────────────────
+  const handleConnect = async (platform) => {
+    // All platforms now use central OAuth logic via backend redirect
+    const backendUrl = "http://localhost:8000/api/v1/oauth";
+    window.location.href = `${backendUrl}/${platform}/connect`;
+  };
+
+  // ── Revoke platform verification (for testing / reset) ─────────────────────
+  const handleRevoke = async (platform) => {
+    try {
+      await profileService.revokeVerify(platform);
+      setVerifiedPlatforms(prev => {
+        const next = { ...prev };
+        delete next[platform];
+        return next;
+      });
+      showToast(`${platform} verification revoked`);
+    } catch {
+      showToast('Failed to revoke', 'error');
+    }
+  };
+
+
   const handlePasswordChange = async () => {
     if (!oldPassword || !newPassword || !confirmPassword) return showToast("Fields missing", "error");
     if (newPassword !== confirmPassword) return showToast("Passwords mismatch", "error");
-    
+
     setIsChangingPassword(true);
     try {
       await profileService.changePassword(oldPassword, newPassword);
@@ -188,6 +309,36 @@ export default function ProfileSettings() {
       showToast(err.response?.data?.message || "Failed", "error");
     } finally {
       setIsChangingPassword(false);
+    }
+  };
+
+  const handleSendOTP = async () => {
+    if (otpCooldown > 0) return;
+    try {
+      await profileService.sendOTP();
+      setIsOTPsent(true);
+      setOtpCooldown(60); // 1 minute cooldown
+      showToast("Verification code sent!");
+    } catch (err) {
+      showToast("Failed to send code", "error");
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    if (otpValue.length !== 6) return showToast("Enter 6-digit code", "error");
+    setIsVerifying(true);
+    try {
+      await profileService.verifyOTP(otpValue);
+      showToast("Email verified successfully!");
+      setIsOTPsent(false);
+      setOtpValue("");
+      // Update local and redux state
+      const updatedUser = { ...user, isVerified: true };
+      dispatch(updateUserFields(updatedUser));
+    } catch (err) {
+      showToast(err.response?.data?.message || "Verification failed", "error");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -217,8 +368,8 @@ export default function ProfileSettings() {
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-32">
-       <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin shadow-sm" />
-       <p className="mt-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Loading Settings...</p>
+      <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin shadow-sm" />
+      <p className="mt-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Loading Settings...</p>
     </div>
   );
 
@@ -230,7 +381,7 @@ export default function ProfileSettings() {
         <p className="text-gray-500 font-medium text-sm">Control your platform identity and security settings.</p>
       </div>
 
-      <CompletionBanner completion={completion} />
+
 
       {/* Toast */}
       {toast && (
@@ -251,19 +402,52 @@ export default function ProfileSettings() {
             <AvatarUpload label="Cover" currentUrl={user?.coverPic} onChange={setCoverPic} shape="rect" />
           </div>
           <div className="flex-1 space-y-6 max-w-2xl">
-             <Field label="Full Name" required>
-                <input type="text" value={fullname} onChange={(e) => setFullname(e.target.value)} className={inputClass} placeholder="Enter your full name" />
-             </Field>
-             <div className="bg-gray-50/50 rounded-xl px-5 py-4 flex items-center gap-4 border border-gray-100">
-                <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm">
-                  <User size={18} />
+            <Field label="Full Name" required>
+              <input type="text" value={fullname} onChange={(e) => setFullname(e.target.value)} className={inputClass} placeholder="Enter your full name" />
+            </Field>
+
+            {user?.role === 'influencer' && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Field label="Username (Display Name)" required>
+                    <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className={inputClass} placeholder="e.g. @cool_influencer" />
+                  </Field>
+                  <Field label="Niche / Category" required>
+                    <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
+                      <option value="" disabled>Select your niche</option>
+                      {["Fashion", "Technology", "Food & Beverage", "Beauty", "Lifestyle", "Fitness", "Travel", "Gaming", "Entertainment", "Finance", "Healthcare", "Art & Design", "Sports", "Other"].map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </Field>
                 </div>
-                <div className="flex-1">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Email Address</p>
-                  <p className="text-sm font-bold text-gray-900">{user?.email}</p>
-                </div>
-                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 bg-gray-100 px-2.5 py-1 rounded-md">Verified</span>
-             </div>
+                <Field label="Bio (About Me)" required>
+                  <textarea
+                    value={about}
+                    onChange={(e) => setAbout(e.target.value)}
+                    className={cn(inputClass, "min-h-[100px] py-4 shadow-sm")}
+                    placeholder="Tell brands about your style, audience, and content..."
+                  />
+                </Field>
+              </>
+            )}
+            <div className="bg-gray-50/50 rounded-xl px-5 py-4 flex items-center gap-4 border border-gray-100">
+              <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 shadow-sm">
+                <User size={18} />
+              </div>
+              <div className="flex-1">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Email Address</p>
+                <p className="text-sm font-bold text-gray-900">{user?.email}</p>
+              </div>
+              {user?.isVerified ? (
+                <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md flex items-center gap-1">
+                  <Check size={10} /> Verified
+                </span>
+              ) : (
+                <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md">Unverified</span>
+              )}
+            </div>
+
           </div>
         </div>
       </SectionCard>
@@ -283,60 +467,401 @@ export default function ProfileSettings() {
         </div>
       </SectionCard>
 
+      {/* ── Verify Your Profile ───────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-300 mb-8 mt-8">
+        <div className="px-8 py-6 flex items-center justify-between border-b border-gray-50 bg-gray-50/30">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+              <Shield size={18} />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-gray-900 leading-tight">Verify Your Profile</h2>
+              <p className="text-xs font-medium text-gray-400 mt-0.5">
+                Connect your social platforms via OAuth to get your Verified badge and boost brand trust.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-8 space-y-8">
+          {/* Email Verification Card */}
+          <div className="p-6 bg-gray-50/50 rounded-2xl border border-gray-100 space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-blue-600 shadow-sm border border-blue-50">
+                  <ShieldCheck size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Verify Your Email</h3>
+                  <p className="text-[11px] font-medium text-gray-500">Registered Email: <span className="text-gray-900 font-bold">{user?.email}</span></p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                {user?.isVerified ? (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 text-[11px] font-bold uppercase tracking-wider rounded-xl border border-emerald-100">
+                    <Check size={14} />
+                    Email Verified ✅
+                  </div>
+                ) : (
+                  !isOTPsent && (
+                    <button
+                      onClick={handleSendOTP}
+                      disabled={otpCooldown > 0}
+                      className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all shadow-md shadow-blue-500/10"
+                    >
+                      {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : "Verify Email Now"}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+
+            {!user?.isVerified && isOTPsent && (
+              <div className="pt-2 animate-in fade-in slide-in-from-top-2">
+                <div className="space-y-4 max-w-md bg-white p-4 rounded-xl border border-blue-50 shadow-sm">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Enter 6-Digit OTP</label>
+                      <div className="flex gap-3">
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={otpValue}
+                          onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ""))}
+                          placeholder="000000"
+                          className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2 text-center text-lg font-black tracking-[0.5em] text-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                        />
+                        <button
+                          onClick={handleVerifyOTP}
+                          disabled={isVerifying || otpValue.length !== 6}
+                          className="px-8 py-2 bg-gray-900 hover:bg-black disabled:opacity-50 text-white text-[11px] font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 shadow-lg"
+                        >
+                          {isVerifying ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                          Submit OTP
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-medium text-gray-400">Code sent to your inbox.</p>
+                      <button
+                        onClick={handleSendOTP}
+                        disabled={otpCooldown > 0}
+                        className="text-[10px] font-bold text-blue-600 hover:underline disabled:opacity-30 uppercase tracking-widest"
+                      >
+                        {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : "Resend OTP"}
+                      </button>
+                    </div>
+                  </div>
+              </div>
+            )}
+          </div>
+          {/* Profile Status Badge */}
+          {(() => {
+            const verifiedCount = selectedPlatforms.filter(p => verifiedPlatforms[p]).length;
+            const totalCount = selectedPlatforms.length;
+            const isFullyVerified = totalCount > 0 && verifiedCount === totalCount;
+            return (
+              <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-100">
+                <div className="space-y-0.5 flex-1">
+                  <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Verification Progress</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-bold text-gray-500">
+                      {totalCount > 0
+                        ? `${verifiedCount} OF ${totalCount} SELECTED PLATFORMS VERIFIED VIA OAUTH`
+                        : "SELECT A PLATFORM BELOW TO START VERIFICATION"}
+                    </p>
+                    <div className="px-1.5 py-0.5 bg-blue-50 text-blue-500 rounded text-[8px] font-black uppercase tracking-tighter">
+                      <Zap size={8} className="inline mr-0.5" /> Fast Track
+                    </div>
+                  </div>
+                </div>
+                {totalCount > 0 && (
+                  isFullyVerified ? (
+                    <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-emerald-100 shadow-sm">
+                      <div className="text-right">
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-0.5">Profile Status</p>
+                        <p className="text-[11px] font-black text-emerald-600 uppercase tracking-wider">Verified ✓</p>
+                      </div>
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500">
+                        <ShieldCheck size={16} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-amber-100 shadow-sm">
+                      <div className="text-right">
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-0.5">Profile Status</p>
+                        <p className="text-[11px] font-black text-amber-600 uppercase tracking-wider">Unverified ({verifiedCount}/{totalCount})</p>
+                      </div>
+                      <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500">
+                        <AlertCircle size={16} />
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Platform Selector Dropdown */}
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 bg-blue-50/20 rounded-2xl border border-blue-50">
+              <div>
+                <h3 className="text-sm font-bold text-gray-900">Add Social Platform</h3>
+                <p className="text-[10px] font-medium text-gray-500">Select which platforms you want to verify and display on your profile.</p>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <select
+                  onChange={async (e) => {
+                    const val = e.target.value;
+                    if (val && !selectedPlatforms.includes(val)) {
+                      const newSelected = [...selectedPlatforms, val];
+                      setSelectedPlatforms(newSelected);
+                      
+                      try {
+                        if (user?.role === 'brand') {
+                          const brandFd = new FormData();
+                          brandFd.append("socialMediaUpdate", "true");
+                          newSelected.forEach(p => brandFd.append(`socialMedia[${p}]`, ""));
+                          await profileService.updateBrandProfile(brandFd);
+                        } else if (user?.role === 'influencer') {
+                          const socialMedia = {};
+                          newSelected.forEach(p => socialMedia[p] = "");
+                          await profileService.updateInfluencerProfile({ socialMediaUpdate: true, socialMedia });
+                        }
+                        showToast(`${val} added to your platforms`);
+                      } catch (err) {
+                        showToast(`Failed to save ${val}`, 'error');
+                      }
+                    }
+                    e.target.value = "";
+                  }}
+                  className={cn(inputClass, "w-full sm:w-48 py-2 px-4 shadow-none")}
+                >
+                  <option value="">Select Platform...</option>
+                  {[
+                    { id: 'youtube', label: 'YouTube' },
+                    { id: 'instagram', label: 'Instagram' },
+                    { id: 'facebook', label: 'Facebook' },
+                    { id: 'tiktok', label: 'TikTok' },
+                    { id: 'linkedin', label: 'LinkedIn' },
+                    { id: 'twitter', label: 'Twitter / X' }
+                  ].filter(p => !selectedPlatforms.includes(p.id)).map(p => (
+                    <option key={p.id} value={p.id}>{p.label}</option>
+                  ))}
+                </select>
+                <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
+                  <Plus size={18} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Your Platforms List */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Selected Platforms</h3>
+            </div>
+
+            <div className="space-y-3">
+              {selectedPlatforms.length === 0 && (
+                <div className="p-12 text-center bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">No platforms selected yet.</p>
+                </div>
+              )}
+              {selectedPlatforms.map((platform) => {
+                const isVerified = !!verifiedPlatforms[platform];
+                const platformData = verifiedPlatforms[platform] || {};
+
+                return (
+                  <div key={platform} className="group flex flex-col sm:flex-row items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 hover:border-blue-100 transition-all hover:shadow-md">
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isVerified
+                        ? 'bg-emerald-50 text-emerald-600'
+                        : 'bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600'
+                        }`}>
+                        {platform === 'instagram' && <Instagram size={20} />}
+                        {platform === 'linkedin' && <Linkedin size={20} />}
+                        {platform === 'youtube' && <Youtube size={20} />}
+                        {platform === 'twitter' && <Twitter size={20} />}
+                        {platform === 'facebook' && <Facebook size={20} />}
+                        {platform === 'tiktok' && (
+                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-gray-900 capitalize">
+                            {platform === 'twitter' ? 'Twitter / X' : platform}
+                          </h4>
+                          {isVerified ? (
+                            <span className="text-[8px] font-bold uppercase tracking-widest bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                              <ShieldCheck size={8} /> Verified
+                            </span>
+                          ) : (
+                            <span className="text-[8px] font-bold uppercase tracking-widest bg-amber-50 text-amber-500 px-1.5 py-0.5 rounded">
+                              Not Verified
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs font-medium text-gray-400 truncate max-w-[200px]">
+                          {isVerified ? (platformData.username || 'Account Connected') : `Connect your ${platform} account`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 w-full sm:w-auto mt-4 sm:mt-0">
+                      {isVerified ? (
+                        <div className="flex items-center gap-2 flex-1 sm:flex-none">
+                          <div className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-50 text-emerald-600 text-[11px] font-bold uppercase tracking-wider rounded-xl border border-emerald-100">
+                            <ShieldCheck size={14} />
+                            Verified
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleConnect(platform)}
+                          disabled={connectingPlatform === platform}
+                          className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-30 text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm"
+                        >
+                          {connectingPlatform === platform ? (
+                            <><Loader2 size={14} className="animate-spin" /> Verifying…</>
+                          ) : (
+                            <>Connect {platform}<ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" /></>
+                          )}
+                        </button>
+                      )}
+
+                      <button
+                        title="Remove Platform"
+                        onClick={async () => {
+                          try {
+                            if (isVerified) {
+                              await handleRevoke(platform);
+                            }
+                            const newSelected = selectedPlatforms.filter(p => p !== platform);
+                            setSelectedPlatforms(newSelected);
+                            
+                            if (user?.role === 'brand') {
+                              const brandFd = new FormData();
+                              brandFd.append("socialMediaUpdate", "true");
+                              newSelected.forEach(p => brandFd.append(`socialMedia[${p}]`, ""));
+                              await profileService.updateBrandProfile(brandFd);
+                            } else if (user?.role === 'influencer') {
+                              const socialMedia = {};
+                              newSelected.forEach(p => socialMedia[p] = "");
+                              await profileService.updateInfluencerProfile({ socialMediaUpdate: true, socialMedia });
+                            }
+                            
+                            showToast(`${platform} removed from selection`);
+                          } catch (err) {
+                            showToast(`Failed to remove ${platform}`, 'error');
+                          }
+                        }}
+                        className="p-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Why verify Section */}
+          <div className="bg-blue-50/30 rounded-3xl p-8 space-y-6 border border-blue-50/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-blue-600 shadow-sm">
+                  <ShieldCheck size={20} />
+                </div>
+                <h3 className="text-sm font-bold text-gray-900 tracking-tight">Why verify your profile?</h3>
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-blue-500 uppercase tracking-wider">
+                Learn More <ExternalLink size={12} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { icon: Zap, label: "Higher AI match ranking" },
+                { icon: ShieldCheck, label: "Increased brand trust" },
+                { icon: ShieldClose, label: "Access to premium campaigns" }
+              ].map((item, idx) => (
+                <div key={idx} className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-3 shadow-sm hover:scale-[1.02] transition-all">
+                  <div className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center">
+                    <Check size={12} className="text-blue-500" />
+                  </div>
+                  <p className="text-[11px] font-bold text-gray-600 tracking-tight leading-tight">{item.label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-center flex-col items-center gap-2 border-t border-blue-100/50 pt-6">
+              <p className="text-[10px] font-medium text-gray-400 flex items-center gap-1.5">
+                <Info size={12} className="text-blue-400" /> Your data is processed securely through official platform APIs.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Section 3: Danger Zone */}
       <div className="bg-red-50/30 rounded-2xl border border-red-100 p-8 md:p-10 space-y-8">
         <div className="flex items-center gap-4">
-           <div className="p-3 bg-red-100 text-red-600 rounded-xl">
-              <ShieldAlert size={24} />
-           </div>
-           <div>
-             <h3 className="text-xl font-bold tracking-tight text-red-900">Danger Zone</h3>
-             <p className="text-sm font-medium text-red-600/70">These actions are irreversible. Please proceed with caution.</p>
-           </div>
+          <div className="p-3 bg-red-100 text-red-600 rounded-xl">
+            <ShieldAlert size={24} />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold tracking-tight text-red-900">Danger Zone</h3>
+            <p className="text-sm font-medium text-red-600/70">These actions are irreversible. Please proceed with caution.</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-           {/* Deactivate */}
-           <div className="bg-white p-6 rounded-2xl border border-red-100 flex flex-col justify-between items-start gap-5 shadow-sm">
-             <div>
-                <h4 className="font-bold text-red-900 flex items-center gap-2 tracking-tight"><ShieldClose size={18} /> Deactivate Account</h4>
-                <p className="text-xs font-medium text-gray-500 mt-2 leading-relaxed">
-                  Temporarily hide your profile and active campaigns. You can reactivate at any time by logging back in.
-                </p>
-             </div>
-             {showManageAccount === 'deactivate' ? (
-                <div className="flex gap-2 w-full">
-                  <button onClick={handleDeactivate} className="flex-1 bg-red-600 text-white text-xs font-bold uppercase py-2.5 rounded-lg hover:bg-red-700 transition-colors">Confirm</button>
-                  <button onClick={() => setShowManageAccount(null)} className="flex-1 bg-gray-100 text-gray-600 text-xs font-bold uppercase py-2.5 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
-                </div>
-             ) : (
-                <button onClick={() => setShowManageAccount('deactivate')} className="w-full py-2.5 bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-red-100 transition-colors">Deactivate Now</button>
-             )}
-           </div>
+          {/* Deactivate */}
+          <div className="bg-white p-6 rounded-2xl border border-red-100 flex flex-col justify-between items-start gap-5 shadow-sm">
+            <div>
+              <h4 className="font-bold text-red-900 flex items-center gap-2 tracking-tight"><ShieldClose size={18} /> Deactivate Account</h4>
+              <p className="text-xs font-medium text-gray-500 mt-2 leading-relaxed">
+                Temporarily hide your profile and active campaigns. You can reactivate at any time by logging back in.
+              </p>
+            </div>
+            {showManageAccount === 'deactivate' ? (
+              <div className="flex gap-2 w-full">
+                <button onClick={handleDeactivate} className="flex-1 bg-red-600 text-white text-xs font-bold uppercase py-2.5 rounded-lg hover:bg-red-700 transition-colors">Confirm</button>
+                <button onClick={() => setShowManageAccount(null)} className="flex-1 bg-gray-100 text-gray-600 text-xs font-bold uppercase py-2.5 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
+              </div>
+            ) : (
+              <button onClick={() => setShowManageAccount('deactivate')} className="w-full py-2.5 bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-red-100 transition-colors">Deactivate Now</button>
+            )}
+          </div>
 
-           {/* Delete */}
-           <div className="bg-white p-6 rounded-2xl border border-red-100 flex flex-col justify-between items-start gap-5 shadow-sm">
-             <div>
-                <h4 className="font-bold text-red-900 flex items-center gap-2 tracking-tight"><Trash2 size={18} /> Delete Permanently</h4>
-                <p className="text-xs font-medium text-gray-500 mt-2 leading-relaxed">
-                  Careful: This will wipe your account, history, and collaborations forever from our database.
-                </p>
-             </div>
-             {showManageAccount === 'delete' ? (
-                <div className="flex gap-2 w-full">
-                  <button onClick={handleDelete} className="flex-1 bg-red-900 text-white text-xs font-bold uppercase py-2.5 rounded-lg hover:bg-black transition-colors">Confirm Delete</button>
-                  <button onClick={() => setShowManageAccount(null)} className="flex-1 bg-gray-100 text-gray-600 text-xs font-bold uppercase py-2.5 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
-                </div>
-             ) : (
-                <button onClick={() => setShowManageAccount('delete')} className="w-full py-2.5 bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-red-100 transition-colors">Delete Account</button>
-             )}
-           </div>
+          {/* Delete */}
+          <div className="bg-white p-6 rounded-2xl border border-red-100 flex flex-col justify-between items-start gap-5 shadow-sm">
+            <div>
+              <h4 className="font-bold text-red-900 flex items-center gap-2 tracking-tight"><Trash2 size={18} /> Delete Permanently</h4>
+              <p className="text-xs font-medium text-gray-500 mt-2 leading-relaxed">
+                Careful: This will wipe your account, history, and collaborations forever from our database.
+              </p>
+            </div>
+            {showManageAccount === 'delete' ? (
+              <div className="flex gap-2 w-full">
+                <button onClick={handleDelete} className="flex-1 bg-red-900 text-white text-xs font-bold uppercase py-2.5 rounded-lg hover:bg-black transition-colors">Confirm Delete</button>
+                <button onClick={() => setShowManageAccount(null)} className="flex-1 bg-gray-100 text-gray-600 text-xs font-bold uppercase py-2.5 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
+              </div>
+            ) : (
+              <button onClick={() => setShowManageAccount('delete')} className="w-full py-2.5 bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-red-100 transition-colors">Delete Account</button>
+            )}
+          </div>
         </div>
 
         <div className="flex justify-center pt-2">
-           <button onClick={() => window.location.href = "/"} className="flex items-center gap-2 text-red-500 hover:text-red-700 font-bold text-xs bg-white px-8 py-3 rounded-full border border-red-100 shadow-sm transition-all hover:shadow-md active:scale-95">
-             <LogOut size={16} /> Sign out of account
-           </button>
+          <button onClick={() => window.location.href = "/"} className="flex items-center gap-2 text-red-500 hover:text-red-700 font-bold text-xs bg-white px-8 py-3 rounded-full border border-red-100 shadow-sm transition-all hover:shadow-md active:scale-95">
+            <LogOut size={16} /> Sign out of account
+          </button>
         </div>
       </div>
     </div>

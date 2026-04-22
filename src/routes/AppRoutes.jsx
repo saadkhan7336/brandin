@@ -177,6 +177,7 @@ import SearchExplore from "../components/layout/influencer/SearchExplore";
 import CampaignDetail from "../components/layout/influencer/CampaignDetail";
 import BrandPublicProfile from "../components/layout/influencer/BrandPublicProfile";
 import InfluencerRequests from "../pages/influencer/InfluencerRequests";
+import OAuthCallbackPage from "../pages/auth/OAuthCallbackPage";
 
 function CatchAll() {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -204,6 +205,9 @@ export default function AppRoutes() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/blog" element={<BlogPage />} />
+
+        {/* OAuth Callback — must be public, no auth required */}
+        <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
         {/* ── Auth (redirect if already logged in) ──────────────────── */}
         <Route element={<PublicRoute />}>
@@ -240,9 +244,9 @@ export default function AppRoutes() {
               </Route>
               <Route path="/brand/campaigns" element={<CampaignHub />} />
               <Route path="/brand/influencer/:influencerId" element={<InfluencerProfile />} />
-              <Route path="/brand/profile" element={<MyProfileView />} />
             </Route>
-            {/* Settings — always accessible, even if incomplete */}
+            {/* Always accessible for brands */}
+            <Route path="/brand/profile" element={<MyProfileView />} />
             <Route path="/brand/settings" element={<ProfileSettings />} />
           </Route>
         </Route>
@@ -274,10 +278,10 @@ export default function AppRoutes() {
               <Route path="/influencer/search/:tab" element={<SearchExplore />} />
               <Route path="/influencer/search/campaign/:campaignId" element={<CampaignDetail />} />
               <Route path="/influencer/search/brand/:brandId" element={<BrandPublicProfile />} />
-              <Route path="/influencer/profile" element={<MyProfileViewInfluencer />} />
             </Route>
 
-            {/* Settings — always accessible */}
+            {/* Always accessible for influencers */}
+            <Route path="/influencer/profile" element={<MyProfileViewInfluencer />} />
             <Route path="/influencer/settings" element={<ProfileSettings />} />
           </Route>
         </Route>

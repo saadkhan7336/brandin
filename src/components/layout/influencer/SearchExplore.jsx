@@ -22,7 +22,8 @@ import {
 import api from "../../../services/api";
 import collaborationService from "../../../services/collaborationService";
 import ApplyCampaignModal from "./ApplyCampaignModal";
-import { clsx } from 'clsx';
+import VerifiedTick from "../../common/VerifiedTick";
+import { clsx } from "clsx";
 import { twMerge } from 'tailwind-merge';
 
 const cn = (...inputs) => twMerge(clsx(inputs));
@@ -30,13 +31,13 @@ const cn = (...inputs) => twMerge(clsx(inputs));
 
 
 // ── Campaign Card ─────────────────────────────────────────────────────────────
-const CampaignCard = ({ 
-  campaign, 
-  isApplied, 
-  isViewed, 
-  isCollaboration, 
+const CampaignCard = ({
+  campaign,
+  isApplied,
+  isViewed,
+  isCollaboration,
   collaborationId,
-  onViewDetails, 
+  onViewDetails,
   onApply,
   onViewCollaboration
 }) => {
@@ -44,7 +45,7 @@ const CampaignCard = ({
   const budgetMax = campaign.budget?.max?.toLocaleString() || 0;
   const brandName = campaign.brandProfile?.brandname || campaign.brandUser?.fullname || "Brand";
   const brandLogo = campaign.brandProfile?.logo || campaign.brandUser?.profilePic;
-  
+
   const startDateStr = campaign.campaignTimeline?.startDate
     ? new Date(campaign.campaignTimeline.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : null;
@@ -55,8 +56,8 @@ const CampaignCard = ({
   // Requirements from db or split from text
   const requirements = campaign.goals && campaign.goals.length > 0
     ? campaign.goals.slice(0, 3)
-    : campaign.additionalRequirements 
-      ? campaign.additionalRequirements.split(".").filter(Boolean).slice(0, 3) 
+    : campaign.additionalRequirements
+      ? campaign.additionalRequirements.split(".").filter(Boolean).slice(0, 3)
       : [];
 
   return (
@@ -71,8 +72,9 @@ const CampaignCard = ({
               {brandName[0]}
             </div>
           )}
-          <div>
-            <p className="text-xs text-gray-500 font-medium">by {brandName}</p>
+          <div className="flex items-center gap-1">
+            <p className="text-xs text-gray-500 font-medium whitespace-nowrap">by {brandName}</p>
+            <VerifiedTick user={campaign.brandUser} roleProfile={campaign.brandProfile} size="xs" />
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -152,19 +154,19 @@ const CampaignCard = ({
 
       {/* Footer Buttons */}
       <div className="flex gap-2 pt-2 mt-auto">
-        <button 
+        <button
           onClick={() => onViewDetails(campaign)}
           className={cn(
             "flex-1 py-2.5 text-sm font-semibold rounded-lg border transition-all",
-            isViewed 
-              ? "bg-gray-50 border-gray-200 text-gray-400" 
+            isViewed
+              ? "bg-gray-50 border-gray-200 text-gray-400"
               : "border-gray-200 text-gray-700 hover:bg-gray-50"
           )}
         >
           {isCollaboration ? "Collaboration Overview" : (isViewed ? "Viewed" : "View Details")}
         </button>
 
-        <button 
+        <button
           onClick={() => isCollaboration ? onViewCollaboration(collaborationId) : (!isApplied && onApply(campaign))}
           disabled={isApplied && !isCollaboration}
           className={cn(
@@ -192,13 +194,13 @@ const CampaignCard = ({
 };
 
 // ── Brand Card ────────────────────────────────────────────────────────────────
-const BrandCard = ({ 
-  brand, 
-  isRequested, 
-  isViewed, 
+const BrandCard = ({
+  brand,
+  isRequested,
+  isViewed,
   isCollaboration,
   collaborationId,
-  onViewProfile, 
+  onViewProfile,
   onSendRequest,
   onViewCollaboration,
   activeCampaignName
@@ -219,10 +221,12 @@ const BrandCard = ({
             </div>
           )}
           <div className="min-w-0 pt-1">
-            <h3 className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors flex items-center gap-1.5 truncate">
-              {name}
-              <CheckCircle className="text-blue-500 flex-shrink-0" size={16} fill="currentColor" stroke="white" />
-            </h3>
+            <div className="flex items-center gap-1 min-w-0">
+              <h3 className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors truncate">
+                {name}
+              </h3>
+              <VerifiedTick user={brand.userDoc} roleProfile={brand} size="xs" />
+            </div>
             {brand.description ? (
               <p className="text-sm text-gray-500 line-clamp-2 mt-0.5 leading-snug">{brand.description}</p>
             ) : (
@@ -231,42 +235,42 @@ const BrandCard = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
-           {isCollaboration ? (
-              <div className="flex flex-col items-end gap-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
-                  Collaborating
+          {isCollaboration ? (
+            <div className="flex flex-col items-end gap-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
+                Collaborating
+              </span>
+              {activeCampaignName && (
+                <span className="text-[9px] font-bold text-indigo-400 uppercase truncate max-w-[110px]" title={activeCampaignName}>
+                  via: {activeCampaignName}
                 </span>
-                {activeCampaignName && (
-                  <span className="text-[9px] font-bold text-indigo-400 uppercase truncate max-w-[110px]" title={activeCampaignName}>
-                    via: {activeCampaignName}
-                  </span>
-                )}
-              </div>
-            ) : isRequested ? (
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-                Requested
-              </span>
-            ) : isViewed && (
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
-                Viewed
-              </span>
-            )}
+              )}
+            </div>
+          ) : isRequested ? (
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+              Requested
+            </span>
+          ) : isViewed && (
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
+              Viewed
+            </span>
+          )}
           <button className="text-gray-300 hover:text-red-500 transition-colors pt-1">
             <Heart size={18} />
           </button>
         </div>
       </div>
 
-        {brand.industry && (
-          <span className="text-xs font-medium bg-gray-100 text-gray-700 px-2.5 py-1 rounded border border-gray-200">
-            {brand.industry}
-          </span>
-        )}
-        {brand.lookingFor?.slice(0, 2).map((item, idx) => (
-          <span key={idx} className="text-xs font-medium bg-gray-100 text-gray-700 px-2.5 py-1 rounded border border-gray-200">
-            {item.length > 15 ? item.substring(0, 15) + "..." : item}
-          </span>
-        ))}
+      {brand.industry && (
+        <span className="text-xs font-medium bg-gray-100 text-gray-700 px-2.5 py-1 rounded border border-gray-200">
+          {brand.industry}
+        </span>
+      )}
+      {brand.lookingFor?.slice(0, 2).map((item, idx) => (
+        <span key={idx} className="text-xs font-medium bg-gray-100 text-gray-700 px-2.5 py-1 rounded border border-gray-200">
+          {item.length > 15 ? item.substring(0, 15) + "..." : item}
+        </span>
+      ))}
 
       {/* Stats row */}
       <div className="space-y-2.5 py-3 text-sm flex-grow">
@@ -293,7 +297,7 @@ const BrandCard = ({
       </div>
 
       <div className="flex gap-2 mt-auto">
-        <button 
+        <button
           onClick={() => onViewProfile(brand)}
           className={cn(
             "flex-1 py-2.5 text-sm font-semibold border rounded-lg transition-colors",
@@ -305,7 +309,7 @@ const BrandCard = ({
           {isViewed ? "Viewed" : "View Profile"}
         </button>
 
-        <button 
+        <button
           onClick={() => isCollaboration ? onViewCollaboration(collaborationId) : (!isRequested && onSendRequest(brand))}
           disabled={isRequested && !isCollaboration}
           className={cn(
@@ -398,7 +402,7 @@ const SearchExplore = () => {
   const [viewedIds, setViewedIds] = useState([]);
   const [appliedCampaignIds, setAppliedCampaignIds] = useState([]);
   const [requestedBrandIds, setRequestedBrandIds] = useState([]);
-  
+
   // Collaboration tracking
   const [activeCollaborations, setActiveCollaborations] = useState([]); // List of { campaignId, brandId, collaborationId }
 
@@ -443,7 +447,7 @@ const SearchExplore = () => {
           const requestedIds = sentRequests
             .filter(r => r.receiverDetails?.role === 'brand' || r.receiver)
             .map(r => r.receiver?._id || r.receiver);
-          
+
           setAppliedCampaignIds(appliedIds);
           setRequestedBrandIds(requestedIds);
         }
@@ -460,7 +464,7 @@ const SearchExplore = () => {
           const collabs = (res.data.collaborations || []).filter(
             c => !['completed', 'cancelled'].includes(c.status)
           );
-          
+
           const mapping = collabs.map(c => {
             // Helper to extract ID from potential object or string
             const getStrId = (val) => {
@@ -597,11 +601,10 @@ const SearchExplore = () => {
               {/* Filter toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border transition-colors text-sm font-medium ${
-                  showFilters || hasActiveFilters
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border transition-colors text-sm font-medium ${showFilters || hasActiveFilters
                     ? "bg-purple-50 border-purple-200 text-purple-700"
                     : "border-gray-200 text-gray-700 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 <Filter size={16} />
                 <span className="hidden sm:inline">Filters</span>
@@ -619,11 +622,10 @@ const SearchExplore = () => {
                 navigate("/influencer/search/campaigns");
                 setPage(1);
               }}
-              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                activeTab === "campaigns"
+              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === "campaigns"
                   ? "bg-purple-600 text-white shadow-md shadow-purple-200"
                   : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-              }`}
+                }`}
             >
               <Briefcase size={16} />
               Campaigns
@@ -633,11 +635,10 @@ const SearchExplore = () => {
                 navigate("/influencer/search/brands");
                 setPage(1);
               }}
-              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                activeTab === "brands"
+              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === "brands"
                   ? "bg-purple-600 text-white shadow-md shadow-purple-200"
                   : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-              }`}
+                }`}
             >
               <Building2 size={16} />
               Brands
@@ -765,8 +766,8 @@ const SearchExplore = () => {
                   isCollaboration={isCollab}
                   collaborationId={collab?.id}
                   onViewDetails={(campaign) => {
-                     markAsViewed(campaign._id);
-                     navigate(`/influencer/search/campaign/${campaign._id}`);
+                    markAsViewed(campaign._id);
+                    navigate(`/influencer/search/campaign/${campaign._id}`);
                   }}
                   onApply={(campaign) => setSelectedApplicationCampaign(campaign)}
                   onViewCollaboration={(collabId) => {

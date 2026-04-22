@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import api from '../../services/api';
 import collaborationService from '../../services/collaborationService';
+import VerifiedTick from '../../components/common/VerifiedTick';
 
 function Influencers() {
   const navigate = useNavigate();
@@ -356,10 +357,7 @@ function Influencers() {
                     />
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <h3 className="text-[15px] font-bold text-gray-900">{influencer.username}</h3>
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#e8f5e9] text-[#2e7d32]">
-                        <ShieldCheck className="w-3 h-3 mr-0.5" />
-                        Verified
-                      </span>
+                      <VerifiedTick user={influencer} roleProfile={influencer} size="xs" />
                     </div>
                     <div className="flex flex-col items-center text-[12px] text-gray-500 space-y-0.5 mb-5 w-full">
                       <div className="flex items-center">

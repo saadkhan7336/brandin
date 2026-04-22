@@ -16,6 +16,8 @@ import {
   Star,
   Instagram,
   Twitter,
+  Linkedin,
+  Youtube,
   LayoutDashboard,
   ShieldClose,
 } from "lucide-react";
@@ -23,6 +25,33 @@ import api from "../../../services/api";
 import collaborationService from "../../../services/collaborationService";
 import SendCollabModal from "./SendCollabModal";
 import { cn } from "../../../utils/helper";
+import VerifiedTick from "../../common/VerifiedTick";
+
+const SocialIcon = ({ name, size = 16, className }) => {
+  const map = {
+    instagram: Instagram,
+    tiktok: ({ size, className }) => (
+      <svg
+        viewBox="0 0 24 24"
+        width={size}
+        height={size}
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+      </svg>
+    ),
+    twitter: Twitter,
+    linkedin: Linkedin,
+    youtube: Youtube,
+  };
+  const Icon = map[name?.toLowerCase()] || Globe;
+  return <Icon size={size} className={className} />;
+};
 
 const BrandPublicProfile = () => {
   const { brandId } = useParams();
@@ -163,12 +192,19 @@ const BrandPublicProfile = () => {
     totalCampaigns: data.stats?.totalCampaignsCount || 0,
   };
 
-  // Contact / social data
+  // Contact / social data from verifiedPlatforms
+  const verifiedPlatformsArr = Array.isArray(brand.user?.verifiedPlatforms) ? brand.user.verifiedPlatforms : [];
+  
+  // For legacy/simple access if needed
+  const getPlatformData = (platform) => verifiedPlatformsArr.find(p => p.platform?.toLowerCase() === platform.toLowerCase());
+
   const socialLinks = {
     website: brand.website || null,
-    instagram: brand.socialMedia?.instagram || null,
-    twitter: brand.socialMedia?.twitter || null,
-    tiktok: brand.socialMedia?.tiktok || null,
+    instagram: getPlatformData('instagram')?.username || null,
+    twitter: getPlatformData('twitter')?.username || null,
+    tiktok: getPlatformData('tiktok')?.username || null,
+    youtube: getPlatformData('youtube')?.username || null,
+    linkedin: getPlatformData('linkedin')?.username || null,
   };
 
   // What We Look For items
@@ -190,9 +226,12 @@ const BrandPublicProfile = () => {
           >
             <ArrowLeft className="w-4 h-4" /> Back to Search
           </button>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight italic uppercase">
-            {name}
-          </h1>
+          <div className="flex items-center gap-1">
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight italic uppercase">
+              {name}
+            </h1>
+            <VerifiedTick user={user} roleProfile={brand} size="lg" />
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -267,11 +306,9 @@ const BrandPublicProfile = () => {
                 {/* Name + Meta */}
                 <div className="pt-1">
                   <div className="flex items-center gap-2">
-                    {user.isVerified && (
-                      <div className="flex items-center gap-1 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-100 uppercase tracking-tight">
-                        <CheckCircle size={10} fill="currentColor" stroke="white" /> Verified Entity
-                      </div>
-                    )}
+                  <div className="flex items-center gap-2">
+                    <VerifiedTick user={user} roleProfile={brand} size="xs" />
+                  </div>
                   </div>
                   <p className="text-sm text-gray-500 mt-0.5">
                     {brand.description
@@ -443,20 +480,9 @@ const BrandPublicProfile = () => {
                       <ExternalLink size={12} className="text-gray-300 ml-auto" />
                     </a>
                   )}
-                  <div className="flex items-center gap-3 text-sm text-gray-600">
-                    <Instagram size={16} className="text-pink-500 flex-shrink-0" />
-                    <span>{socialLinks.instagram}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-gray-600">
-                    <svg viewBox="0 0 24 24" width="16" height="16" className="text-gray-800 flex-shrink-0 fill-current">
-                      <path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
-                    </svg>
-                    <span>{socialLinks.tiktok}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-gray-600">
-                    <Twitter size={16} className="text-blue-400 flex-shrink-0" />
-                    <span>{socialLinks.twitter}</span>
-                  </div>
+                  {!socialLinks.website && (
+                    <p className="text-xs text-gray-400 italic">No contact info available</p>
+                  )}
                 </div>
               </div>
 
@@ -474,6 +500,82 @@ const BrandPublicProfile = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Web Presence Card */}
+              {verifiedPlatformsArr.length > 0 && (
+                <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm space-y-4">
+                  <h3 className="text-xs font-bold text-gray-900 tracking-widest uppercase flex items-center gap-3">
+                    <Globe size={16} className="text-emerald-600" /> Web Presence
+                  </h3>
+                  <div className="flex flex-col gap-3">
+                    {verifiedPlatformsArr.map((platData) => {
+                      if (!platData || !platData.platform || !platData.verified) return null;
+                      
+                      const platform = platData.platform;
+                      const knownPlatforms = {
+                        instagram: { label: "Instagram", name: "INSTAGRAM", color: "pink" },
+                        tiktok: { label: "TikTok", name: "TIKTOK", color: "gray" },
+                        twitter: { label: "Twitter / X", name: "TWITTER", color: "blue" },
+                        linkedin: { label: "LinkedIn", name: "LINKEDIN", color: "indigo" },
+                        youtube: { label: "YouTube", name: "YOUTUBE", color: "red" },
+                        facebook: { label: "Facebook", name: "FACEBOOK", color: "blue" }
+                      };
+
+                      const platformKey = platform.toLowerCase();
+                      const social = knownPlatforms[platformKey];
+
+                      if (!social) return null;
+
+                      const value = platData.username || platData.handle || platData.platformUserId;
+                      if (!value) return null;
+
+                      const linkUrl = platData.profileUrl || (value.startsWith("http") ? value : `https://${platformKey === 'twitter' ? 'x' : platformKey}.com/${value.replace('@', '')}`);
+
+                      return (
+                        <div
+                          key={platform}
+                          className="flex items-center justify-between p-3.5 bg-gray-50/50 rounded-xl border border-transparent hover:border-gray-100 hover:bg-gray-50 transition-all group/soc"
+                        >
+                          <div className="flex items-center gap-4 w-full">
+                            <div
+                              className={cn(
+                                "w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-white shadow-sm border border-gray-50",
+                                social.color === "pink" ? "text-pink-600" :
+                                  social.color === "blue" ? "text-blue-600" :
+                                    social.color === "red" ? "text-red-600" :
+                                      social.color === "indigo" ? "text-indigo-600" : "text-gray-900"
+                              )}
+                            >
+                              <SocialIcon name={platform} size={18} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-[9px] font-bold text-gray-400 tracking-widest leading-none uppercase">
+                                  {social.name}
+                                </p>
+                                <div className="px-1 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[7px] font-black uppercase tracking-tighter">
+                                  Verified
+                                </div>
+                              </div>
+                              <p className="text-xs font-bold text-gray-700 truncate pr-2">
+                                @{value}
+                              </p>
+                            </div>
+                          </div>
+                          <a
+                            href={linkUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-2 text-gray-300 hover:text-blue-600 transition-colors"
+                          >
+                            <ExternalLink size={14} />
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

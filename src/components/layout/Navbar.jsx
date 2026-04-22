@@ -1,6 +1,7 @@
 import { Bell, Menu, X, Shield, MessageCircle } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import VerifiedTick from '../common/VerifiedTick';
 
 export default function Navbar({
   userRole,
@@ -114,7 +115,10 @@ export default function Navbar({
 
             {/* Name + role + email */}
             <div className="hidden md:block text-left">
-              <p className="text-sm font-semibold text-gray-900 leading-tight">{displayName}</p>
+              <div className="flex items-center gap-1">
+                <p className="text-sm font-semibold text-gray-900 leading-tight">{displayName}</p>
+                <VerifiedTick user={user} roleProfile={roleProfile} size="xs" />
+              </div>
               <p className="text-xs text-gray-400 leading-tight">
                 <span className={`font-bold ${userRole === 'brand' ? 'text-blue-500' : 'text-emerald-500'}`}>
                   {roleLabel}

@@ -17,6 +17,8 @@ import {
   Instagram,
   Twitter,
   Linkedin,
+  Youtube,
+  ExternalLink,
 } from "lucide-react";
 import api from "../../services/api";
 import profileService from "../../services/profileService";
@@ -26,6 +28,7 @@ import {
   updateProfileComplete,
 } from "../../redux/slices/authSlice";
 import { cn } from "../../utils/helper";
+import VerifiedTick from "../../components/common/VerifiedTick";
 
 const INDUSTRIES = [
   "Fashion",
@@ -83,6 +86,7 @@ const SocialIcon = ({ name, size = 16, className }) => {
     ),
     twitter: Twitter,
     linkedin: Linkedin,
+    youtube: Youtube,
   };
   const Icon = map[name?.toLowerCase()] || Globe;
   return <Icon size={size} className={className} />;
@@ -209,10 +213,7 @@ const MyProfileView = () => {
         address: brandData.brand.address || "",
         budgetMin: brandData.brand.budgetRange?.min || "",
         budgetMax: brandData.brand.budgetRange?.max || "",
-        instagram: brandData.brand.socialMedia?.instagram || "",
-        tiktok: brandData.brand.socialMedia?.tiktok || "",
-        twitter: brandData.brand.socialMedia?.twitter || "",
-        linkedin: brandData.brand.socialMedia?.linkedin || "",
+
         lookingFor: brandData.brand.lookingFor || [],
         customLookingFor: (brandData.brand.lookingFor || [])
           .filter((n) => !NICHES.includes(n))
@@ -252,10 +253,7 @@ const MyProfileView = () => {
       brandFd.append("budgetRange[min]", editedBrand.budgetMin || 0);
       brandFd.append("budgetRange[max]", editedBrand.budgetMax || 0);
 
-      brandFd.append("socialMedia[instagram]", editedBrand.instagram);
-      brandFd.append("socialMedia[tiktok]", editedBrand.tiktok);
-      brandFd.append("socialMedia[twitter]", editedBrand.twitter);
-      brandFd.append("socialMedia[linkedin]", editedBrand.linkedin);
+
 
       // Handle lookingFor (checkboxes + custom)
       let finalLookingFor = [...editedBrand.lookingFor].filter((n) =>
@@ -447,9 +445,9 @@ const MyProfileView = () => {
             <div className="relative group/logo shrink-0">
               <div className="w-40 h-40 rounded-2xl overflow-hidden border-[6px] border-white shadow-lg bg-white flex items-center justify-center relative ring-1 ring-gray-100">
                 {previews.logo ||
-                previews.profilePic ||
-                brand.logo ||
-                userDoc.profilePic ? (
+                  previews.profilePic ||
+                  brand.logo ||
+                  userDoc.profilePic ? (
                   <img
                     src={
                       previews.logo ||
@@ -518,15 +516,7 @@ const MyProfileView = () => {
                     <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
                       {name}
                     </h2>
-                    {userDoc.isVerified && (
-                      <div className="bg-blue-600 p-1 rounded-full text-white">
-                        <CheckCircle
-                          size={12}
-                          fill="currentColor"
-                          stroke="white"
-                        />
-                      </div>
-                    )}
+                    <VerifiedTick user={userDoc} roleProfile={brand} size="lg" className="shadow-lg shadow-emerald-200" />
                   </div>
                 )}
               </div>
@@ -696,9 +686,9 @@ const MyProfileView = () => {
                     className={cn(
                       "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-tiny",
                       stat.color === "blue" ? "bg-blue-50 text-blue-600" :
-                      stat.color === "orange" ? "bg-orange-50 text-orange-600" :
-                      stat.color === "emerald" ? "bg-emerald-50 text-emerald-600" :
-                      "bg-violet-50 text-violet-600"
+                        stat.color === "orange" ? "bg-orange-50 text-orange-600" :
+                          stat.color === "emerald" ? "bg-emerald-50 text-emerald-600" :
+                            "bg-violet-50 text-violet-600"
                     )}
                   >
                     <stat.icon size={20} />
@@ -751,97 +741,81 @@ const MyProfileView = () => {
               <Globe size={16} className="text-emerald-600" /> Web Presence
             </h3>
             <div className="flex flex-col gap-3">
-              {[
-                {
-                  id: "instagram",
-                  label: "Instagram",
-                  name: "INSTAGRAM",
-                  color: "pink",
-                },
-                {
-                  id: "tiktok",
-                  label: "TikTok",
-                  name: "TIKTOK",
-                  color: "gray",
-                },
-                {
-                  id: "twitter",
-                  label: "Twitter / X",
-                  name: "TWITTER",
-                  color: "blue",
-                },
-                {
-                  id: "linkedin",
-                  label: "LinkedIn",
-                  name: "LINKEDIN",
-                  color: "indigo",
-                },
-              ].map((social) => (
-                <div
-                  key={social.id}
-                  className="flex items-center justify-between p-3.5 bg-gray-50/50 rounded-xl border border-transparent hover:border-gray-100 hover:bg-gray-50 transition-all group/soc"
-                >
-                  <div className="flex items-center gap-4 w-full">
-                    <div
-                      className={cn(
-                        "w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-white shadow-sm border border-gray-50",
-                        social.color === "pink" ? "text-pink-600" :
-                        social.color === "blue" ? "text-blue-600" :
-                        social.color === "indigo" ? "text-indigo-600" : "text-gray-900"
-                      )}
-                    >
-                      <SocialIcon name={social.id} size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      {isEditing ? (
-                        <div className="flex flex-col">
-                          <p className="text-[9px] font-bold text-gray-400 tracking-widest leading-none mb-1 uppercase">
+              {(Array.isArray(brand.user?.verifiedPlatforms) ? brand.user.verifiedPlatforms : []).map((platData) => {
+                if (!platData || !platData.platform || !platData.verified) return null;
+                const platform = platData.platform;
+                const knownPlatforms = {
+                  instagram: { label: "Instagram", name: "INSTAGRAM", color: "pink" },
+                  tiktok: { label: "TikTok", name: "TIKTOK", color: "gray" },
+                  twitter: { label: "Twitter / X", name: "TWITTER", color: "blue" },
+                  linkedin: { label: "LinkedIn", name: "LINKEDIN", color: "indigo" },
+                  youtube: { label: "YouTube", name: "YOUTUBE", color: "red" },
+                  facebook: { label: "Facebook", name: "FACEBOOK", color: "blue" }
+                };
+
+                const platformKey = platform.toLowerCase();
+                const social = knownPlatforms[platformKey];
+
+                if (!social) return null;
+
+                const value = platData.username || platData.handle || platData.platformUserId;
+                if (!value) return null;
+
+                return (
+                  <div
+                    key={platform}
+                    className="flex items-center justify-between p-3.5 bg-gray-50/50 rounded-xl border border-transparent hover:border-gray-100 hover:bg-gray-50 transition-all group/soc"
+                  >
+                    <div className="flex items-center gap-4 w-full">
+                      <div
+                        className={cn(
+                          "w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-white shadow-sm border border-gray-50",
+                          social.color === "pink" ? "text-pink-600" :
+                            social.color === "blue" ? "text-blue-600" :
+                              social.color === "red" ? "text-red-600" :
+                                social.color === "indigo" ? "text-indigo-600" : "text-gray-900"
+                        )}
+                      >
+                        <SocialIcon name={platform} size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-[9px] font-bold text-gray-400 tracking-widest leading-none uppercase">
                             {social.name}
                           </p>
-                          <input
-                            value={editedBrand[social.id]}
-                            onChange={(e) =>
-                              setEditedBrand((prev) => ({
-                                ...prev,
-                                [social.id]: e.target.value,
-                              }))
-                            }
-                            className="bg-transparent border-0 border-b border-gray-200 p-0 focus:ring-0 focus:border-blue-500 text-xs font-bold w-full transition-all outline-none"
-                            placeholder="handle or url"
-                          />
+                          <div className="px-1 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[7px] font-black uppercase tracking-tighter">
+                            Verified
+                          </div>
                         </div>
-                      ) : (
-                        <>
-                          <p className="text-[9px] font-bold text-gray-400 tracking-widest leading-none mb-1 uppercase">
-                            {social.name}
-                          </p>
-                          <p className="text-xs font-bold text-gray-700 truncate pr-2">
-                            {brand.socialMedia?.[social.id]
-                              ? brand.socialMedia[social.id].startsWith("http")
-                                ? brand.socialMedia[social.id]
-                                : `@${brand.socialMedia[social.id]}`
-                              : "Not linked"}
-                          </p>
-                        </>
-                      )}
+                        <p className="text-xs font-bold text-gray-700 truncate pr-2">
+                          @{value}
+                        </p>
+                      </div>
                     </div>
+                    {(() => {
+                      const linkUrl = platData.profileUrl || (value.startsWith("http") ? value : `https://${platformKey === 'twitter' ? 'x' : platformKey}.com/${value.replace('@', '')}`);
+                      return (
+                        <a
+                          href={linkUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all border-none"
+                        >
+                          <ExternalLink size={12} />
+                        </a>
+                      );
+                    })()}
                   </div>
-                  {!isEditing && brand.socialMedia?.[social.id] && (
-                    <a
-                      href={
-                        brand.socialMedia[social.id].startsWith("http")
-                          ? brand.socialMedia[social.id]
-                          : `https://${social.id}.com/${brand.socialMedia[social.id]}`
-                      }
-                      target="_blank"
-                      rel="noreferrer"
-                      className="w-8 h-8 shrink-0 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all"
-                    >
-                      <ExternalLink size={12} />
-                    </a>
-                  )}
+                );
+              })}
+              {(!brand.user?.verifiedPlatforms || Object.keys(brand.user.verifiedPlatforms).length === 0) && (
+                <div className="py-8 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">No verified platforms</p>
                 </div>
-              ))}
+              )}
+              {(!brand.socialMedia || Object.values(brand.socialMedia).every(v => !v)) && (
+                <p className="text-xs font-medium text-gray-400 text-center py-4">No social platforms linked.</p>
+              )}
             </div>
           </div>
         </div>
@@ -1026,7 +1000,7 @@ const MyProfileView = () => {
                               {c.budget?.min?.toLocaleString()} - {c.budget?.max?.toLocaleString()}
                             </div>
                             <button className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all outline-none">
-                               <TrendingUp size={14} className="rotate-45" />
+                              <TrendingUp size={14} className="rotate-45" />
                             </button>
                           </div>
                         </div>
@@ -1042,24 +1016,5 @@ const MyProfileView = () => {
     </div>
   );
 };
-
-// Internal Helper for External Links Icon (not in lucide standard imports list above)
-const ExternalLink = ({ size = 16, className }) => (
-  <svg
-    viewBox="0 0 24 24"
-    width={size}
-    height={size}
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-    <polyline points="15 3 21 3 21 9" />
-    <line x1="10" y1="14" x2="21" y2="3" />
-  </svg>
-);
 
 export default MyProfileView;

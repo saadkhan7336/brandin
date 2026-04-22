@@ -26,6 +26,7 @@ import { Send, Menu, Phone, Video, MoreVertical, Paperclip, ImageIcon, Check, Ch
 import { formatDistanceToNow, format } from "date-fns";
 import EmojiPicker from 'emoji-picker-react';
 import collaborationService from "../../services/collaborationService";
+import VerifiedTick from "../common/VerifiedTick";
 
 const ENDPOINT = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
@@ -468,8 +469,9 @@ const ChatLayout = () => {
                   </div>
                   <div className="ml-3 flex-1 overflow-hidden">
                     <div className="flex justify-between items-start mb-0.5">
-                      <h3 className={`text-sm font-semibold truncate ${isActive ? 'text-indigo-900' : 'text-gray-900'}`}>
+                      <h3 className={`text-sm font-semibold flex items-center gap-1 truncate ${isActive ? 'text-indigo-900' : 'text-gray-900'}`}>
                         {otherUser?.fullname || "Unknown User"}
+                        <VerifiedTick user={otherUser} size="xs" />
                       </h3>
                       {conv.lastMessage?.createdAt && (
                         <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap ml-2">
@@ -552,9 +554,12 @@ const ChatLayout = () => {
                     )}
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 leading-none mb-1">
-                      {chatOtherUser?.fullname}
-                    </h3>
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="text-lg font-bold text-gray-900 leading-none">
+                        {chatOtherUser?.fullname}
+                      </h3>
+                      <VerifiedTick user={chatOtherUser} size="xs" />
+                    </div>
                     <div className={`flex items-center gap-1.5 ${isTyping ? 'animate-pulse' : ''}`}>
                        <span className="text-xs font-medium text-gray-400">
                           {isTyping ? "Typing..." : (isOnline ? "Online" : lastActiveText)}
@@ -735,7 +740,10 @@ const ChatLayout = () => {
                         </div>
                       )}
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">{chatOtherUser?.fullname}</h3>
+                    <div className="flex items-center gap-1.5 mb-1 justify-center">
+                      <h3 className="text-lg font-bold text-gray-900 leading-tight">{chatOtherUser?.fullname}</h3>
+                      <VerifiedTick user={chatOtherUser} size="xs" />
+                    </div>
                     <p className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-[0.2em] mb-3">
                       {chatOtherUser?.role === 'brand' ? 'Brand Partner' : 'Influencer'}
                     </p>

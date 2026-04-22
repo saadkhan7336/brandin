@@ -26,6 +26,7 @@ import {
   updateProfileComplete,
 } from "../../redux/slices/authSlice";
 import { cn } from "../../utils/helper";
+import VerifiedTick from "../../components/common/VerifiedTick";
 
 // Platform Icon Helper
 const SocialIcon = ({ name, size = 16, className }) => {
@@ -167,11 +168,7 @@ export default function MyProfileView() {
         location: profileData.location || "",
         portfolio: profileData.portfolio || "",
         resume: profileData.resume || "",
-        instagram: profileData.socialMedia?.instagram || "",
-        tiktok: profileData.socialMedia?.tiktok || "",
-        twitter: profileData.socialMedia?.twitter || "",
-        linkedin: profileData.socialMedia?.linkedin || "",
-        youtube: profileData.socialMedia?.youtube || "",
+
       });
       setEditedUser({
         fullname: profileData.user?.fullname || "",
@@ -214,11 +211,7 @@ export default function MyProfileView() {
       infFd.append("portfolio", editedProfile.portfolio);
 
       // Social Media
-      infFd.append("socialMedia[instagram]", editedProfile.instagram);
-      infFd.append("socialMedia[tiktok]", editedProfile.tiktok);
-      infFd.append("socialMedia[twitter]", editedProfile.twitter);
-      infFd.append("socialMedia[linkedin]", editedProfile.linkedin);
-      infFd.append("socialMedia[youtube]", editedProfile.youtube);
+
 
       if (files.coverPic) infFd.append("coverImage", files.coverPic);
       if (files.profilePic) infFd.append("profilePicture", files.profilePic);
@@ -281,15 +274,7 @@ export default function MyProfileView() {
             <h1 className="text-4xl font-black text-slate-900 tracking-tight italic uppercase">
               {name}
             </h1>
-            {data.user?.isVerified && (
-              <div className="bg-blue-600 p-1.5 rounded-full text-white shadow-lg shadow-blue-200">
-                <CheckCircle
-                  size={14}
-                  fill="currentColor"
-                  stroke="white"
-                />
-              </div>
-            )}
+            <VerifiedTick user={data.user} roleProfile={data} size="lg" className="shadow-lg shadow-emerald-200" />
           </div>
           <p className="text-slate-500 text-sm font-medium">
             This is how <span className="text-blue-600 font-bold">Brands</span>{" "}
@@ -585,85 +570,75 @@ export default function MyProfileView() {
               <Globe size={16} className="text-emerald-600" /> Digital Ecosystem
             </h3>
             <div className="flex flex-col gap-4">
-              {[
-                {
-                  id: "instagram",
-                  label: "Instagram",
-                  name: "INSTAGRAM",
-                  color: "pink",
-                },
-                {
-                  id: "tiktok",
-                  label: "TikTok",
-                  name: "TIKTOK",
-                  color: "slate",
-                },
-                {
-                  id: "twitter",
-                  label: "Twitter",
-                  name: "TWITTER",
-                  color: "blue",
-                },
-                {
-                  id: "youtube",
-                  label: "YouTube",
-                  name: "YOUTUBE",
-                  color: "red",
-                },
-                {
-                  id: "linkedin",
-                  label: "LinkedIn",
-                  name: "LINKEDIN",
-                  color: "indigo",
-                },
-              ].map((social) => (
-                <div
-                  key={social.id}
-                  className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50 transition-all group/soc"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div
-                      className={cn(
-                        `w-9 h-9 rounded-xl flex items-center justify-center bg-white shadow-sm transition-transform group-hover/soc:rotate-6`,
-                        `text-${social.color}-600`,
-                      )}
-                    >
-                      <SocialIcon name={social.id} size={16} />
-                    </div>
-                    <div className="text-left">
-                      {isEditing ? (
-                        <input
-                          value={editedProfile[social.id]}
-                          onChange={(e) =>
-                            setEditedProfile((prev) => ({
-                              ...prev,
-                              [social.id]: e.target.value,
-                            }))
-                          }
-                          className="bg-transparent border-0 border-b border-slate-200 p-0 focus:ring-0 text-xs font-bold w-24"
-                          placeholder={`@username`}
-                        />
-                      ) : (
-                        <>
-                          <p className="text-[10px] font-black text-slate-400 tracking-widest leading-none mb-1.5 uppercase">
+              {(Array.isArray(data.user?.verifiedPlatforms) ? data.user.verifiedPlatforms : []).map((platformData) => {
+                if (!platformData || !platformData.platform || !platformData.verified) return null;
+                const platform = platformData.platform;
+                
+                const knownPlatforms = {
+                  instagram: { label: "Instagram", name: "INSTAGRAM", color: "pink" },
+                  tiktok: { label: "TikTok", name: "TIKTOK", color: "slate" },
+                  twitter: { label: "Twitter", name: "TWITTER", color: "blue" },
+                  youtube: { label: "YouTube", name: "YOUTUBE", color: "red" },
+                  linkedin: { label: "LinkedIn", name: "LINKEDIN", color: "indigo" },
+                  facebook: { label: "Facebook", name: "FACEBOOK", color: "blue" }
+                };
+
+                const social = knownPlatforms[platform.toLowerCase()] || {
+                  label: platform.charAt(0).toUpperCase() + platform.slice(1),
+                  name: platform.toUpperCase(),
+                  color: "slate"
+                };
+
+                const displayValue = platformData.username || platformData.platformUserId || platformData.profileUrl || "Connected";
+                const linkUrl = platformData.profileUrl || (displayValue.startsWith("http") ? displayValue : `https://${platform}.com/${displayValue}`);
+
+                return (
+                  <div
+                    key={platform}
+                    className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50 transition-all group/soc"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div
+                        className={cn(
+                          `w-9 h-9 rounded-xl flex items-center justify-center bg-white shadow-sm transition-transform group-hover/soc:rotate-6`,
+                          `text-${social.color}-600`,
+                        )}
+                      >
+                        <SocialIcon name={platform} size={16} />
+                      </div>
+                      <div className="text-left">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <p className="text-[10px] font-black text-slate-400 tracking-widest leading-none uppercase">
                             {social.name}
                           </p>
-                          <p className="text-xs font-bold text-slate-600">
-                            {data.socialMedia?.[social.id]
-                              ? `@${data.socialMedia[social.id]}`
-                              : "Not linked"}
-                          </p>
-                        </>
-                      )}
+                          <div className="px-1 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[7px] font-black uppercase tracking-tighter">
+                            Verified
+                          </div>
+                        </div>
+                        <p className="text-xs font-bold text-slate-600">
+                          {displayValue.startsWith("http") ? "Profile" : (displayValue.startsWith("@") ? displayValue : `@${displayValue}`)}
+                        </p>
+                      </div>
                     </div>
+                    {linkUrl && (
+                      <a
+                        href={linkUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-8 h-8 rounded-lg bg-slate-200/50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all border-none"
+                      >
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
                   </div>
-                  {!isEditing && data.socialMedia?.[social.id] && (
-                    <button className="w-8 h-8 rounded-lg bg-slate-200/50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all border-none">
-                      <ExternalLink size={12} />
-                    </button>
-                  )}
+                );
+              })}
+              {(!data.user?.verifiedPlatforms || !Array.isArray(data.user.verifiedPlatforms) || data.user.verifiedPlatforms.length === 0) && (
+                <div className="text-center py-6">
+                   <p className="text-xs font-medium text-slate-400">No verified platforms linked.</p>
+                   <p className="text-[10px] font-bold text-blue-500 uppercase tracking-tight mt-1">Connect accounts in Settings</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

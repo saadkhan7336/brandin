@@ -70,6 +70,44 @@ const profileService = {
     const res = await api.patch(ENDPOINTS.USER_DEACTIVATE);
     return res.data;
   },
+
+  /**
+   * GET /oauth/status
+   * Returns { verifiedPlatforms, isProfileVerified, verifiedCount }
+   */
+  getOAuthStatus: async () => {
+    const res = await api.get(ENDPOINTS.oauth.status);
+    return res.data.data;
+  },
+
+  /**
+   * POST /oauth/:platform/simulate
+   * Testing only — instantly marks a platform as verified
+   * Returns { verifiedPlatforms, isProfileVerified, verifiedCount }
+   */
+  simulateVerify: async (platform) => {
+    const res = await api.post(ENDPOINTS.oauth.simulate(platform));
+    return res.data.data;
+  },
+
+  /**
+   * DELETE /oauth/:platform/revoke
+   * Revokes verification for a platform
+   */
+  revokeVerify: async (platform) => {
+    const res = await api.delete(ENDPOINTS.oauth.revoke(platform));
+    return res.data.data;
+  },
+  
+  sendOTP: async () => {
+    const res = await api.post(ENDPOINTS.SEND_OTP);
+    return res.data;
+  },
+
+  verifyOTP: async (otp) => {
+    const res = await api.post(ENDPOINTS.VERIFY_OTP, { otp });
+    return res.data;
+  },
 };
 
 export default profileService;

@@ -165,24 +165,7 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout, isCollaps
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        {/* Profile completion warning */}
-        {showCompletionWarning && (
-          <div className="mx-3 mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <div className="flex items-start gap-2">
-              <AlertCircle size={14} className="text-amber-500 mt-0.5 flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-amber-800">Profile incomplete</p>
-                <div className="mt-1.5 w-full bg-amber-200 rounded-full h-1.5">
-                  <div
-                    className="bg-amber-500 h-1.5 rounded-full transition-all duration-500"
-                    style={{ width: `${percent}%` }}
-                  />
-                </div>
-                <p className="text-xs text-amber-600 mt-1">{percent}% complete</p>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         <nav className={`flex-1 flex flex-col ${isCollapsed ? 'px-2' : 'px-3'} py-4 space-y-1 overflow-y-auto overflow-x-hidden`}>
           {navItems.map((item) => {

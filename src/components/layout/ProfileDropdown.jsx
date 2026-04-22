@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, LogOut, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import VerifiedTick from '../common/VerifiedTick';
 
 export default function ProfileDropdown({ user, roleProfile, isOpen, onClose, onLogout }) {
   const panelRef = useRef(null);
@@ -78,7 +79,10 @@ export default function ProfileDropdown({ user, roleProfile, isOpen, onClose, on
 
       {/* User info */}
       <div className="pt-12 pb-4 px-5 text-center">
-        <h4 className="text-lg font-bold text-gray-900 truncate px-2">{displayName}</h4>
+        <div className="flex items-center justify-center gap-1">
+          <h4 className="text-lg font-bold text-gray-900 truncate px-2">{displayName}</h4>
+          <VerifiedTick user={user} roleProfile={roleProfile} size="md" />
+        </div>
         <p className="text-sm text-blue-500 mt-0.5 truncate">{userEmail}</p>
       </div>
 

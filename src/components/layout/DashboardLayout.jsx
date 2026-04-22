@@ -10,7 +10,9 @@ import { fetchNotifications } from '../../redux/slices/notificationSlice';
 import { fetchConversations } from '../../redux/slices/chatSlice';
 import profileService from '../../services/profileService';
 import { setProfileData } from '../../redux/slices/Profileslice';
+import { updateUserFields } from '../../redux/slices/authSlice';
 import CompletionBanner from '../common/CompletionBanner';
+import VerificationBanner from '../common/VerificationBanner';
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
@@ -36,6 +38,9 @@ export default function DashboardLayout() {
       try {
         const profileData = await profileService.getMe();
         dispatch(setProfileData(profileData));
+        if (profileData.user) {
+          dispatch(updateUserFields(profileData.user));
+        }
       } catch (err) {
         console.error("Error fetching profile completion:", err);
       }
@@ -99,6 +104,13 @@ export default function DashboardLayout() {
 
         {/* Main content — dynamic pages via <Outlet> */}
         <main className={`flex-1 min-w-0 overflow-y-auto ${location.pathname === '/messages' ? 'p-0' : 'p-5 sm:p-6 lg:p-8'}`}>
+          {/* Social Verification Banner */}
+          <VerificationBanner 
+            user={user} 
+            roleProfile={roleProfile} 
+            onGoToSettings={() => navigate(user?.role === 'brand' ? '/brand/settings' : '/influencer/settings')}
+          />
+
           {/* Global Completion Banner */}
           {completion && !completion.isComplete && (
             <div className="mb-8">

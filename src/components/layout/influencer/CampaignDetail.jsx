@@ -7,6 +7,7 @@ import {
 import api from "../../../services/api";
 import collaborationService from "../../../services/collaborationService";
 import ApplyCampaignModal from "./ApplyCampaignModal";
+import VerifiedTick from "../../common/VerifiedTick";
 
 const CampaignDetail = () => {
   const { campaignId } = useParams();
@@ -165,7 +166,7 @@ const CampaignDetail = () => {
                     >
                       {brandName}
                     </button>
-                    <CheckCircle size={14} className="text-blue-500" fill="currentColor" stroke="white" />
+                    <VerifiedTick user={campaign.brand} roleProfile={campaign.brandProfile} size="xs" />
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-2 md:pt-0">

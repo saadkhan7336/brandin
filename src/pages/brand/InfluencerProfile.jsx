@@ -27,6 +27,7 @@ import api from "../../services/api";
 import collaborationService from "../../services/collaborationService";
 import SendCollabModal from "../../components/layout/influencer/SendCollabModal";
 import { cn } from "../../utils/helper";
+import VerifiedTick from "../../components/common/VerifiedTick";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ const InfluencerProfile = () => {
         const res = await api.get(`/brands/influencers/${influencerId}`);
         if (res.data?.success) {
           setData(res.data.data);
-          
+
           // Check for active collaboration using the user ID
           const userId = res.data.data.influencer?.user?._id;
           if (userId) {
@@ -218,13 +219,16 @@ const InfluencerProfile = () => {
           >
             <ArrowLeft className="w-4 h-4" /> Back to Search
           </button>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight italic uppercase">
-            {name}
-          </h1>
+          <div className="flex items-center gap-1">
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight italic uppercase">
+              {name}
+            </h1>
+            <VerifiedTick user={user} roleProfile={influencer} size="lg" />
+          </div>
         </div>
         <div className="flex items-center gap-3">
           {activeCollab ? (
-            <button 
+            <button
               onClick={() => navigate(`/brand/collaboration/${activeCollab._id}`)}
               className="px-6 py-3 bg-indigo-600 border border-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-sm shadow-indigo-100"
             >
@@ -264,11 +268,12 @@ const InfluencerProfile = () => {
                 alt="Avatar"
                 className="w-44 h-44 rounded-[2.5rem] object-cover border-[10px] border-white shadow-2xl bg-white"
               />
-              {user.isVerified && (
-                <div className="absolute -bottom-2 -right-2 bg-blue-600 p-2.5 rounded-full text-white shadow-lg border-4 border-white">
-                  <ShieldCheck size={20} fill="currentColor" stroke="white" />
-                </div>
-              )}
+              <VerifiedTick
+                user={user}
+                roleProfile={influencer}
+                size="md"
+                className="absolute -bottom-2 -right-2 bg-blue-600 p-2.5 rounded-full text-white shadow-lg border-4 border-white ml-0"
+              />
             </div>
 
             <div className="flex-1 pb-4 space-y-6">
@@ -384,75 +389,85 @@ const InfluencerProfile = () => {
             </div>
           </div>
 
-          {/* SOCIAL HANDLINGS */}
+          {/* DIGITAL ECOSYSTEM */}
           <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-2xl shadow-slate-200/30 space-y-8">
             <h3 className="text-sm font-black text-slate-900 tracking-widest uppercase flex items-center gap-3 text-left">
               <Globe size={16} className="text-emerald-600" /> Digital Ecosystem
             </h3>
             <div className="flex flex-col gap-4">
-              {[
-                {
-                  id: "instagram",
-                  label: "Instagram",
-                  name: "INSTAGRAM",
-                  color: "pink",
-                },
-                {
-                  id: "tiktok",
-                  label: "TikTok",
-                  name: "TIKTOK",
-                  color: "slate",
-                },
-                {
-                  id: "twitter",
-                  label: "Twitter",
-                  name: "TWITTER",
-                  color: "blue",
-                },
-                {
-                  id: "youtube",
-                  label: "YouTube",
-                  name: "YOUTUBE",
-                  color: "red",
-                },
-                {
-                  id: "linkedin",
-                  label: "LinkedIn",
-                  name: "LINKEDIN",
-                  color: "indigo",
-                },
-              ].map((social) => (
-                <div
-                  key={social.id}
-                  className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50 transition-all group/soc"
-                >
-                  <div className="flex items-center gap-3.5 text-left">
-                    <div
-                      className={cn(
-                        `w-9 h-9 rounded-xl flex items-center justify-center bg-white shadow-sm transition-transform group-hover/soc:rotate-6`,
-                        `text-${social.color}-600`,
-                      )}
-                    >
-                      <SocialIcon name={social.id} size={16} />
+              {(Array.isArray(user?.verifiedPlatforms) ? user.verifiedPlatforms : []).map((platformData) => {
+                if (!platformData || !platformData.platform || !platformData.verified) return null;
+                const platform = platformData.platform;
+                
+                const knownPlatforms = {
+                  instagram: { label: "Instagram", name: "INSTAGRAM", color: "pink" },
+                  tiktok: { label: "TikTok", name: "TIKTOK", color: "slate" },
+                  twitter: { label: "Twitter", name: "TWITTER", color: "blue" },
+                  youtube: { label: "YouTube", name: "YOUTUBE", color: "red" },
+                  linkedin: { label: "LinkedIn", name: "LINKEDIN", color: "indigo" },
+                  facebook: { label: "Facebook", name: "FACEBOOK", color: "blue" }
+                };
+
+                const social = knownPlatforms[platform.toLowerCase()] || {
+                  label: platform.charAt(0).toUpperCase() + platform.slice(1),
+                  name: platform.toUpperCase(),
+                  color: "slate"
+                };
+
+                const displayValue = platformData.username || platformData.handle || platformData.platformUserId || platformData.profileUrl || "Connected";
+                const linkUrl = platformData.profileUrl || (displayValue.startsWith("http") ? displayValue : `https://${platform}.com/${displayValue.replace("@", "")}`);
+
+                return (
+                  <div
+                    key={platform}
+                    className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50 transition-all group/soc"
+                  >
+                    <div className="flex items-center gap-3.5 text-left">
+                      <div
+                        className={cn(
+                          `w-9 h-9 rounded-xl flex items-center justify-center bg-white shadow-sm transition-transform group-hover/soc:rotate-6`,
+                          social.color === "pink" ? "text-pink-600" :
+                          social.color === "blue" ? "text-blue-600" :
+                          social.color === "red" ? "text-red-600" :
+                          social.color === "indigo" ? "text-indigo-600" : "text-slate-900"
+                        )}
+                      >
+                        <SocialIcon name={platform} size={16} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <p className="text-[10px] font-black text-slate-400 tracking-widest leading-none uppercase">
+                            {social.name}
+                          </p>
+                          <div className="px-1 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[7px] font-black uppercase tracking-tighter">
+                            Verified
+                          </div>
+                        </div>
+                        <p className="text-xs font-bold text-slate-600">
+                          {displayValue.startsWith("http") ? "Profile" : (displayValue.startsWith("@") ? displayValue : `@${displayValue}`)}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-[10px] font-black text-slate-400 tracking-widest leading-none mb-1.5 uppercase">
-                        {social.name}
-                      </p>
-                      <p className="text-xs font-bold text-slate-600">
-                        {influencer.socialMedia?.[social.id]
-                          ? `@${influencer.socialMedia[social.id]}`
-                          : "Not linked"}
-                      </p>
-                    </div>
+                    {linkUrl && (
+                      <a
+                        href={linkUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-8 h-8 rounded-lg bg-slate-200/50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all border-none"
+                      >
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
                   </div>
-                  {influencer.socialMedia?.[social.id] && (
-                    <button className="w-8 h-8 rounded-lg bg-slate-200/50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all border-none">
-                      <ExternalLink size={12} />
-                    </button>
-                  )}
+                );
+              })}
+              {(!user?.verifiedPlatforms || !Array.isArray(user.verifiedPlatforms) || user.verifiedPlatforms.length === 0) && (
+                <div className="py-12 text-center bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-100">
+                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">
+                    No verified platforms linked.
+                  </p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -531,12 +546,12 @@ const InfluencerProfile = () => {
                     )}
                     {(!influencer.activeCollaborations ||
                       influencer.activeCollaborations.length === 0) && (
-                      <div className="col-span-full py-20 text-center bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200">
-                        <p className="text-slate-400 font-black uppercase text-xs tracking-widest italic">
-                          No active collaborations right now.
-                        </p>
-                      </div>
-                    )}
+                        <div className="col-span-full py-20 text-center bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                          <p className="text-slate-400 font-black uppercase text-xs tracking-widest italic">
+                            No active collaborations right now.
+                          </p>
+                        </div>
+                      )}
                   </div>
                 </div>
               )}
@@ -589,12 +604,12 @@ const InfluencerProfile = () => {
                     ))}
                     {(!influencer.reviews ||
                       influencer.reviews.length === 0) && (
-                      <div className="py-20 text-center bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200">
-                        <p className="text-slate-400 font-black uppercase text-xs tracking-widest italic">
-                          No reviews yet.
-                        </p>
-                      </div>
-                    )}
+                        <div className="py-20 text-center bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                          <p className="text-slate-400 font-black uppercase text-xs tracking-widest italic">
+                            No reviews yet.
+                          </p>
+                        </div>
+                      )}
                   </div>
                 </div>
               )}
