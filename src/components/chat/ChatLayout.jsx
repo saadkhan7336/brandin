@@ -54,6 +54,7 @@ const ChatLayout = () => {
   const [selectedMessageIds, setSelectedMessageIds] = useState([]);
   const [isForwardModalOpen, setIsForwardModalOpen] = useState(false);
   const allFileInputRef = useRef(null);
+  const chatInputRef = useRef(null);
   
   // Real-time UI states
   const [isTyping, setIsTyping] = useState(false);
@@ -659,6 +660,7 @@ const ChatLayout = () => {
                       <Smile className="w-5 h-5" />
                     </button>
                     <textarea
+                      ref={chatInputRef}
                       rows="1"
                       value={newMessage}
                       onChange={(e) => {
@@ -685,8 +687,22 @@ const ChatLayout = () => {
                     <div className="absolute bottom-16 left-0 z-50">
                       <EmojiPicker 
                         onEmojiClick={(emojiData) => {
-                          setNewMessage((prev) => prev + emojiData.emoji);
+                          const input = chatInputRef.current;
+                          const start = input.selectionStart;
+                          const end = input.selectionEnd;
+                          const text = newMessage;
+                          const before = text.substring(0, start);
+                          const after = text.substring(end, text.length);
+                          
+                          setNewMessage(before + emojiData.emoji + after);
                           setShowEmojiPicker(false);
+                          
+                          // Maintain focus and set cursor position after insertion
+                          setTimeout(() => {
+                            input.focus();
+                            const newPos = start + emojiData.emoji.length;
+                            input.setSelectionRange(newPos, newPos);
+                          }, 0);
                         }} 
                       />
                     </div>
