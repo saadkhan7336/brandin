@@ -101,7 +101,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
-  LayoutDashboard, Search, FileText, Settings,
+  LayoutDashboard, Search, FileText, Settings, User,
   LogOut, Target, Handshake, Building2, AlertCircle, MessageCircle
 } from "lucide-react";
 
@@ -112,7 +112,7 @@ const brandNavItems = [
   { icon: Handshake,       label: "Collaborations",     path: "/brand/collaborations" },
   { icon: Target,          label: "Campaigns",          path: "/brand/campaigns" },
   { icon: MessageCircle,   label: "Messages",           path: "/messages" },
-  { icon: Settings,        label: "My Profile",         path: "/brand/profile" },
+  { icon: User,            label: "My Profile",         path: "/brand/profile" },
 ];
 
 const influencerNavItems = [
@@ -121,7 +121,7 @@ const influencerNavItems = [
   { icon: FileText,        label: "Collaboration Requests", path: "/influencer/requests" },
   { icon: Handshake,       label: "Collaborations",         path: "/influencer/collaborations" },
   { icon: MessageCircle,   label: "Messages",               path: "/messages" },
-  { icon: Settings,        label: "My Profile",             path: "/influencer/profile" },
+  { icon: User,            label: "My Profile",             path: "/influencer/profile" },
 ];
 
 const adminNavItems = [

@@ -126,6 +126,12 @@ export const ENDPOINTS = {
     deleteDeliverable: (id, delivId) => `/collaborations/${id}/deliverables/${delivId}`,
     submitDeliverable: (id, delivId) => `/collaborations/${id}/deliverables/${delivId}/submit`,
     reviewDeliverable: (id, delivId) => `/collaborations/${id}/deliverables/${delivId}/review`,
+    pause: (id) => `/collaborations/${id}/pause`,
+    resume: (id) => `/collaborations/${id}/resume`,
+    suspend: (id) => `/collaborations/${id}/suspend`,
+    complete: (id) => `/collaborations/${id}/complete`,
+    requestAction: (id) => `/collaborations/${id}/request-action`,
+    handleAction: (id) => `/collaborations/${id}/handle-action`,
   },
 
   // Messages

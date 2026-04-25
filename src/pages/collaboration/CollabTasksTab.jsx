@@ -163,7 +163,7 @@ const CollabTasksTab = () => {
           </NavLink>
         </div>
 
-        {userRole === 'brand' && (
+        {userRole === 'brand' && collaboration?.status !== 'completed' && (
           <button
             onClick={() => handleOpenModal()}
             className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"

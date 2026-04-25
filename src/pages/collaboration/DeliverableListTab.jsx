@@ -80,7 +80,12 @@ const DeliverableListTab = () => {
 
               {/* Actions */}
               <div className="flex items-center gap-2 self-end md:self-center">
-                {userRole === 'brand' ? (
+                {collaboration.status === 'completed' ? (
+                  <div className="flex items-center gap-2 text-blue-600 font-black text-xs uppercase tracking-widest px-4 py-2 bg-blue-50 rounded-xl border border-blue-100">
+                    <CheckCircle size={16} />
+                    Project Completed
+                  </div>
+                ) : userRole === 'brand' ? (
                   <>
                     {deliv.status === 'SUBMITTED' && (
                       <div className="flex items-center gap-2 mr-4 pr-4 border-r border-gray-100">

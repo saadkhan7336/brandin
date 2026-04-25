@@ -9,12 +9,22 @@ import {
   Calendar,
   DollarSign,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Pause,
+  Play,
+  XCircle,
+  CheckCircle2,
+  Star
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import collaborationService from '../../services/collaborationService';
 import { chatService } from '../../services/chatService';
 import { setActiveConversation } from '../../redux/slices/chatSlice';
+import Modal from '../../components/common/Modal';
+import { cn } from '../../utils/helper';
+import { io } from 'socket.io-client';
+
+const ENDPOINT = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const CollabDetailView = () => {
   const { id } = useParams();
@@ -24,6 +34,16 @@ const CollabDetailView = () => {
   const [collaboration, setCollaboration] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // Modal States
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [resumeReason, setResumeReason] = useState("");
+  const [rating, setRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
 
   const fetchCollaboration = useCallback(async () => {
     try {
@@ -42,6 +62,90 @@ const CollabDetailView = () => {
   useEffect(() => {
     fetchCollaboration();
   }, [fetchCollaboration]);
+
+  useEffect(() => {
+    const socket = io(ENDPOINT, {
+      withCredentials: true,
+    });
+
+    if (user) {
+      socket.emit('setup', user);
+      
+      socket.on('activity_created', (data) => {
+        // Refresh if the activity is related to this specific collaboration
+        if (data.relatedId === id || (['collaboration', 'system'].includes(data.category))) {
+          fetchCollaboration();
+        }
+      });
+    }
+
+    return () => {
+      socket.off('activity_created');
+      socket.disconnect();
+    };
+  }, [user, id, fetchCollaboration]);
+
+  const handleAction = async (actionType, payload = {}) => {
+    try {
+      setActionLoading(true);
+      let res;
+      
+      switch(actionType) {
+        case 'PAUSE':
+          res = await collaborationService.pause(id);
+          break;
+        case 'RESUME':
+          res = await collaborationService.resume(id);
+          break;
+        case 'SUSPEND':
+          res = await collaborationService.suspend(id);
+          break;
+        case 'REQUEST_CANCEL':
+          res = await collaborationService.requestAction(id, { type: 'CANCEL', reason: cancelReason });
+          setIsCancelModalOpen(false);
+          setCancelReason("");
+          break;
+        case 'REQUEST_COMPLETE':
+          res = await collaborationService.requestAction(id, { type: 'COMPLETE', reason: "Work finished, ready for completion." });
+          break;
+        case 'REQUEST_RESUME':
+          res = await collaborationService.requestAction(id, { type: 'RESUME', reason: resumeReason });
+          setIsResumeModalOpen(false);
+          setResumeReason("");
+          break;
+        case 'APPROVE_REQUEST':
+          res = await collaborationService.handleAction(id, { decision: 'APPROVED', reviewData: payload.reviewData });
+          setIsCompleteModalOpen(false);
+          break;
+        case 'REJECT_REQUEST':
+          res = await collaborationService.handleAction(id, { decision: 'REJECTED' });
+          break;
+        case 'COMPLETE':
+          res = await collaborationService.complete(id, payload.reviewData);
+          setIsCompleteModalOpen(false);
+          break;
+        case 'CANCEL':
+          res = await collaborationService.requestAction(id, { type: 'CANCEL', reason: cancelReason }); // Direct cancel for brand is also a request for consistency or use updateStatus
+          // Let's use requestAction with approval if influencer, or direct cancel for brand
+          if (user.role === 'brand') {
+             // For brand, we can just cancel directly if needed, but the user said "asked for reason"
+             // Our service updateCollaborationStatus handles this.
+             // But let's stick to the prompt: brand can suspend/pause at any time.
+             // Cancellation prompt for both.
+          }
+          break;
+        default:
+          break;
+      }
+      
+      await fetchCollaboration();
+    } catch (err) {
+      console.error(`Action ${actionType} failed:`, err);
+      alert(err.message || "Action failed. Please try again.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -70,14 +174,15 @@ const CollabDetailView = () => {
     );
   }
 
-  const { campaign, influencer, brand, status, deliverables = [] } = collaboration;
+  const { campaign, influencer, brand, status, deliverables = [], actionRequest } = collaboration;
   const partner = user.role === 'brand' ? influencer : brand;
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(partner?.fullname || 'User')}&background=random&size=150`;
 
-  // Calculate stats for progress fix
+  // Progress logic
   const delivTotal = deliverables.length;
-  const delivCompleted = deliverables.filter(d => d.status === 'APPROVED').length;
+  const delivCompleted = deliverables.filter(d => ['APPROVED', 'DELIVERED'].includes(d.status)).length;
   const progress = delivTotal > 0 ? Math.round((delivCompleted / delivTotal) * 100) : 0;
+  const canComplete = delivTotal > 0 && delivCompleted === delivTotal;
 
   const handleChatClick = async () => {
     try {
@@ -120,9 +225,22 @@ const CollabDetailView = () => {
                <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold uppercase tracking-wider">
                  Campaign Project
                </span>
-               <span className="px-3 py-1 bg-gray-50 text-gray-600 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-gray-100">
+               <span className={cn(
+                 "px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border",
+                 status === 'active' || status === 'in_progress' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                 status === 'paused' ? "bg-amber-50 text-amber-600 border-amber-100" :
+                 status === 'suspended' ? "bg-red-50 text-red-600 border-red-100" :
+                 status === 'completed' ? "bg-blue-50 text-blue-600 border-blue-100" :
+                 "bg-gray-50 text-gray-600 border-gray-100"
+               )}>
                  {status || 'ONGOING'}
                </span>
+               
+               {actionRequest && actionRequest.status === 'PENDING' && (
+                 <span className="px-3 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-purple-100 animate-pulse">
+                   PENDING {actionRequest.type} REQUEST
+                 </span>
+               )}
             </div>
             <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-4 capitalize">
               {campaign?.name || collaboration.title || 'Untitled Project'}
@@ -131,7 +249,7 @@ const CollabDetailView = () => {
             <div className="flex flex-wrap gap-6 mt-6">
               <div className="flex items-center gap-2 text-gray-600">
                 <Calendar size={16} className="text-gray-400" />
-                <span className="text-sm font-bold">{new Date(collaboration.startDate).toLocaleDateString()} - {new Date(collaboration.endDate).toLocaleDateString()}</span>
+                <span className="text-sm font-bold">{new Date(collaboration.startDate).toLocaleDateString()} - {new Date(collaboration.endDate || Date.now()).toLocaleDateString()}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-600">
                 <DollarSign size={16} className="text-emerald-500" />
@@ -164,6 +282,169 @@ const CollabDetailView = () => {
         </div>
       </div>
 
+      {/* Review Summary (Visible after completion) */}
+      {collaboration.review && (
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-6 mb-8 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 opacity-5">
+             <Star size={120} className="fill-amber-400 text-amber-400" />
+          </div>
+          <div className="relative z-10">
+             <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                   <div className="flex">
+                      {[1,2,3,4,5].map((s) => (
+                        <Star 
+                          key={s} 
+                          size={18} 
+                          className={cn(s <= collaboration.review.rating ? "fill-amber-400 text-amber-400" : "text-gray-200")} 
+                        />
+                      ))}
+                   </div>
+                   <span className="text-xs font-black text-amber-600 uppercase tracking-widest">Project Review</span>
+                </div>
+                <span className="text-[10px] font-bold text-gray-400 uppercase">
+                  {new Date(collaboration.review.createdAt).toLocaleDateString()}
+                </span>
+             </div>
+             <p className="text-gray-700 font-bold italic text-sm leading-relaxed max-w-2xl">
+                "{collaboration.review.comment}"
+             </p>
+             <div className="mt-4 flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-amber-200 flex items-center justify-center">
+                   <CheckCircle2 size={12} className="text-amber-700" />
+                </div>
+                <span className="text-[11px] font-black text-amber-700 uppercase tracking-widest">Verified Collaboration Outcome</span>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action Bar (Contextual) */}
+      <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+           {/* BRAND ACTIONS */}
+           {user.role === 'brand' && status !== 'completed' && status !== 'cancelled' && (
+             <>
+               {status === 'active' || status === 'in_progress' ? (
+                 <button 
+                   disabled={actionLoading}
+                   onClick={() => handleAction('PAUSE')}
+                   className="flex items-center gap-2 px-6 py-2.5 bg-amber-50 text-amber-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-amber-100 transition-all"
+                 >
+                   <Pause size={14} /> Pause
+                 </button>
+               ) : (
+                 <button 
+                   disabled={actionLoading}
+                   onClick={() => handleAction('RESUME')}
+                   className="flex items-center gap-2 px-6 py-2.5 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-100 transition-all"
+                 >
+                   <Play size={14} /> Resume
+                 </button>
+               )}
+               
+               {status !== 'suspended' && (
+                 <button 
+                   disabled={actionLoading}
+                   onClick={() => handleAction('SUSPEND')}
+                   className="flex items-center gap-2 px-6 py-2.5 bg-red-50 text-red-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-100 transition-all"
+                 >
+                   <AlertCircle size={14} /> Suspend
+                 </button>
+               )}
+
+               {canComplete && (
+                 <button 
+                   disabled={actionLoading}
+                   onClick={() => setIsCompleteModalOpen(true)}
+                   className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 hover:scale-105 transition-all shadow-lg shadow-blue-200"
+                 >
+                   <CheckCircle2 size={14} /> Complete Project
+                 </button>
+               )}
+             </>
+           )}
+
+           {/* INFLUENCER ACTIONS */}
+           {user.role === 'influencer' && status !== 'completed' && status !== 'cancelled' && (
+             <>
+               {(status === 'paused' || status === 'suspended') && (
+                 <button 
+                   disabled={actionLoading || (actionRequest?.type === 'RESUME' && actionRequest.status === 'PENDING')}
+                   onClick={() => setIsResumeModalOpen(true)}
+                   className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-all"
+                 >
+                   <Play size={14} /> Request Resume
+                 </button>
+               )}
+
+               {canComplete && status !== 'paused' && status !== 'suspended' && (
+                 <button 
+                   disabled={actionLoading || (actionRequest?.type === 'COMPLETE' && actionRequest.status === 'PENDING')}
+                   onClick={() => handleAction('REQUEST_COMPLETE')}
+                   className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                 >
+                   <CheckCircle2 size={14} /> Request Completion
+                 </button>
+               )}
+             </>
+           )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {status !== 'completed' && status !== 'cancelled' && (
+            <button 
+              disabled={actionLoading || (actionRequest?.type === 'CANCEL' && actionRequest.status === 'PENDING')}
+              onClick={() => setIsCancelModalOpen(true)}
+              className="flex items-center gap-2 px-6 py-2.5 text-red-500 hover:bg-red-50 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+            >
+              <XCircle size={14} /> {user.role === 'brand' ? 'Cancel Project' : 'Request Cancellation'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Incoming Requests Notification Section */}
+      {actionRequest && actionRequest.status === 'PENDING' && actionRequest.requestedBy !== user._id && (
+        <div className="bg-purple-600 text-white rounded-2xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-purple-200 border-2 border-white/20">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+              <AlertCircle className="text-white w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-black uppercase tracking-wider text-sm">Action Required: {actionRequest.type} Request</h3>
+              <p className="text-purple-100 text-xs font-medium mt-1">
+                The partner has requested to <span className="font-black italic">{actionRequest.type.toLowerCase()}</span> this collaboration.
+                <br/>
+                <span className="italic opacity-80">Reason: "{actionRequest.reason}"</span>
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+             <button 
+               disabled={actionLoading}
+               onClick={() => handleAction('REJECT_REQUEST')}
+               className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-white/20"
+             >
+               Reject
+             </button>
+             <button 
+               disabled={actionLoading}
+               onClick={() => {
+                 if (actionRequest.type === 'COMPLETE' && user.role === 'brand') {
+                   setIsCompleteModalOpen(true);
+                 } else {
+                   handleAction('APPROVE_REQUEST');
+                 }
+               }}
+               className="px-8 py-2.5 bg-white text-purple-600 rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105"
+             >
+               Approve Request
+             </button>
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex items-center gap-2 mb-8 bg-gray-50 p-1.5 rounded-2xl border border-gray-100 w-fit">
         <NavLink
@@ -194,6 +475,139 @@ const CollabDetailView = () => {
       <div className="animate-in fade-in duration-300">
         <Outlet context={{ collaboration, userRole: user.role, onRefresh: fetchCollaboration }} />
       </div>
+
+      {/* --- MODALS --- */}
+
+      {/* Cancel Modal */}
+      <Modal 
+        isOpen={isCancelModalOpen} 
+        onClose={() => setIsCancelModalOpen(false)} 
+        title={user.role === 'brand' ? "Cancel Project" : "Request Cancellation"}
+      >
+        <div className="space-y-6">
+          <div className="p-4 bg-red-50 rounded-2xl border border-red-100">
+             <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1">Confirm Project</p>
+             <p className="text-sm font-bold text-gray-900">{campaign?.name || "This Collaboration"}</p>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Reason for cancellation</label>
+            <textarea 
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Please explain why you want to cancel this collaboration..."
+              className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium focus:ring-2 focus:ring-red-500/10 focus:border-red-500 transition-all outline-none h-32"
+            />
+          </div>
+
+          <button 
+            disabled={!cancelReason || actionLoading}
+            onClick={() => handleAction(user.role === 'brand' ? 'REQUEST_CANCEL' : 'REQUEST_CANCEL')} // Using request cancel flow for both for now per prompt
+            className="w-full py-4 bg-red-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50 transition-all"
+          >
+            {actionLoading ? "Processing..." : (user.role === 'brand' ? "Cancel Collaboration" : "Submit Cancellation Request")}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Resume Request Modal */}
+      <Modal 
+        isOpen={isResumeModalOpen} 
+        onClose={() => setIsResumeModalOpen(false)} 
+        title="Request to Resume"
+      >
+        <div className="space-y-6">
+          <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+             <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Project Status</p>
+             <p className="text-sm font-bold text-gray-900 capitalize">{status}</p>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Message to brand</label>
+            <textarea 
+              value={resumeReason}
+              onChange={(e) => setResumeReason(e.target.value)}
+              placeholder="Why should this project be resumed now?"
+              className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none h-32"
+            />
+          </div>
+
+          <button 
+            disabled={!resumeReason || actionLoading}
+            onClick={() => handleAction('REQUEST_RESUME')}
+            className="w-full py-4 bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-50 transition-all"
+          >
+            {actionLoading ? "Sending..." : "Send Resume Request"}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Complete Modal (with Review) */}
+      <Modal 
+        isOpen={isCompleteModalOpen} 
+        onClose={() => setIsCompleteModalOpen(false)} 
+        title="Complete Project & Leave Review"
+        maxWidth="max-w-xl"
+      >
+        <div className="space-y-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              {[1,2,3,4,5].map((star) => (
+                <button 
+                  key={star}
+                  onClick={() => setRating(star)}
+                  className="p-1 transition-transform hover:scale-110 active:scale-95"
+                >
+                  <Star 
+                    size={40} 
+                    className={cn(
+                      "transition-colors",
+                      star <= rating ? "fill-amber-400 text-amber-400" : "text-gray-200"
+                    )} 
+                  />
+                </button>
+              ))}
+            </div>
+            <p className="text-sm font-bold text-gray-500">How was your experience with {partner?.fullname}?</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Public Feedback</label>
+            <textarea 
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              placeholder="Share your feedback about the influencer's work and professionalism..."
+              className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none h-32"
+            />
+          </div>
+
+          <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+             <div className="flex gap-3">
+                <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                   <AlertCircle size={10} className="text-white" />
+                </div>
+                <p className="text-xs font-medium text-blue-700 leading-relaxed">
+                   By completing this project, you confirm that all deliverables have been received and approved. This action cannot be undone.
+                </p>
+             </div>
+          </div>
+
+          <button 
+            disabled={actionLoading}
+            onClick={() => {
+               const payload = { reviewData: { rating, comment: reviewComment } };
+               if (actionRequest?.type === 'COMPLETE') {
+                 handleAction('APPROVE_REQUEST', payload);
+               } else {
+                 handleAction('COMPLETE', payload);
+               }
+            }}
+            className="w-full py-4 bg-gray-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-gray-200"
+          >
+            {actionLoading ? "Finalizing..." : "Complete Collaboration"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };

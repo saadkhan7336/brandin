@@ -1,10 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, ShieldCheck, Instagram, Youtube, Twitter, Linkedin, Users,
-  AlertCircle, ChevronLeft, ChevronRight
+  AlertCircle, ChevronLeft, ChevronRight, Sparkles, XCircle, Loader2
 } from 'lucide-react';
 import api from '../../services/api.js';
+import { getFilteredInfluencers } from '../../services/aiService.js';
+
+// Lazy loading AI Feature Components to optimize initial bundle bounds
+const CampaignSelectionModal = lazy(() => import('../../components/ai/CampaignSelectionModal.jsx'));
+const AIInfluencerCard = lazy(() => import('../../components/cards/AIInfluencerCard.jsx'));
+const SendCollabModal = lazy(() => import('../../components/layout/influencer/SendCollabModal'));
+import VerifiedTick from '../../components/common/VerifiedTick';
 
 function SearchInfluencers() {
   const navigate = useNavigate();
@@ -16,6 +23,8 @@ function SearchInfluencers() {
     search: ''
   });
 
+  const abortControllerRef = useRef(null);
+
   // Data States
   const [influencers, setInfluencers] = useState([]);
   const [pagination, setPagination] = useState({
@@ -24,9 +33,20 @@ function SearchInfluencers() {
     pages: 1
   });
 
+  // AI Matching States
+  const [isAIMode, setIsAIMode] = useState(false);
+  const [showCampaignModal, setShowCampaignModal] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResults, setAiResults] = useState([]);
+  const [aiMessage, setAiMessage] = useState(null);
+
   // UI States
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Invitation Modal State
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [selectedInfluencer, setSelectedInfluencer] = useState(null);
 
   const fetchInfluencers = useCallback(async (currentPage = 1) => {
     try {
@@ -84,6 +104,52 @@ function SearchInfluencers() {
       fetchInfluencers(newPage, false); // Fetch without resetting filters or triggering debounce
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  // AI Implementation Methods
+  const handleAIMatchSelect = async (campaignId) => {
+    // Cancel previous fetch if spam clicked
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
+    setShowCampaignModal(false);
+    setIsAIMode(true);
+    setAiLoading(true);
+    setAiMessage(null);
+    setError(null);
+    
+    try {
+      const response = await getFilteredInfluencers(campaignId, abortControllerRef.current.signal);
+      
+      if (!response) return; // Request was canceled
+      
+      if (response.data) {
+        if (Array.isArray(response.data)) {
+           setAiResults(response.data);
+        } else if (response.data.suggestion) {
+           setAiResults([]);
+           setAiMessage(response.data.message || "No strong matches found.");
+        }
+      }
+    } catch(err) {
+      if (err.name !== 'CanceledError' && err.message !== 'canceled') {
+         console.error(err);
+         setError("Failed to fetch AI matches. Back to regular search.");
+         setIsAIMode(false);
+      }
+    } finally {
+      // Small safety check so a canceled older request doesn't override current states
+       setAiLoading(false);
+    }
+  };
+
+  const clearAIMatch = () => {
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    setIsAIMode(false);
+    setAiResults([]);
+    setAiMessage(null);
   };
 
   // Helper function to map platform name to dynamic icon
@@ -206,27 +272,50 @@ function SearchInfluencers() {
             </div>
           </div>
 
-          <div className="w-full mt-4 md:mt-0">
+          <div className="md:col-span-1 flex flex-col gap-2">
             <button
               onClick={handleSearchClick}
-              className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white py-2.5 rounded-lg flex items-center justify-center font-medium text-[15px] transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-2"
+              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold text-sm transition-all shadow-sm active:scale-95"
             >
-              <Search className="w-[18px] h-[18px] mr-2" />
+              <Search className="w-4 h-4" />
               Search
+            </button>
+            <button
+              onClick={() => setShowCampaignModal(true)}
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 text-white py-3 rounded-xl font-bold text-sm transition-all shadow-md shadow-blue-100 active:scale-95 border-b-4 border-blue-800"
+            >
+              <Sparkles className="w-4 h-4" />
+              AI Match
             </button>
           </div>
         </div>
       </div>
 
       {/* Results Header */}
-      {!isLoading && !error && (
+      {!isLoading && !error && !isAIMode && (
         <h2 className="text-[15px] font-semibold text-gray-800 mb-4 px-1">
           Found {pagination.total} Influencers
         </h2>
       )}
 
+      {isAIMode && (
+         <div className="flex justify-between items-center mb-6 bg-indigo-50 border border-indigo-100 p-4 rounded-xl">
+            <div>
+               <h2 className="text-lg font-bold text-indigo-900 flex items-center">
+                  <Sparkles className="w-5 h-5 mr-2 text-indigo-500" />
+                  AI Curated Matches
+               </h2>
+               <p className="text-sm text-indigo-600 mt-0.5">Top influencers precisely matched to your campaign</p>
+            </div>
+            <button onClick={clearAIMatch} className="flex items-center text-sm font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-100 bg-white px-3 py-1.5 rounded-lg border border-gray-200 transition-all shadow-sm">
+               <XCircle className="w-4 h-4 mr-1.5" />
+               Exit AI Mode
+            </button>
+         </div>
+      )}
+
       {/* Influencers Grid */}
-      {isLoading ? (
+      {(isLoading && !isAIMode) || aiLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="bg-white rounded-xl border border-gray-100 p-6 flex flex-col items-center animate-pulse shadow-sm">
@@ -238,6 +327,38 @@ function SearchInfluencers() {
             </div>
           ))}
         </div>
+      ) : isAIMode ? (
+         <>
+           {aiMessage ? (
+              <div className="flex flex-col items-center justify-center py-20 bg-indigo-50/30 rounded-xl border border-dashed border-indigo-200">
+                <div className="w-16 h-16 bg-white shadow-sm text-indigo-400 rounded-full flex items-center justify-center mb-4">
+                  <AlertCircle className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg font-bold text-indigo-900 mb-1">{aiMessage}</h3>
+                <p className="text-indigo-500 text-center max-w-md">Try relaxing your campaign budget bounds or verifying your campaign requirements.</p>
+              </div>
+           ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 <Suspense fallback={
+                    <div className="col-span-full flex flex-col items-center justify-center p-12">
+                       <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-2" />
+                       <p className="text-gray-500 text-sm font-medium">Rendering Matches...</p>
+                    </div>
+                 }>
+                   {aiResults.map(data => (
+                      <AIInfluencerCard 
+                        key={data.id} 
+                        data={data} 
+                        onInvite={(influencer) => {
+                          setSelectedInfluencer({ _id: influencer.userId || influencer.id, name: influencer.name });
+                          setShowInviteModal(true);
+                        }}
+                      />
+                   ))}
+                 </Suspense>
+              </div>
+           )}
+         </>
       ) : (
         <>
           {influencers.length > 0 ? (
@@ -259,11 +380,7 @@ function SearchInfluencers() {
 
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <h3 className="text-[15px] font-bold text-gray-900">{influencer.username}</h3>
-                      {/* Assumed true or driven by a verified property if it exists. Replicating the design */}
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#e8f5e9] text-[#2e7d32]">
-                        <ShieldCheck className="w-3 h-3 mr-0.5" />
-                        Verified
-                      </span>
+                      <VerifiedTick user={influencer} roleProfile={influencer} size="xs" />
                     </div>
 
                     <div className="flex flex-col items-center text-[12px] text-gray-500 space-y-0.5 mb-5 w-full">
@@ -309,7 +426,7 @@ function SearchInfluencers() {
           )}
 
           {/* Pagination Controls */}
-          {pagination.pages > 1 && (
+          {pagination.pages > 1 && !isAIMode && (
             <div className="mt-10 flex items-center justify-center gap-2">
               <button
                 onClick={() => handlePageChange(pagination.page - 1)}
@@ -337,6 +454,22 @@ function SearchInfluencers() {
         </>
       )}
 
+      <Suspense fallback={null}>
+        <CampaignSelectionModal 
+          isOpen={showCampaignModal} 
+          onClose={() => setShowCampaignModal(false)}
+          onSelect={handleAIMatchSelect}
+        />
+      </Suspense>
+
+      {showInviteModal && (
+        <SendCollabModal 
+          targetType="influencer" 
+          targetUser={selectedInfluencer} 
+          onClose={() => setShowInviteModal(false)} 
+          onSuccess={() => setShowInviteModal(false)} 
+        />
+      )}
     </div>
   );
 }

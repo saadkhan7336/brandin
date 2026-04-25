@@ -8,6 +8,9 @@ import {
   Calendar
 } from 'lucide-react';
 import api from '../../services/api';
+import { io } from 'socket.io-client';
+
+const ENDPOINT = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 function BrandDashboard() {
   const navigate = useNavigate();
@@ -43,35 +46,58 @@ function BrandDashboard() {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        setIsLoading(true);
-        const response = await api.get('/brands/analytics');
-        if (response.data?.success) {
-          const data = response.data.data;
-          
-          // Format values for display (e.g. 2.4M)
-          const formatNumber = (num) => {
-            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-            return num.toString();
-          };
+  const fetchAnalytics = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get('/brands/analytics');
+      if (response.data?.success) {
+        const data = response.data.data;
+        
+        // Format values for display (e.g. 2.4M)
+        const formatNumber = (num) => {
+          if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+          if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+          return num.toString();
+        };
 
-          setAnalytics({
-            ...data,
-            totalReach: formatNumber(data.totalReach),
-            avgEngagementRate: data.avgEngagementRate + "%"
-          });
-        }
-      } catch (err) {
-        console.error("Analytics fetch error:", err);
-      } finally {
-        setIsLoading(false);
+        setAnalytics({
+          ...data,
+          totalReach: formatNumber(data.totalReach),
+          avgEngagementRate: data.avgEngagementRate + "%"
+        });
       }
-    };
+    } catch (err) {
+      console.error("Analytics fetch error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchAnalytics();
   }, []);
+
+  useEffect(() => {
+    const socket = io(ENDPOINT, {
+      withCredentials: true,
+    });
+
+    if (user) {
+      socket.emit('setup', user);
+      
+      socket.on('activity_created', (data) => {
+        // Refresh analytics for any relevant activity
+        if (['collaboration', 'application', 'system'].includes(data.category)) {
+          fetchAnalytics();
+        }
+      });
+    }
+
+    return () => {
+      socket.off('activity_created');
+      socket.disconnect();
+    };
+  }, [user]);
 
   // --- CSV Export Logic ---
   const handleExport = () => {

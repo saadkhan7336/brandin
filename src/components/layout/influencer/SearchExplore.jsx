@@ -18,9 +18,12 @@ import {
   CheckCircle,
   TrendingUp,
   Send,
+  Sparkles
 } from "lucide-react";
 import api from "../../../services/api";
 import collaborationService from "../../../services/collaborationService";
+import { getAiMatchForInfluencer } from "../../../services/aiService";
+import { useAuth } from "../../../hooks/useAuth";
 import ApplyCampaignModal from "./ApplyCampaignModal";
 import VerifiedTick from "../../common/VerifiedTick";
 import { clsx } from "clsx";
@@ -39,10 +42,17 @@ const CampaignCard = ({
   collaborationId,
   onViewDetails,
   onApply,
-  onViewCollaboration
+  onViewCollaboration,
+  isAIMatch,
+  aiData
 }) => {
   const budgetMin = campaign.budget?.min?.toLocaleString() || 0;
   const budgetMax = campaign.budget?.max?.toLocaleString() || 0;
+  
+  const matchScore = aiData?.matchScore || campaign.matchScore;
+  const matchLevel = aiData?.matchLevel || campaign.matchLevel;
+  const reasons = aiData?.reasons || (aiData?.aiReason ? [aiData.aiReason] : (campaign.reasons || []));
+
   const brandName = campaign.brandProfile?.brandname || campaign.brandUser?.fullname || "Brand";
   const brandLogo = campaign.brandProfile?.logo || campaign.brandUser?.profilePic;
 
@@ -126,6 +136,31 @@ const CampaignCard = ({
         )}
       </div>
 
+      {/* AI Match Info */}
+      {isAIMatch && (matchScore || matchLevel) && (
+        <div className="bg-purple-50 rounded-lg p-3 mt-1 border border-purple-100">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1"><Sparkles size={12}/> AI Match</span>
+            <span className={cn(
+              "text-[10px] font-bold px-2 py-0.5 rounded-full border bg-white",
+              matchScore >= 80 ? "text-green-600 border-green-100" :
+              matchScore >= 60 ? "text-blue-600 border-blue-100" :
+              "text-orange-600 border-orange-100"
+            )}>{matchScore}%</span>
+          </div>
+          {reasons.length > 0 && (
+            <div className="space-y-1">
+              {reasons.slice(0, 2).map((r, i) => (
+                <div key={i} className="flex items-center gap-2 text-[10px] font-bold text-purple-700/70">
+                  <div className="w-1 h-1 rounded-full bg-purple-400" />
+                  {r}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Key Stats Block */}
       <div className="space-y-2 py-3 border-y border-gray-50 text-sm">
         <div className="flex justify-between items-center text-gray-600">
@@ -203,10 +238,25 @@ const BrandCard = ({
   onViewProfile,
   onSendRequest,
   onViewCollaboration,
-  activeCampaignName
+  activeCampaignName,
+  isAIMatch,
+  aiData,
+  collaborationStatus
 }) => {
-  const name = brand.brandname || "Brand";
-  const logo = brand.logo;
+  const name = brand.brandname || (brand.user && brand.user.fullname) || "Brand";
+  const logo = brand.logo || (brand.user && brand.user.profilePic);
+  
+  const matchScore = aiData?.matchScore;
+  const matchLevel = aiData?.matchLevel;
+  const reasons = aiData?.reasons || [];
+
+  // Determine collaboration badge from API collaborationStatus or local isCollaboration
+  const collabLabel = collaborationStatus?.label || null;
+  const isOngoing = isCollaboration || ['Ongoing'].includes(collabLabel);
+  const isPreviouslyWorked = collabLabel === 'Previously Worked';
+  const isCancelled = collabLabel === 'Cancelled';
+  const effectiveCollabId = collaborationId || collaborationStatus?.collaborationId;
+  const effectiveCampaignName = activeCampaignName || collaborationStatus?.campaignName;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-200 p-5 space-y-4 flex flex-col h-full">
@@ -225,7 +275,7 @@ const BrandCard = ({
               <h3 className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors truncate">
                 {name}
               </h3>
-              <VerifiedTick user={brand.userDoc} roleProfile={brand} size="xs" />
+              <VerifiedTick user={brand} roleProfile={brand} size="xs" />
             </div>
             {brand.description ? (
               <p className="text-sm text-gray-500 line-clamp-2 mt-0.5 leading-snug">{brand.description}</p>
@@ -234,32 +284,76 @@ const BrandCard = ({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {isCollaboration ? (
-            <div className="flex flex-col items-end gap-1">
+        <div className="flex flex-col items-end gap-1">
+          {isOngoing ? (
+            <>
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
                 Collaborating
               </span>
-              {activeCampaignName && (
-                <span className="text-[9px] font-bold text-indigo-400 uppercase truncate max-w-[110px]" title={activeCampaignName}>
-                  via: {activeCampaignName}
+              {effectiveCampaignName && (
+                <span className="text-[9px] font-bold text-indigo-400 uppercase truncate max-w-[110px]" title={effectiveCampaignName}>
+                  via: {effectiveCampaignName}
                 </span>
               )}
-            </div>
+            </>
+          ) : isPreviouslyWorked ? (
+            <>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100">
+                Previously Worked
+              </span>
+              {effectiveCampaignName && (
+                <span className="text-[9px] font-bold text-amber-400 uppercase truncate max-w-[110px]" title={effectiveCampaignName}>
+                  {effectiveCampaignName}
+                </span>
+              )}
+            </>
+          ) : isCancelled ? (
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-100">
+              Cancelled
+            </span>
           ) : isRequested ? (
             <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
               Requested
             </span>
-          ) : isViewed && (
+          ) : isViewed ? (
             <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
               Viewed
             </span>
-          )}
+          ) : null}
           <button className="text-gray-300 hover:text-red-500 transition-colors pt-1">
             <Heart size={18} />
           </button>
         </div>
       </div>
+
+      {/* AI Match Stats */}
+      {isAIMatch && (
+        <div className="bg-purple-50 rounded-xl p-3 border border-purple-100 flex items-center justify-between">
+          <div className="flex flex-col">
+            <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest">Match Score</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-lg font-black text-purple-600">{matchScore}%</span>
+              <span className="text-[10px] font-bold text-purple-400 px-1.5 py-0.5 bg-white rounded-md border border-purple-100">{matchLevel}</span>
+            </div>
+          </div>
+          <div className="flex -space-x-1.5">
+             <Sparkles size={20} className="text-purple-400 opacity-30" />
+          </div>
+        </div>
+      )}
+
+      {/* AI Reasons */}
+      {isAIMatch && reasons.length > 0 && (
+        <div className="space-y-1.5 bg-gray-50/50 p-2.5 rounded-xl border border-gray-100">
+          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Why this Brand?</p>
+          {reasons.map((r, i) => (
+            <div key={i} className="flex items-center gap-2 text-[10px] font-bold text-gray-600">
+              <div className="w-1 h-1 rounded-full bg-purple-400" />
+              {r}
+            </div>
+          ))}
+        </div>
+      )}
 
       {brand.industry && (
         <span className="text-xs font-medium bg-gray-100 text-gray-700 px-2.5 py-1 rounded border border-gray-200">
@@ -310,19 +404,25 @@ const BrandCard = ({
         </button>
 
         <button
-          onClick={() => isCollaboration ? onViewCollaboration(collaborationId) : (!isRequested && onSendRequest(brand))}
-          disabled={isRequested && !isCollaboration}
+          onClick={() => isOngoing ? onViewCollaboration(effectiveCollabId) : isPreviouslyWorked ? onViewCollaboration(effectiveCollabId) : (!isRequested && onSendRequest(brand))}
+          disabled={isRequested && !isOngoing && !isPreviouslyWorked}
           className={cn(
             "flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5",
-            isCollaboration
+            isOngoing
               ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200"
-              : isRequested
-                ? "bg-emerald-50 text-emerald-600 border border-emerald-100 cursor-default"
-                : "bg-blue-600 text-white hover:bg-blue-700"
+              : isPreviouslyWorked
+                ? "bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100"
+                : isCancelled
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : isRequested
+                    ? "bg-emerald-50 text-emerald-600 border border-emerald-100 cursor-default"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
           )}
         >
-          {isCollaboration ? (
+          {isOngoing ? (
             <>Collaboration</>
+          ) : isPreviouslyWorked ? (
+            <>View Past Work</>
           ) : (
             <>
               {isRequested ? <CheckCircle size={15} /> : <Send size={15} />}
@@ -383,6 +483,7 @@ const PLATFORMS = [
 // ══════════════════════════════════════════════════════════════════════════════
 const SearchExplore = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { tab } = useParams();
   const activeTab = tab === "brands" ? "brands" : "campaigns";
@@ -397,6 +498,42 @@ const SearchExplore = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedApplicationCampaign, setSelectedApplicationCampaign] = useState(null);
   const [selectedBrand, setSelectedBrand] = useState(null);
+
+  // AI Match state
+  const [isAIMode, setIsAIMode] = useState(false);
+  const [aiCampaigns, setAiCampaigns] = useState([]);
+  const [aiBrands, setAiBrands] = useState([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(null);
+
+  const handleAIMatch = async () => {
+    if (!user?._id) return;
+    setIsAIMode(true);
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const res = await getAiMatchForInfluencer(user._id, activeTab);
+      const matches = res?.matches || res?.data?.matches || res?.data || res || [];
+      if (activeTab === 'campaigns') {
+        setAiCampaigns(matches);
+        setAiBrands([]);
+      } else {
+        setAiBrands(matches);
+        setAiCampaigns([]);
+      }
+    } catch (err) {
+      setAiError(err.response?.data?.message || "Failed to load AI matches");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const clearAIMatch = () => {
+    setIsAIMode(false);
+    setAiCampaigns([]);
+    setAiBrands([]);
+    setAiError(null);
+  };
 
   // States for feedback tracking
   const [viewedIds, setViewedIds] = useState([]);
@@ -616,33 +753,57 @@ const SearchExplore = () => {
           </div>
 
           {/* Tab pills */}
-          <div className="flex gap-2 mt-6">
-            <button
-              onClick={() => {
-                navigate("/influencer/search/campaigns");
-                setPage(1);
-              }}
-              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === "campaigns"
-                  ? "bg-purple-600 text-white shadow-md shadow-purple-200"
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-                }`}
-            >
-              <Briefcase size={16} />
-              Campaigns
-            </button>
-            <button
-              onClick={() => {
-                navigate("/influencer/search/brands");
-                setPage(1);
-              }}
-              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === "brands"
-                  ? "bg-purple-600 text-white shadow-md shadow-purple-200"
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-                }`}
-            >
-              <Building2 size={16} />
-              Brands
-            </button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-6">
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  navigate("/influencer/search/campaigns");
+                  setPage(1);
+                  clearAIMatch();
+                }}
+                className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === "campaigns"
+                    ? "bg-purple-600 text-white shadow-md shadow-purple-200"
+                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                  }`}
+              >
+                <Briefcase size={16} />
+                Campaigns
+              </button>
+              <button
+                onClick={() => {
+                  navigate("/influencer/search/brands");
+                  setPage(1);
+                  clearAIMatch();
+                }}
+                className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === "brands"
+                    ? "bg-purple-600 text-white shadow-md shadow-purple-200"
+                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                  }`}
+              >
+                <Building2 size={16} />
+                Brands
+              </button>
+            </div>
+            
+            {(activeTab === "campaigns" || activeTab === "brands") && (
+              isAIMode ? (
+                <button
+                  onClick={clearAIMatch}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                >
+                  <X size={16} />
+                  Clear AI Match
+                </button>
+              ) : (
+                <button
+                  onClick={handleAIMatch}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-200 hover:shadow-lg hover:shadow-purple-300 hover:-translate-y-0.5"
+                >
+                  <Sparkles size={16} />
+                  ✨ AI Match
+                </button>
+              )
+            )}
           </div>
 
           {/* Filter panel */}
@@ -703,14 +864,14 @@ const SearchExplore = () => {
       {/* ── Main content ────────────────────────────────────────────────────── */}
       <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 py-6">
         {/* Error */}
-        {error && (
+        {(error || aiError) && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm mb-6">
-            {error}
+            {error || aiError}
           </div>
         )}
 
         {/* Loading skeletons */}
-        {loading && (
+        {(loading || aiLoading) && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <SkeletonCard key={i} />
@@ -719,9 +880,12 @@ const SearchExplore = () => {
         )}
 
         {/* Empty state */}
-        {!loading &&
-          !error &&
-          (activeTab === "campaigns" ? campaigns : brands).length === 0 && (
+        {!(loading || aiLoading) &&
+          !error && !aiError &&
+          (isAIMode
+            ? (activeTab === 'campaigns' ? aiCampaigns : aiBrands).length === 0
+            : (activeTab === "campaigns" ? campaigns : brands).length === 0
+          ) && (
             <div className="text-center py-20">
               <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 {activeTab === "campaigns" ? (
@@ -731,12 +895,16 @@ const SearchExplore = () => {
                 )}
               </div>
               <h3 className="text-gray-700 font-medium mb-1">
-                No {activeTab} found
+                {isAIMode
+                  ? activeTab === 'campaigns'
+                    ? "No campaigns match your profile"
+                    : "No brands match your profile"
+                  : `No ${activeTab} found`}
               </h3>
               <p className="text-sm text-gray-400">
-                Try changing your filters or search term
+                {isAIMode ? "Try adjusting your profile or explore normally" : "Try changing your filters or search term"}
               </p>
-              {hasActiveFilters && (
+              {hasActiveFilters && !isAIMode && (
                 <button
                   onClick={clearFilters}
                   className="mt-3 text-sm text-purple-600 hover:text-purple-800"
@@ -747,8 +915,78 @@ const SearchExplore = () => {
             </div>
           )}
 
-        {/* Campaign cards grid */}
-        {!loading && activeTab === "campaigns" && campaigns.length > 0 && (
+        {/* AI Campaign cards grid (Overrides regular tabs) */}
+        {!(loading || aiLoading) && isAIMode && activeTab === 'campaigns' && aiCampaigns.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {aiCampaigns.map((item) => {
+              const c = item.campaign || item;
+              const collab = activeCollaborations.find(
+                ac => ac.campaignId === String(c._id)
+              );
+              const isCollab = !!collab;
+              return (
+                <CampaignCard
+                  key={c._id}
+                  campaign={c}
+                  isApplied={!isCollab && appliedCampaignIds.map(String).includes(String(c._id))}
+                  isViewed={viewedIds.includes(c._id)}
+                  isCollaboration={isCollab}
+                  collaborationId={collab?.id}
+                  isAIMatch={true}
+                  aiData={item}
+                  onViewDetails={(campaign) => {
+                    markAsViewed(campaign._id);
+                    navigate(`/influencer/search/campaign/${campaign._id}`);
+                  }}
+                  onApply={(campaign) => setSelectedApplicationCampaign(campaign)}
+                  onViewCollaboration={(collabId) => {
+                    navigate(`/influencer/collaboration/${collabId}`);
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* AI Brand cards grid */}
+        {!(loading || aiLoading) && isAIMode && activeTab === 'brands' && aiBrands.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {aiBrands.map((item) => {
+              const b = item.brand || item;
+              const collabStatus = item.collaborationStatus || null;
+              // Also check local active collaborations as fallback
+              const localCollab = activeCollaborations.find(
+                ac => ac.brandId === String(b._id) || ac.brandId === String(b.user?._id || b.user || '')
+              );
+              const isCollab = !!localCollab || (collabStatus && ['Ongoing'].includes(collabStatus.label));
+              return (
+                <BrandCard
+                  key={b._id}
+                  brand={b}
+                  isRequested={!isCollab && requestedBrandIds.map(String).includes(String(b._id))}
+                  isViewed={viewedIds.includes(b._id)}
+                  isCollaboration={isCollab}
+                  collaborationId={localCollab?.id || collabStatus?.collaborationId}
+                  activeCampaignName={localCollab?.campaignName || collabStatus?.campaignName}
+                  collaborationStatus={collabStatus}
+                  isAIMatch={true}
+                  aiData={item}
+                  onViewProfile={(brand) => {
+                    markAsViewed(brand._id);
+                    navigate(`/influencer/search/brand/${brand._id}`);
+                  }}
+                  onSendRequest={(brand) => setSelectedBrand(brand)}
+                  onViewCollaboration={(collabId) => {
+                    navigate(`/influencer/collaboration/${collabId}`);
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Regular Campaign cards grid */}
+        {!(loading || aiLoading) && !isAIMode && activeTab === "campaigns" && campaigns.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {campaigns.map((c) => {
               // Use String() to safely compare MongoDB ObjectIds
@@ -765,6 +1003,8 @@ const SearchExplore = () => {
                   isViewed={viewedIds.includes(c._id)}
                   isCollaboration={isCollab}
                   collaborationId={collab?.id}
+                  isAIMatch={false}
+                  aiData={null}
                   onViewDetails={(campaign) => {
                     markAsViewed(campaign._id);
                     navigate(`/influencer/search/campaign/${campaign._id}`);
@@ -782,7 +1022,7 @@ const SearchExplore = () => {
         )}
 
         {/* Brand cards grid */}
-        {!loading && activeTab === "brands" && brands.length > 0 && (
+        {!(loading || aiLoading) && !isAIMode && activeTab === "brands" && brands.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {brands.map((b) => {
               const collab = activeCollaborations.find(

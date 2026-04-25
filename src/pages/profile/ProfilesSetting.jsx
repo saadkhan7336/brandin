@@ -6,8 +6,8 @@ import {
   Lock, ShieldAlert,
   ShieldClose, LogOut,
   Plus, Instagram, Twitter, Linkedin, Youtube, Globe, Facebook,
-  MoreHorizontal, Shield, ShieldCheck, Zap, Info, ExternalLink,
-  ChevronRight, Loader2, X
+  Shield, ShieldCheck, Zap, Info, ExternalLink,
+  ChevronRight, Loader2, X, Link, File, UploadCloud
 } from "lucide-react";
 import { updateProfileComplete, updateUserFields } from "../../redux/slices/authSlice";
 import {
@@ -15,7 +15,6 @@ import {
   setProfileData,
 } from "../../redux/slices/Profileslice";
 import profileService from "../../services/profileService";
-import CompletionBanner from "../../components/common/CompletionBanner";
 import { cn } from "../../utils/helper";
 
 // ── Avatar upload area (Standardized) ───────────────────────────────────────────
@@ -125,7 +124,7 @@ const inputClass = "w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-
 export default function ProfileSettings() {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { completion, saving, loading } = useSelector((state) => state.profile);
+  const { saving, loading } = useSelector((state) => state.profile);
 
   // Form states
   const [fullname, setFullname] = useState("");
@@ -134,6 +133,11 @@ export default function ProfileSettings() {
   const [category, setCategory] = useState(""); // Influencer only
   const [profilePic, setProfilePic] = useState(null);
   const [coverPic, setCoverPic] = useState(null);
+  
+  // Portfolio state
+  const [portfolio, setPortfolio] = useState([]);
+  const [newPortfolioFiles, setNewPortfolioFiles] = useState([]);
+  const [portfolioLink, setPortfolioLink] = useState({ title: "", url: "" });
 
   // Social Links state
 
@@ -154,13 +158,13 @@ export default function ProfileSettings() {
   // Verified Platforms state — { youtube: true, instagram: false, ... }
   const [verifiedPlatforms, setVerifiedPlatforms] = useState({});
   const [selectedPlatforms, setSelectedPlatforms] = useState([]);
-  const [connectingPlatform, setConnectingPlatform] = useState(null);
 
   // Email OTP state
   const [isOTPsent, setIsOTPsent] = useState(false);
   const [otpValue, setOtpValue] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
+  const [connectingPlatform, setConnectingPlatform] = useState(null);
 
   useEffect(() => {
     let timer;
@@ -180,6 +184,7 @@ export default function ProfileSettings() {
       setUsername(roleProfile.username || "");
       setAbout(roleProfile.about || "");
       setCategory(roleProfile.category || "");
+      setPortfolio(Array.isArray(roleProfile.portfolio) ? roleProfile.portfolio : []);
 
 
       // Load verified platforms from user data
@@ -215,6 +220,16 @@ export default function ProfileSettings() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // Helper to format bytes
+  const formatBytes = (bytes, decimals = 2) => {
+    if (!bytes || bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  };
+
   const saveUserInfo = async () => {
     dispatch(setProfileSaving(true));
     try {
@@ -243,20 +258,28 @@ export default function ProfileSettings() {
           dispatch(updateProfileComplete(brandRes.completion?.isComplete));
         }
       } else if (user?.role === 'influencer') {
-        const influencerData = {
-          username,
-          about,
-          category,
-          socialMediaUpdate: true,
-          socialMedia: {}
-        };
-        // Populate socialMedia object with selected platforms
-        selectedPlatforms.forEach(p => {
-          influencerData.socialMedia[p] = "";
+        const infFd = new FormData();
+        infFd.append("username", username);
+        infFd.append("about", about);
+        infFd.append("category", category);
+        infFd.append("socialMediaUpdate", "true");
+        
+        const socialMedia = {};
+        selectedPlatforms.forEach(p => socialMedia[p] = "");
+        infFd.append("socialMedia", JSON.stringify(socialMedia));
+
+        // Append existing portfolio items (links and already uploaded files)
+        infFd.append("portfolio", JSON.stringify(portfolio));
+
+        // Append new portfolio files
+        newPortfolioFiles.forEach(file => {
+          infFd.append("portfolioFiles", file);
         });
 
-        const infRes = await profileService.updateInfluencerProfile(influencerData);
+        const infRes = await profileService.updateInfluencerProfile(infFd);
         dispatch(setProfileData({ roleProfile: infRes.influencer, completion: infRes.completion }));
+        setPortfolio(Array.isArray(infRes.influencer.portfolio) ? infRes.influencer.portfolio : []);
+        setNewPortfolioFiles([]);
         if (infRes.user) {
           dispatch(updateUserFields(infRes.user));
           dispatch(updateProfileComplete(infRes.completion?.isComplete));
@@ -275,6 +298,7 @@ export default function ProfileSettings() {
 
   // ── OAuth connect handler ───────────────────────────────────────────────────
   const handleConnect = async (platform) => {
+    setConnectingPlatform(platform);
     // All platforms now use central OAuth logic via backend redirect
     const backendUrl = "http://localhost:8000/api/v1/oauth";
     window.location.href = `${backendUrl}/${platform}/connect`;
@@ -451,6 +475,150 @@ export default function ProfileSettings() {
           </div>
         </div>
       </SectionCard>
+      
+      {/* Section: Portfolio (Influencer Only) */}
+      {user?.role === 'influencer' && (
+        <SectionCard 
+          title="Professional Portfolio" 
+          description="Showcase your best work to brands. Add links or upload PDF portfolios."
+          saving={saving} 
+          onSave={saveUserInfo} 
+          icon={Globe}
+        >
+          <div className="space-y-8">
+            {/* Add New Item */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Add Link */}
+              <div className="p-6 bg-gray-50/50 rounded-2xl border border-gray-100 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Link size={16} className="text-blue-500" />
+                  <h3 className="text-sm font-bold text-gray-900">Add Project Link</h3>
+                </div>
+                <div className="space-y-3">
+                  <input 
+                    type="text" 
+                    placeholder="Project Title (e.g. Summer Campaign 2023)"
+                    className={inputClass}
+                    value={portfolioLink.title}
+                    onChange={(e) => setPortfolioLink(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                  <div className="flex gap-2">
+                    <input 
+                      type="url" 
+                      placeholder="https://..."
+                      className={inputClass}
+                      value={portfolioLink.url}
+                      onChange={(e) => setPortfolioLink(prev => ({ ...prev, url: e.target.value }))}
+                    />
+                    <button 
+                      onClick={() => {
+                        if (!portfolioLink.title || !portfolioLink.url) return showToast("Enter title and URL", "error");
+                        setPortfolio(prev => [...prev, { ...portfolioLink, type: "link" }]);
+                        setPortfolioLink({ title: "", url: "" });
+                      }}
+                      className="p-3 bg-gray-900 text-white rounded-xl hover:bg-black transition-all"
+                    >
+                      <Plus size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Upload File */}
+              <div className="p-6 bg-gray-50/50 rounded-2xl border border-gray-100 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <File size={16} className="text-blue-500" />
+                  <h3 className="text-sm font-bold text-gray-900">Upload Portfolio File</h3>
+                </div>
+                <div 
+                  className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer group"
+                  onClick={() => document.getElementById('portfolio-file-input').click()}
+                >
+                  <UploadCloud size={24} className="text-gray-300 group-hover:text-blue-500 transition-colors" />
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Click to upload (PDF, Images)</p>
+                  <input 
+                    id="portfolio-file-input"
+                    type="file" 
+                    className="hidden" 
+                    multiple
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      setNewPortfolioFiles(prev => [...prev, ...files]);
+                    }}
+                  />
+                </div>
+                {newPortfolioFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pending Uploads ({newPortfolioFiles.length})</p>
+                    {newPortfolioFiles.map((f, i) => (
+                      <div key={i} className="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-100 text-xs font-bold text-gray-600">
+                        <span className="truncate max-w-[200px]">{f.name}</span>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setNewPortfolioFiles(prev => prev.filter((_, idx) => idx !== i));
+                          }}
+                          className="text-red-400 hover:text-red-600"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Existing Portfolio Items */}
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Current Portfolio Items</h3>
+              {(!Array.isArray(portfolio) || portfolio.length === 0) && newPortfolioFiles.length === 0 ? (
+                <div className="p-12 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-100">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Your portfolio is empty.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {(Array.isArray(portfolio) ? portfolio : []).map((item, idx) => (
+                    <div key={idx} className="group relative bg-white p-4 rounded-2xl border border-gray-100 hover:border-blue-100 transition-all hover:shadow-md">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                            {item.type === 'link' ? <Link size={16} /> : <File size={16} />}
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-bold text-gray-900 truncate pr-4">{item.title}</h4>
+                            <div className="flex items-center gap-2">
+                              <a 
+                                href={item.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-[10px] font-bold text-blue-500 hover:underline flex items-center gap-1"
+                              >
+                                View {item.type === 'link' ? 'Link' : 'File'} <ExternalLink size={8} />
+                              </a>
+                              {item.type === 'file' && item.fileSize > 0 && (
+                                <span className="text-[10px] text-gray-400 font-medium tracking-tight">
+                                  ({formatBytes(item.fileSize)})
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => setPortfolio(prev => prev.filter((_, i) => i !== idx))}
+                          className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </SectionCard>
+      )}
 
       {/* Section 2: Security */}
       <SectionCard title="Security & Password" saving={isChangingPassword} onSave={handlePasswordChange} icon={Lock}>

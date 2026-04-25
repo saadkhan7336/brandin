@@ -24,9 +24,17 @@ const CampaignCard = ({ campaign, onEdit, onDelete, onReactivate }) => {
     completed: 'text-gray-600 bg-gray-50 border-gray-100',
     draft: 'text-gray-500 bg-gray-100 border-gray-200',
     cancelled: 'text-rose-600 bg-rose-50 border-rose-100',
+    in_progress: 'text-indigo-600 bg-indigo-50 border-indigo-100',
+    review: 'text-purple-600 bg-purple-50 border-purple-100',
+    paused: 'text-orange-600 bg-orange-50 border-orange-100',
   };
 
   const status = campaign.status?.toLowerCase() || 'pending';
+  
+  const formatStatus = (s) => {
+      if (s === 'in_progress') return 'In Progress';
+      return s.charAt(0).toUpperCase() + s.slice(1);
+  };
 
   return (
     <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative group">
@@ -106,25 +114,18 @@ const CampaignCard = ({ campaign, onEdit, onDelete, onReactivate }) => {
         </div>
 
         <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 flex flex-col items-start">
             <h3 className="text-lg font-bold text-blue-600 uppercase tracking-tight mb-1">
               {campaign.name || 'Untitled Campaign'}
             </h3>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 mb-2">
               Created on {formatDate(campaign.createdAt)}
             </p>
-
-            {campaign.ongoingCollaborationId ? (
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100 animate-in fade-in duration-300">
-                <Handshake className="w-3 h-3" />
-                <span className="text-[10px] font-bold tracking-tight uppercase">Ongoing Collaboration</span>
-              </div>
-            ) : (
-              <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusColors[status] || statusColors.pending}`}>
-                <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${status === 'draft' ? 'bg-gray-400' : 'bg-current'}`}></span>
-                {status}
-              </div>
-            )}
+            
+            <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusColors[status] || statusColors.pending}`}>
+              <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${status === 'draft' ? 'bg-gray-400' : 'bg-current'}`}></span>
+              {formatStatus(status)}
+            </div>
           </div>
 
           <div>

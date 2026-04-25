@@ -1,4 +1,5 @@
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Globe,
@@ -17,6 +18,11 @@ import {
   Youtube,
   Star,
   ExternalLink,
+  Download,
+  Eye,
+  X,
+  Link as LinkIcon,
+  FolderOpen,
 } from "lucide-react";
 import api from "../../services/api";
 import profileService from "../../services/profileService";
@@ -53,6 +59,16 @@ const SocialIcon = ({ name, size = 16, className }) => {
   };
   const Icon = map[name?.toLowerCase()] || Globe;
   return <Icon size={size} className={className} />;
+};
+
+// Helper to format bytes
+const formatBytes = (bytes, decimals = 2) => {
+  if (!bytes || bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
 const INDUSTRIES = [
@@ -133,6 +149,52 @@ export default function MyProfileView() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("about");
+  const [previewItem, setPreviewItem] = useState(null);
+  const navigate = useNavigate();
+
+    const handleDownload = async (url, title, type) => {
+      if (type === "link") {
+        window.open(url, "_blank", "noopener,noreferrer");
+        return;
+      }
+      
+      // For Cloudinary files, especially raw ones, we can force a download by 
+      // adding the fl_attachment flag to the URL if it's an image/video, 
+      // or just opening it in a new tab for raw files if fetch fails.
+      try {
+        // Try to fetch and download if possible (helps with naming)
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = title || "portfolio-item";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      } catch (error) {
+        console.error("Download failed, falling back to direct link:", error);
+        // For Cloudinary files, try fl_attachment. If it's a raw file, it will just open/download.
+        const downloadUrl = (url.includes('cloudinary.com') && !url.includes('/raw/')) 
+          ? url.replace('/upload/', '/upload/fl_attachment/')
+          : url;
+        
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    };
+    
+    // Check if viewing own profile
+    const isOwnProfile = useSelector(state => state.auth.user?._id) === data?.user?._id;
+
 
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -208,7 +270,7 @@ export default function MyProfileView() {
       infFd.append("category", editedProfile.category);
       infFd.append("about", editedProfile.about);
       infFd.append("location", editedProfile.location);
-      infFd.append("portfolio", editedProfile.portfolio);
+      infFd.append("portfolio", JSON.stringify(editedProfile.portfolio));
 
       // Social Media
 
@@ -464,41 +526,27 @@ export default function MyProfileView() {
                   </div>
                 </div>
 
-                {/* Media Kit */}
+                {/* Portfolio */}
                 <div className="flex items-center gap-3.5 group/info">
                   <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 transition-all group-hover/info:scale-110 shadow-sm border border-emerald-100/50">
                     <FileText size={16} />
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-0.5">
-                      Media Kit
+                      Portfolio
                     </p>
                     <div className="text-sm font-black text-slate-800 text-left">
                       {isEditing ? (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => fileRefs.resume.current.click()}
-                            className="text-blue-600 font-medium text-xs border border-blue-200 bg-blue-50 px-2 py-1 rounded-md"
-                          >
-                            {files.resume ? files.resume.name : "Upload PDF"}
-                          </button>
-                          <input
-                            ref={fileRefs.resume}
-                            type="file"
-                            className="hidden"
-                            accept=".pdf"
-                            onChange={(e) => handleFileChange("resume", e)}
-                          />
-                        </div>
-                      ) : data.resume ? (
                         <a
-                          href={data.resume}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-600 hover:underline"
+                          href="/profile/settings"
+                          className="text-blue-600 font-medium text-xs border border-blue-200 bg-blue-50 px-2 py-1 rounded-md inline-flex items-center gap-1"
                         >
-                          Download
+                          <FileText size={12} /> Manage in Settings
                         </a>
+                      ) : Array.isArray(data.portfolio) && data.portfolio.length > 0 ? (
+                        <span className="text-blue-600">
+                          {data.portfolio.length} {data.portfolio.length === 1 ? "Item" : "Items"}
+                        </span>
                       ) : (
                         <span className="text-gray-400 italic font-medium">
                           None
@@ -646,8 +694,8 @@ export default function MyProfileView() {
         {/* RIGHT COLUMN: CONTENT AREAS */}
         <div className="lg:col-span-8 space-y-8 animate-in slide-in-from-right-4 duration-1000">
           <div className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/30 overflow-hidden flex flex-col h-full">
-            <div className="border-b border-slate-50 px-10 flex gap-12 bg-slate-50/10">
-              {["about", "collaborations", "reviews"].map((tab) => (
+            <div className="border-b border-slate-50 px-10 flex gap-8 bg-slate-50/10">
+              {["about", "portfolio", "collaborations", "reviews"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -660,9 +708,11 @@ export default function MyProfileView() {
                 >
                   {tab === "about"
                     ? "Story"
-                    : tab === "collaborations"
-                      ? "Collaborations"
-                      : "Reviews"}
+                    : tab === "portfolio"
+                      ? "Portfolio"
+                      : tab === "collaborations"
+                        ? "Collaborations"
+                        : "Reviews"}
                 </button>
               ))}
             </div>
@@ -686,6 +736,66 @@ export default function MyProfileView() {
                     <p className="text-slate-600 leading-relaxed font-medium pl-6 border-l-4 border-slate-100 whitespace-pre-wrap text-left">
                       {data.about || "No story shared yet."}
                     </p>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "portfolio" && (
+                <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
+                  <SectionHeader title="My Portfolio" icon={FolderOpen} color="violet" />
+                  {Array.isArray(data.portfolio) && data.portfolio.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      {data.portfolio.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="group bg-slate-50 hover:bg-white border border-slate-100 hover:border-violet-100 rounded-[2rem] p-6 transition-all duration-300 hover:shadow-xl hover:shadow-violet-500/10 flex flex-col gap-4"
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="w-11 h-11 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center shrink-0">
+                              {item.type === "link" ? (
+                                <LinkIcon size={18} className="text-violet-500" />
+                              ) : (
+                                <FileText size={18} className="text-blue-500" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0 text-left">
+                              <h4 className="text-sm font-black text-slate-900 truncate tracking-tight">{item.title || "Untitled"}</h4>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                {item.type === "link" ? "Web Link" : (
+                                  <>
+                                    File {item.fileSize > 0 && `• ${formatBytes(item.fileSize)}`}
+                                  </>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-auto">
+                            <button
+                              onClick={() => setPreviewItem(item)}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-[11px] font-black uppercase tracking-wider hover:bg-violet-600 hover:text-white hover:border-violet-600 transition-all"
+                            >
+                              <Eye size={13} /> Preview
+                            </button>
+                            <button
+                              onClick={() => handleDownload(item.url, item.title, item.type)}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-wider hover:bg-black transition-all"
+                            >
+                              <Download size={13} /> {item.type === "link" ? "Open" : "Download"}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-20 text-center bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                      <FolderOpen size={32} className="text-slate-200 mx-auto mb-3" />
+                      <p className="text-slate-400 font-black uppercase text-xs tracking-widest italic">
+                        No portfolio items yet.
+                      </p>
+                      <p className="text-[10px] font-bold text-blue-400 mt-1 uppercase tracking-wide">
+                        Add items in Profile Settings
+                      </p>
+                    </div>
                   )}
                 </div>
               )}
@@ -715,16 +825,26 @@ export default function MyProfileView() {
                               {collab.campaign?.name || "Untitled"}
                             </h4>
                             <p className="text-xs font-bold text-slate-400 italic">
-                              With {collab.sender?.fullname || "Brand Partner"}
+                              With {collab.brand?.fullname || collab.sender?.fullname || "Brand Partner"}
                             </p>
                           </div>
                           <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-500 text-white px-3 py-1.5 rounded-xl shadow-lg shadow-emerald-200">
                             ACTIVE
                           </span>
                         </div>
-                        <p className="text-sm text-slate-600 leading-relaxed font-medium line-clamp-3 text-left">
+                        <p className="text-sm text-slate-600 leading-relaxed font-medium line-clamp-3 text-left mb-6">
                           {collab.campaign?.description || "Ongoing collaboration details..."}
                         </p>
+                        
+                        {isOwnProfile && (
+                          <button
+                            onClick={() => navigate(`/influencer/collaboration/${collab._id}`)}
+                            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-white border-2 border-slate-900 text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all duration-300"
+                          >
+                            Manage Project
+                            <ExternalLink size={12} />
+                          </button>
+                        )}
                       </div>
                     ))}
                     {(data.activeCollaborations || []).length === 0 && (
@@ -801,6 +921,101 @@ export default function MyProfileView() {
           </div>
         </div>
       </div>
+
+      {/* ── Portfolio Preview Modal ── */}
+      {previewItem && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setPreviewItem(null)}
+        >
+          <div
+            className="bg-white rounded-[2.5rem] overflow-hidden w-full max-w-4xl shadow-2xl flex flex-col"
+            style={{ maxHeight: "90vh" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center">
+                  {previewItem.type === "link" ? (
+                    <LinkIcon size={16} className="text-violet-500" />
+                  ) : (
+                    <FileText size={16} className="text-blue-500" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 tracking-tight">{previewItem.title || "Portfolio Item"}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{previewItem.type === "link" ? "Web Link" : "File"}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPreviewItem(null)}
+                  className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+            
+             {/* Modal Body */}
+            <div className="flex-grow bg-slate-900/5 overflow-hidden relative">
+              {previewItem.type === "link" ? (
+                <iframe
+                  src={previewItem.url}
+                  title={previewItem.title}
+                  className="w-full h-full border-0 bg-white"
+                  style={{ minHeight: "70vh" }}
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center p-4" style={{ minHeight: "70vh" }}>
+                  {previewItem.url.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) ? (
+                    <img 
+                      src={previewItem.url} 
+                      alt={previewItem.title} 
+                      className="max-w-full max-h-full object-contain shadow-2xl rounded-lg bg-white" 
+                    />
+                  ) : (previewItem.url.toLowerCase().endsWith('.pdf') || 
+                       previewItem.title?.toLowerCase().endsWith('.pdf') || 
+                       previewItem.format?.toLowerCase() === 'pdf') ? (
+                    <iframe
+                      src={`https://docs.google.com/gview?url=${encodeURIComponent(previewItem.url)}&embedded=true`}
+                      title={previewItem.title}
+                      className="w-full h-full border-0 bg-white rounded-lg shadow-sm"
+                      style={{ minHeight: "70vh" }}
+                    />
+                  ) : (
+                    <div className="text-center space-y-4">
+                       <FileText size={48} className="text-slate-300 mx-auto" />
+                       <p className="text-slate-500 font-medium">Preview not available for this file type.</p>
+                       <button 
+                        onClick={() => handleDownload(previewItem.url, previewItem.title, previewItem.type)}
+                        className="text-blue-600 font-bold uppercase text-[10px] tracking-widest"
+                       >
+                        Download to View
+                       </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-white border-t border-slate-100 flex justify-between items-center">
+              <p className="text-xs text-slate-400 font-medium italic">
+                {previewItem.type === "link" ? "External content may have restrictions." : "Portfolio file preview."}
+              </p>
+              <button
+                onClick={() => handleDownload(previewItem.url, previewItem.title, previewItem.type)}
+                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+              >
+                <Download size={16} /> {previewItem.type === "link" ? "Open Link" : "Download File"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -22,6 +22,12 @@ import {
   Edit3,
   LayoutDashboard,
   CheckCircle,
+  Download,
+  Eye,
+  X,
+  Link as LinkIcon,
+  FolderOpen,
+  FileText,
 } from "lucide-react";
 import api from "../../services/api";
 import collaborationService from "../../services/collaborationService";
@@ -92,6 +98,32 @@ const InfluencerProfile = () => {
   const [activeTab, setActiveTab] = useState("about");
   const [activeCollab, setActiveCollab] = useState(null);
   const [isRequested, setIsRequested] = useState(false);
+  const [previewItem, setPreviewItem] = useState(null);
+
+  const handleDownload = async (url, title, type) => {
+    if (type === "link") {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = title || "portfolio-item";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download failed, falling back to new tab:", error);
+      window.open(url, "_blank");
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -323,24 +355,22 @@ const InfluencerProfile = () => {
                   </div>
                 </div>
 
-                {/* Media Kit */}
-                {influencer.resume && (
+                {/* Portfolio */}
+                {Array.isArray(influencer.portfolio) && influencer.portfolio.length > 0 && (
                   <div className="flex items-center gap-3.5 group/info">
                     <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600 transition-all group-hover/info:scale-110 shadow-sm border border-violet-100/50">
-                      <Globe size={16} />
+                      <FolderOpen size={16} />
                     </div>
                     <div className="text-left">
                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-0.5">
-                        Assets
+                        Portfolio
                       </p>
-                      <a
-                        href={influencer.resume}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm font-black text-blue-600 hover:underline"
+                      <button
+                        onClick={() => setActiveTab("portfolio")}
+                        className="text-sm font-black text-violet-600 hover:underline"
                       >
-                        Download Media Kit
-                      </a>
+                        {influencer.portfolio.length} {influencer.portfolio.length === 1 ? "Item" : "Items"}
+                      </button>
                     </div>
                   </div>
                 )}
@@ -475,8 +505,8 @@ const InfluencerProfile = () => {
         {/* RIGHT COLUMN: CONTENT AREAS */}
         <div className="lg:col-span-8 space-y-8 animate-in slide-in-from-right-4 duration-1000">
           <div className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/30 overflow-hidden flex flex-col h-full">
-            <div className="border-b border-slate-50 px-10 flex gap-12 bg-slate-50/10">
-              {["about", "collaborations", "reviews"].map((tab) => (
+            <div className="border-b border-slate-50 px-10 flex gap-8 bg-slate-50/10">
+              {["about", "portfolio", "collaborations", "reviews"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -489,9 +519,11 @@ const InfluencerProfile = () => {
                 >
                   {tab === "about"
                     ? "Strategic Bio"
-                    : tab === "collaborations"
-                      ? "Collaborations"
-                      : "Brand Feedback"}
+                    : tab === "portfolio"
+                      ? "Portfolio"
+                      : tab === "collaborations"
+                        ? "Collaborations"
+                        : "Brand Feedback"}
                 </button>
               ))}
             </div>
@@ -503,6 +535,59 @@ const InfluencerProfile = () => {
                   <p className="text-slate-600 leading-relaxed font-medium pl-6 border-l-4 border-slate-100 whitespace-pre-wrap text-base">
                     {influencer.about || "Biography under review."}
                   </p>
+                </div>
+              )}
+
+              {activeTab === "portfolio" && (
+                <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
+                  <SectionHeader title="Portfolio" icon={FolderOpen} color="violet" />
+                  {Array.isArray(influencer.portfolio) && influencer.portfolio.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      {influencer.portfolio.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="group bg-slate-50 hover:bg-white border border-slate-100 hover:border-violet-100 rounded-[2rem] p-6 transition-all duration-300 hover:shadow-xl hover:shadow-violet-500/10 flex flex-col gap-4"
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="w-11 h-11 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center shrink-0">
+                              {item.type === "link" ? (
+                                <LinkIcon size={18} className="text-violet-500" />
+                              ) : (
+                                <FileText size={18} className="text-blue-500" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-black text-slate-900 truncate tracking-tight">{item.title || "Untitled"}</h4>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                {item.type === "link" ? "Web Link" : "File"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-auto">
+                            <button
+                              onClick={() => setPreviewItem(item)}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-[11px] font-black uppercase tracking-wider hover:bg-violet-600 hover:text-white hover:border-violet-600 transition-all"
+                            >
+                              <Eye size={13} /> Preview
+                            </button>
+                            <button
+                              onClick={() => handleDownload(item.url, item.title, item.type)}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-wider hover:bg-black transition-all"
+                            >
+                              <Download size={13} /> {item.type === "link" ? "Open" : "Download"}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-20 text-center bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                      <FolderOpen size={32} className="text-slate-200 mx-auto mb-3" />
+                      <p className="text-slate-400 font-black uppercase text-xs tracking-widest italic">
+                        No portfolio items shared yet.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -628,6 +713,84 @@ const InfluencerProfile = () => {
           onClose={() => setShowModal(false)}
           onSuccess={() => setShowModal(false)}
         />
+      )}
+
+      {/* ── Portfolio Preview Modal ── */}
+      {previewItem && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setPreviewItem(null)}
+        >
+          <div
+            className="bg-white rounded-[2.5rem] overflow-hidden w-full max-w-4xl shadow-2xl flex flex-col"
+            style={{ maxHeight: "90vh" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center">
+                  {previewItem.type === "link" ? (
+                    <LinkIcon size={16} className="text-violet-500" />
+                  ) : (
+                    <FileText size={16} className="text-blue-500" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 tracking-tight">{previewItem.title || "Portfolio Item"}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{previewItem.type === "link" ? "Web Link" : "File"}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPreviewItem(null)}
+                className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            {/* Modal Content */}
+            <div className="flex-grow bg-slate-900/5 overflow-hidden relative">
+              {previewItem.type === "link" ? (
+                <iframe
+                  src={previewItem.url}
+                  title={previewItem.title}
+                  className="w-full h-full border-0 bg-white"
+                  style={{ minHeight: "70vh" }}
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center p-4" style={{ minHeight: "70vh" }}>
+                  {previewItem.url.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) ? (
+                    <img 
+                      src={previewItem.url} 
+                      alt={previewItem.title} 
+                      className="max-w-full max-h-full object-contain shadow-2xl rounded-lg bg-white" 
+                    />
+                  ) : (
+                    <iframe
+                      src={previewItem.url}
+                      title={previewItem.title}
+                      className="w-full h-full border-0 bg-white rounded-lg shadow-sm"
+                      style={{ minHeight: "70vh" }}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-white border-t border-slate-100 flex justify-between items-center px-8">
+              <p className="text-xs text-slate-400 font-medium italic">
+                {previewItem.type === "link" ? "External content may have restrictions." : "Portfolio file preview."}
+              </p>
+              <button
+                onClick={() => handleDownload(previewItem.url, previewItem.title, previewItem.type)}
+                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+              >
+                <Download size={16} /> {previewItem.type === "link" ? "Open Link" : "Download File"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

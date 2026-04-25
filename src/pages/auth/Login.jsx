@@ -77,7 +77,13 @@ export default function Login() {
       dispatch(setLoading(true));
       setSubmitError('');
 
-      await api.post(ENDPOINTS.LOGIN, formData);
+      const loginRes = await api.post(ENDPOINTS.LOGIN, formData);
+      const { accessToken, refreshToken } = loginRes.data.data;
+      
+      // Save tokens as fallback for cross-origin local dev
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+
       const res = await api.get(ENDPOINTS.ME);
       const { user: authUser } = res.data.data;
 

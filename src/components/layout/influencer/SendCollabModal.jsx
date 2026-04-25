@@ -11,9 +11,9 @@ import api from "../../../services/api";
  *   onClose      - callback to close the modal
  *   onSuccess    - callback after successful submission
  */
-const SendCollabModal = ({ targetUser, targetType, onClose, onSuccess }) => {
+const SendCollabModal = ({ targetUser, targetType, onClose, onSuccess, initialCampaignId = "" }) => {
   const [campaigns, setCampaigns] = useState([]);
-  const [selectedCampaignId, setSelectedCampaignId] = useState("");
+  const [selectedCampaignId, setSelectedCampaignId] = useState(initialCampaignId);
   const [fetchingCampaigns, setFetchingCampaigns] = useState(false);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);

@@ -153,6 +153,78 @@ const collaborationService = {
     }
   },
 
+  /**
+   * Pause collaboration (Brand only)
+   */
+  pause: async (id) => {
+    try {
+      const response = await api.patch(ENDPOINTS.collaborations.pause(id));
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * Resume collaboration (Brand only)
+   */
+  resume: async (id) => {
+    try {
+      const response = await api.patch(ENDPOINTS.collaborations.resume(id));
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * Suspend collaboration (Brand only)
+   */
+  suspend: async (id) => {
+    try {
+      const response = await api.patch(ENDPOINTS.collaborations.suspend(id));
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * Complete collaboration (Brand only, with review)
+   */
+  complete: async (id, reviewData) => {
+    try {
+      const response = await api.patch(ENDPOINTS.collaborations.complete(id), { reviewData });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * Submit an action request (Influencer/Brand)
+   */
+  requestAction: async (id, data) => {
+    try {
+      const response = await api.post(ENDPOINTS.collaborations.requestAction(id), data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * Handle an action request (Approve/Reject)
+   */
+  handleAction: async (id, data) => {
+    try {
+      const response = await api.post(ENDPOINTS.collaborations.handleAction(id), data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
   api
 };
 

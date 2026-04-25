@@ -9,6 +9,9 @@ import {
   setCollaborationsLoading,
   setCollaborationsError,
 } from '../../redux/slices/collaborationSlice';
+import { io } from 'socket.io-client';
+
+const ENDPOINT = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const CollaborationsPage = () => {
   const navigate = useNavigate();
@@ -40,6 +43,27 @@ const CollaborationsPage = () => {
   useEffect(() => {
     fetchCollaborations();
   }, [fetchCollaborations]);
+
+  useEffect(() => {
+    const socket = io(ENDPOINT, {
+      withCredentials: true,
+    });
+
+    if (user) {
+      socket.emit('setup', user);
+      
+      socket.on('activity_created', (data) => {
+        if (data.category === 'collaboration') {
+          fetchCollaborations();
+        }
+      });
+    }
+
+    return () => {
+      socket.off('activity_created');
+      socket.disconnect();
+    };
+  }, [user, fetchCollaborations]);
 
   const userRole = user?.role;
   const baseUrl = userRole === 'influencer' ? '/influencer/collaborations' : '/brand/collaborations';

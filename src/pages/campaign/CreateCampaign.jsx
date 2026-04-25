@@ -37,6 +37,7 @@ const CreateCampaign = ({ onCancel, onSuccess, campaign }) => {
     startDate: campaign?.campaignTimeline?.startDate ? new Date(campaign.campaignTimeline.startDate).toISOString().split('T')[0] : '',
     endDate: campaign?.campaignTimeline?.endDate ? new Date(campaign.campaignTimeline.endDate).toISOString().split('T')[0] : '',
     platforms: campaign?.platform || [],
+    goals: campaign?.goals || [],
     deliverables: campaign?.deliverables || '',
     targetAudience: campaign?.targetAudience || '',
     additionalRequirements: campaign?.additionalRequirements || '',
@@ -103,6 +104,13 @@ const CreateCampaign = ({ onCancel, onSuccess, campaign }) => {
     { id: 'facebook', label: 'Facebook', icon: Facebook, color: '#1877F2' },
     { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: '#0077B5' }
   ];
+  
+  const goalList = [
+    { id: 'awareness', label: 'Awareness' },
+    { id: 'sales', label: 'Sales & Conversion' },
+    { id: 'traffic', label: 'Web Traffic' },
+    { id: 'creation', label: 'Content Creation' }
+  ];
 
 
 
@@ -112,6 +120,15 @@ const CreateCampaign = ({ onCancel, onSuccess, campaign }) => {
       platforms: prev.platforms.includes(platformId)
         ? prev.platforms.filter(p => p !== platformId)
         : [...prev.platforms, platformId]
+    }));
+  };
+
+  const toggleGoal = (goalId) => {
+    setFormData(prev => ({
+      ...prev,
+      goals: prev.goals.includes(goalId)
+        ? prev.goals.filter(g => g !== goalId)
+        : [...prev.goals, goalId]
     }));
   };
 
@@ -147,6 +164,7 @@ const CreateCampaign = ({ onCancel, onSuccess, campaign }) => {
       submitData.append('campaignTimeline[endDate]', formData.endDate);
       
       formData.platforms.forEach(p => submitData.append('platform[]', p));
+      formData.goals.forEach(g => submitData.append('goals[]', g));
 
       if (asDraft) {
         submitData.append('status', 'draft');
@@ -342,6 +360,32 @@ const CreateCampaign = ({ onCancel, onSuccess, campaign }) => {
                     formData.platforms.includes(platform.id) ? 'text-gray-900' : 'text-gray-500'
                   }`}>
                     {platform.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* Campaign Goals */}
+          <section className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-2 font-display">Campaign Goals</h2>
+            <p className="text-xs text-gray-500 mb-6 italic">Select the primary objectives of this campaign for better AI matching</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {goalList.map((goal) => (
+                <button
+                  key={goal.id}
+                  type="button"
+                  onClick={() => toggleGoal(goal.id)}
+                  className={`flex items-center justify-center p-4 border rounded-xl transition-all ${
+                    formData.goals.includes(goal.id)
+                      ? 'border-emerald-500 bg-emerald-50/50 ring-1 ring-emerald-500'
+                      : 'border-gray-100 hover:border-emerald-200 bg-white'
+                  }`}
+                >
+                  <span className={`text-xs font-bold uppercase tracking-tight ${
+                    formData.goals.includes(goal.id) ? 'text-emerald-700' : 'text-gray-500'
+                  }`}>
+                    {goal.label}
                   </span>
                 </button>
               ))}

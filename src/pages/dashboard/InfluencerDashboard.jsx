@@ -8,7 +8,10 @@ import {
 } from 'lucide-react';
 import api from '../../services/api';
 import collaborationService from '../../services/collaborationService';
+import { io } from 'socket.io-client';
 import './InfluencerDashboard.css';
+
+const ENDPOINT = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 function InfluencerDashboard() {
   const { user } = useSelector((state) => state.auth);
@@ -45,6 +48,28 @@ function InfluencerDashboard() {
   useEffect(() => {
     fetchDashboardData(selectedPeriod);
   }, [selectedPeriod]);
+
+  useEffect(() => {
+    const socket = io(ENDPOINT, {
+      withCredentials: true,
+    });
+
+    if (user) {
+      socket.emit('setup', user);
+      
+      socket.on('activity_created', (data) => {
+        // Refresh dashboard for any relevant activity
+        if (['collaboration', 'application', 'system'].includes(data.category)) {
+          fetchDashboardData(selectedPeriod);
+        }
+      });
+    }
+
+    return () => {
+      socket.off('activity_created');
+      socket.disconnect();
+    };
+  }, [user, selectedPeriod]);
 
   // ── Accept / Decline handlers ──────────────────────────────
   const handleAccept = async (requestId) => {

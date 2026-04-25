@@ -17,13 +17,18 @@ export function checkVerification(user, roleProfile) {
   let rawLinks = {};
   
   // Format 1: socialMedia Map/Object (Profile View)
-  if (roleProfile.socialMedia && (roleProfile.socialMedia instanceof Map || Object.keys(roleProfile.socialMedia).length > 0)) {
-    rawLinks = (roleProfile.socialMedia instanceof Map) 
+  let socialLinks = {};
+  if (roleProfile.socialMedia) {
+    socialLinks = (roleProfile.socialMedia instanceof Map) 
       ? Object.fromEntries(roleProfile.socialMedia) 
       : roleProfile.socialMedia;
+  }
+
+  if (Object.keys(socialLinks).length > 0) {
+    rawLinks = socialLinks;
   } 
   // Format 2: platforms Array (Search Result/Model View)
-  else if (Array.isArray(roleProfile.platforms)) {
+  else if (Array.isArray(roleProfile.platforms) && roleProfile.platforms.length > 0) {
     roleProfile.platforms.forEach(p => {
       // Handle various platform object structures (backend consistency)
       const name = p.name;

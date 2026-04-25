@@ -3,7 +3,8 @@ import {
   MessageCircle,
   ExternalLink,
   ClipboardList,
-  Briefcase
+  Briefcase,
+  Star
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -127,22 +128,46 @@ const CollaborationCard = ({ collaboration, userRole }) => {
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="space-y-3">
-          <div className="flex justify-between items-end">
-             <div className="space-y-0.5">
-               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Campaign Milestones</p>
-               <h4 className="text-xs font-bold text-gray-700 uppercase">{delivCompleted} / {delivTotal} Deliverables Completed</h4>
-             </div>
-             <span className="text-xs font-bold text-blue-600">{progress}%</span>
+        {/* Progress Bar - Only show if NOT completed */}
+        {collaboration.status?.toLowerCase() !== 'completed' ? (
+          <div className="space-y-3">
+            <div className="flex justify-between items-end">
+               <div className="space-y-0.5">
+                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Campaign Milestones</p>
+                 <h4 className="text-xs font-bold text-gray-700 uppercase">{delivCompleted} / {delivTotal} Deliverables Completed</h4>
+               </div>
+               <span className="text-xs font-bold text-blue-600">{progress}%</span>
+            </div>
+            <div className="w-full bg-gray-50 h-2 rounded-full overflow-hidden">
+              <div 
+                className="bg-blue-600 h-full rounded-full transition-all duration-1000 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
-          <div className="w-full bg-gray-50 h-2 rounded-full overflow-hidden">
-            <div 
-              className="bg-blue-600 h-full rounded-full transition-all duration-1000 ease-out"
-              style={{ width: `${progress}%` }}
-            />
+        ) : (
+          /* Review Display for Completed Collaborations */
+          <div className="bg-emerald-50/30 border border-emerald-100/50 rounded-2xl p-4 animate-in fade-in zoom-in duration-500">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Brand Review</p>
+              <div className="flex items-center gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star 
+                    key={i} 
+                    size={10} 
+                    className={cn(
+                      "fill-current",
+                      i < (collaboration.review?.rating || 0) ? "text-amber-400" : "text-gray-200"
+                    )} 
+                  />
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-gray-600 italic leading-relaxed">
+              "{collaboration.review?.comment || 'No comment provided.'}"
+            </p>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Action Part (Right) */}

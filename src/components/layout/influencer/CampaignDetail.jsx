@@ -170,10 +170,21 @@ const CampaignDetail = () => {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-2 md:pt-0">
-                  {campaign.status === "active" && (
-                    <span className="bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border border-emerald-100 shadow-sm flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      Active
+                  {campaign.status && (
+                    <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border shadow-sm flex items-center gap-1.5 ${
+                      {
+                        active: 'text-emerald-700 bg-emerald-50 border-emerald-100',
+                        pending: 'text-amber-700 bg-amber-50 border-amber-100',
+                        completed: 'text-gray-700 bg-gray-50 border-gray-100',
+                        draft: 'text-gray-600 bg-gray-100 border-gray-200',
+                        cancelled: 'text-rose-700 bg-rose-50 border-rose-100',
+                        in_progress: 'text-indigo-700 bg-indigo-50 border-indigo-100',
+                        review: 'text-purple-700 bg-purple-50 border-purple-100',
+                        paused: 'text-orange-700 bg-orange-50 border-orange-100'
+                      }[campaign.status?.toLowerCase()] || 'text-gray-700 bg-gray-50 border-gray-100'
+                    }`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${campaign.status === 'active' || campaign.status === 'in_progress' ? 'animate-pulse' : ''} bg-current`} />
+                      {campaign.status === 'in_progress' ? 'In Progress' : campaign.status}
                     </span>
                   )}
                   {campaign.industry && (

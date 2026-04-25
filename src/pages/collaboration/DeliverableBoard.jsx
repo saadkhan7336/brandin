@@ -80,7 +80,7 @@ const DeliverableBoard = () => {
                   )}
                 >
                   {getDeliverablesByStatus(column.id).map((task, index) => (
-                    <Draggable key={task._id} draggableId={task._id} index={index} isDragDisabled={userRole === 'brand'}>
+                    <Draggable key={task._id} draggableId={task._id} index={index} isDragDisabled={userRole === 'brand' || collaboration.status === 'completed'}>
                       {(provided, snapshot) => (
                         <div 
                           ref={provided.innerRef}
@@ -93,7 +93,7 @@ const DeliverableBoard = () => {
                           )}
                         >
                           {/* CRUD Actions for Brands */}
-                          {userRole === 'brand' && (
+                          {userRole === 'brand' && collaboration.status !== 'completed' && (
                             <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
                               <button 
                                 onClick={(e) => { e.stopPropagation(); handleEdit(task); }}
@@ -119,7 +119,7 @@ const DeliverableBoard = () => {
                             )}>
                               {task.priority || 'MEDIUM'}
                             </span>
-                            {task.status === 'SUBMITTED' && (
+                            {task.status === 'SUBMITTED' && collaboration.status !== 'completed' && (
                               <div className="flex items-center gap-1.5 text-[9px] font-bold text-blue-500 uppercase tracking-wider animate-pulse">
                                 <AlertCircle size={10} />
                                 In Review
@@ -171,7 +171,12 @@ const DeliverableBoard = () => {
                                 </a>
                              )}
 
-                             {task.status === 'APPROVED' ? (
+                             {collaboration.status === 'completed' ? (
+                               <div className="flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-xl uppercase tracking-wider border border-blue-100">
+                                 <CheckCircle size={14} />
+                                 Project Completed
+                               </div>
+                             ) : task.status === 'APPROVED' ? (
                                <div className="flex items-center justify-center gap-2 py-2.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-xl uppercase tracking-wider border border-emerald-100">
                                  <CheckCircle size={14} />
                                  Finalized
@@ -190,7 +195,7 @@ const DeliverableBoard = () => {
                                  >
                                    Revise
                                  </button>
-                               </div>
+                                </div>
                              ) : userRole === 'influencer' && (task.status === 'PENDING' || task.status === 'IN_PROGRESS' || task.status === 'REVISION_REQUESTED') ? (
                                <button 
                                   onClick={(e) => { e.stopPropagation(); handleOpenSubmitModal(task); }}

@@ -1,0 +1,10 @@
+Script Error: The `uri` parameter to `openUri()` must be a string, got "undefined". Make sure the first parameter to `mongoose.connect()` or `mongoose.createConnection()` is a string.
+MongooseError: The `uri` parameter to `openUri()` must be a string, got "undefined". Make sure the first parameter to `mongoose.connect()` or `mongoose.createConnection()` is a string.
+    at NativeConnection.createClient (/Users/samiafzal/Desktop/FYP/brandy-backend/node_modules/mongoose/lib/drivers/node-mongodb-native/connection.js:237:11)
+    at NativeConnection.openUri (/Users/samiafzal/Desktop/FYP/brandy-backend/node_modules/mongoose/lib/connection.js:1075:34)
+    at Mongoose.connect (/Users/samiafzal/Desktop/FYP/brandy-backend/node_modules/mongoose/lib/mongoose.js:450:15)
+    at run (file:///Users/samiafzal/Desktop/FYP/brandy-backend/testFetchReal.mjs:13:20)
+    at file:///Users/samiafzal/Desktop/FYP/brandy-backend/testFetchReal.mjs:35:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:329:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:644:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
