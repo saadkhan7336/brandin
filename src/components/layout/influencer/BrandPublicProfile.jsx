@@ -424,6 +424,21 @@ const BrandPublicProfile = () => {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setActiveTab("reviews")}
+            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+              activeTab === "reviews"
+                ? "border-gray-900 text-gray-900"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Reviews
+            {data.reviews && data.reviews.length > 0 && (
+              <span className="bg-amber-100 text-amber-600 text-xs px-2 py-0.5 rounded-full">
+                {data.reviews.length}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -684,6 +699,75 @@ const BrandPublicProfile = () => {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Reviews Tab */}
+        {activeTab === "reviews" && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center text-white shadow-sm">
+                <Star size={18} />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 tracking-tight">
+                Influencer Feedback
+              </h3>
+            </div>
+
+            <div className="space-y-4">
+              {(data.reviews || []).map((review, i) => (
+                <div
+                  key={i}
+                  className="p-6 bg-white border border-gray-100 rounded-2xl flex flex-col md:flex-row gap-5 items-start group hover:shadow-lg transition-all duration-500"
+                >
+                  <img
+                    src={
+                      review.reviewer?.profilePic ||
+                      `https://ui-avatars.com/api/?name=${review.reviewer?.fullname}`
+                    }
+                    className="w-12 h-12 rounded-xl object-cover border-2 border-gray-100 shadow"
+                    alt="Reviewer"
+                  />
+                  <div className="flex-1 text-left space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-gray-900 text-sm">
+                        {review.reviewer?.fullname}
+                      </h4>
+                      <div className="flex gap-0.5">
+                        {[...Array(5)].map((_, idx) => (
+                          <Star
+                            key={idx}
+                            size={12}
+                            className={cn(
+                              idx < review.rating
+                                ? "text-yellow-500 fill-yellow-500"
+                                : "text-gray-200",
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-gray-600 font-medium leading-relaxed italic text-sm">
+                      "{review.comment}"
+                    </p>
+                    <p className="text-[10px] font-black text-gray-400 tracking-widest uppercase pt-1">
+                      Verified Influencer Partner
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {(!data.reviews || data.reviews.length === 0) && (
+                <div className="py-20 text-center bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-200">
+                  <Star size={32} className="text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">
+                    No reviews yet.
+                  </p>
+                  <p className="text-[10px] font-medium text-gray-300 mt-1">
+                    Be the first to review this brand after a collaboration!
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

@@ -100,11 +100,11 @@ export default function Navbar({
           >
             {/* Avatar */}
             <div className="relative">
-              <div className={`w-9 h-9 rounded-full ${roleBgColor} flex items-center justify-center overflow-hidden`}>
+              <div className="w-9 h-9 rounded-full bg-slate-100 border border-gray-100 flex items-center justify-center overflow-hidden">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-white font-semibold text-sm">{initial}</span>
+                  <span className="text-slate-500 font-semibold text-sm">{initial}</span>
                 )}
               </div>
               {/* Status dot */}

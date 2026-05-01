@@ -8,9 +8,6 @@ import {
   CheckCircle,
   Users,
   TrendingUp,
-  Edit3,
-  Save,
-  Camera,
   FileText,
   Instagram,
   Twitter,
@@ -71,63 +68,9 @@ const formatBytes = (bytes, decimals = 2) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
-const INDUSTRIES = [
-  "Fashion",
-  "Technology",
-  "Food & Beverage",
-  "Beauty",
-  "Lifestyle",
-  "Fitness",
-  "Travel",
-  "Gaming",
-  "Entertainment",
-  "Finance",
-  "Healthcare",
-  "Art & Design",
-  "Sports",
-  "Other",
-];
 
-// ── Shared Input Components ──
-const InlineInput = ({
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-  label,
-}) => (
-  <div className="space-y-1.5 w-full">
-    {label && (
-      <p className="text-[10px] font-black uppercase tracking-tighter text-slate-400 ml-1">
-        {label}
-      </p>
-    )}
-    <input
-      type={type}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className="w-full bg-slate-50 border-0 border-b-2 border-transparent focus:border-blue-500 focus:bg-white focus:ring-0 text-sm font-bold transition-all py-2.5 px-3"
-    />
-  </div>
-);
 
-const InlineTextarea = ({ value, onChange, placeholder, label }) => (
-  <div className="space-y-2">
-    {label && (
-      <p className="text-[10px] font-black uppercase tracking-tighter text-slate-400 ml-1">
-        {label}
-      </p>
-    )}
-    <textarea
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      rows={4}
-      className="w-full bg-slate-50 border-0 border-b-2 border-transparent focus:border-blue-500 focus:bg-white focus:ring-0 text-sm font-medium transition-all py-3 px-4 resize-none"
-    />
-  </div>
-);
+
 
 const SectionHeader = ({ title, icon: Icon, color = "blue" }) => (
   <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-3 tracking-tight">
@@ -192,29 +135,10 @@ export default function MyProfileView() {
       }
     };
     
-    // Check if viewing own profile
-    const isOwnProfile = useSelector(state => state.auth.user?._id) === data?.user?._id;
 
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [editedProfile, setEditedProfile] = useState({});
-  const [editedUser, setEditedUser] = useState({});
-
-  const [files, setFiles] = useState({
-    profilePic: null,
-    coverPic: null,
-    resume: null,
-  });
-  const [previews, setPreviews] = useState({
-    profilePic: null,
-    coverPic: null,
-  });
-  const fileRefs = {
-    profilePic: useRef(),
-    coverPic: useRef(),
-    resume: useRef(),
-  };
+  // Check if viewing own profile
+  const isOwnProfile = useSelector(state => state.auth.user?._id) === data?.user?._id;
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -222,19 +146,6 @@ export default function MyProfileView() {
       const res = await api.get("/influencers/profile");
       const profileData = res.data.data;
       setData(profileData);
-
-      setEditedProfile({
-        username: profileData.username || "",
-        category: profileData.category || "",
-        about: profileData.about || "",
-        location: profileData.location || "",
-        portfolio: profileData.portfolio || "",
-        resume: profileData.resume || "",
-
-      });
-      setEditedUser({
-        fullname: profileData.user?.fullname || "",
-      });
     } catch (err) {
       console.error(err);
     } finally {
@@ -245,61 +156,6 @@ export default function MyProfileView() {
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
-
-  const handleFileChange = (type, e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setFiles((prev) => ({ ...prev, [type]: file }));
-    if (type !== "resume") {
-      setPreviews((prev) => ({ ...prev, [type]: URL.createObjectURL(file) }));
-    }
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      // User info update
-      const userFd = new FormData();
-      userFd.append("fullname", editedUser.fullname);
-      if (files.profilePic) userFd.append("profilePic", files.profilePic);
-      const userRes = await profileService.updateUserInfo(userFd);
-
-      // Influencer info update
-      const infFd = new FormData();
-      infFd.append("username", editedProfile.username);
-      infFd.append("category", editedProfile.category);
-      infFd.append("about", editedProfile.about);
-      infFd.append("location", editedProfile.location);
-      infFd.append("portfolio", JSON.stringify(editedProfile.portfolio));
-
-      // Social Media
-
-
-      if (files.coverPic) infFd.append("coverImage", files.coverPic);
-      if (files.profilePic) infFd.append("profilePicture", files.profilePic);
-      if (files.resume) infFd.append("resume", files.resume);
-
-      const infRes = await profileService.updateInfluencerProfile(infFd);
-
-      dispatch(updateUserFields(userRes.user));
-      dispatch(updateProfileComplete(infRes.completion?.isComplete));
-      dispatch(
-        setProfileData({
-          roleProfile: infRes.influencer,
-          completion: infRes.completion,
-        }),
-      );
-
-      await fetchProfile();
-      setIsEditing(false);
-      setFiles({ profilePic: null, coverPic: null, resume: null });
-      setPreviews({ profilePic: null, coverPic: null });
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to save");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   if (loading)
     return (
@@ -313,16 +169,12 @@ export default function MyProfileView() {
 
   if (!data) return <div className="text-center py-20">Profile not found.</div>;
 
-  const name = isEditing
-    ? editedUser.fullname
-    : data.user?.fullname || data.username || "Influencer";
+  const name = data.user?.fullname || data.username || "Influencer";
   const avatar =
-    previews.profilePic ||
     data.profilePicture ||
     data.user?.profilePic ||
     `https://ui-avatars.com/api/?name=${name}`;
   const cover =
-    previews.coverPic ||
     data.coverImage ||
     data.user?.coverPic ||
     "https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=2000";
@@ -330,14 +182,8 @@ export default function MyProfileView() {
   return (
     <div className="w-full max-w-[1800px] mx-auto space-y-10 pb-24 animate-in fade-in duration-700">
       {/* ── HEADER ACTIONS ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 px-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 px-4 pt-10">
         <div>
-          <div className="flex items-center gap-4 mb-1">
-            <h1 className="text-4xl font-black text-slate-900 tracking-tight italic uppercase">
-              {name}
-            </h1>
-            <VerifiedTick user={data.user} roleProfile={data} size="lg" className="shadow-lg shadow-emerald-200" />
-          </div>
           <p className="text-slate-500 text-sm font-medium">
             This is how <span className="text-blue-600 font-bold">Brands</span>{" "}
             and{" "}
@@ -346,35 +192,7 @@ export default function MyProfileView() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {isEditing ? (
-            <>
-              <button
-                onClick={() => setIsEditing(false)}
-                className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-xs font-black uppercase tracking-widest shadow-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-2xl flex items-center gap-2.5 active:scale-95 transition-all"
-              >
-                {saving ? (
-                  <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <Save size={14} />
-                )}
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="px-8 py-3 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 border-none flex items-center gap-2.5"
-            >
-              <Edit3 size={14} /> Edit Profile
-            </button>
-          )}
+          {/* Edit option removed as per user request */}
         </div>
       </div>
 
@@ -387,73 +205,29 @@ export default function MyProfileView() {
             className="absolute inset-0 w-full h-full object-cover transition-transform group-hover/card:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
-          {isEditing && (
-            <button
-              onClick={() => fileRefs.coverPic.current.click()}
-              className="absolute inset-0 bg-black/40 opacity-0 group-hover/cover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-black uppercase tracking-widest"
-            >
-              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-1">
-                <Camera size={18} />
-              </div>
-              Change Cover
-            </button>
-          )}
-          <input
-            ref={fileRefs.coverPic}
-            type="file"
-            className="hidden"
-            onChange={(e) => handleFileChange("coverPic", e)}
-          />
         </div>
 
         <div className="px-12 pb-12">
-          <div className="flex flex-col md:flex-row items-end gap-12 -mt-16 relative z-10">
+          <div className="flex flex-col md:flex-row items-center gap-12 -mt-16 relative z-10">
             <div className="relative group/logo">
               <img
                 src={avatar}
                 alt="Avatar"
                 className="w-44 h-44 rounded-[2.5rem] object-cover border-[10px] border-white shadow-2xl bg-white"
               />
-              {isEditing && (
-                <button
-                  onClick={() => fileRefs.profilePic.current.click()}
-                  className="absolute inset-0 bg-black/50 opacity-0 group-hover/logo:opacity-100 rounded-[2.5rem] text-white flex flex-col items-center justify-center text-[10px] font-black uppercase tracking-widest"
-                >
-                  Change Avatar
-                </button>
-              )}
-              <input
-                ref={fileRefs.profilePic}
-                type="file"
-                className="hidden"
-                onChange={(e) => handleFileChange("profilePic", e)}
-              />
             </div>
 
-            <div className="flex-1 pb-4 space-y-6">
-              {isEditing && (
-                <div className="flex gap-4 w-full max-w-2xl">
-                  <InlineInput
-                    value={editedUser.fullname}
-                    onChange={(e) =>
-                      setEditedUser({ ...editedUser, fullname: e.target.value })
-                    }
-                    label="FULL NAME"
-                  />
-                  <InlineInput
-                    value={editedProfile.username}
-                    onChange={(e) =>
-                      setEditedProfile({
-                        ...editedProfile,
-                        username: e.target.value,
-                      })
-                    }
-                    label="USERNAME"
-                  />
+            <div className="flex-1 pt-16 pb-4 space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tight italic capitalize">
+                    {name}
+                  </h2>
+                  <VerifiedTick user={data.user} roleProfile={data} size="lg" className="shadow-lg shadow-emerald-200" />
                 </div>
-              )}
+              </div>
 
-              <div className="flex flex-wrap items-center gap-10 pt-8">
+              <div className="flex flex-wrap items-center gap-10 pt-2">
                 {/* Location */}
                 <div className="flex items-center gap-3.5 group/info">
                   <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 transition-all group-hover/info:scale-110 shadow-sm border border-blue-100/50">
@@ -464,21 +238,7 @@ export default function MyProfileView() {
                       Location
                     </p>
                     <div className="text-sm font-black text-slate-800">
-                      {isEditing ? (
-                        <input
-                          value={editedProfile.location}
-                          onChange={(e) =>
-                            setEditedProfile({
-                              ...editedProfile,
-                              location: e.target.value,
-                            })
-                          }
-                          className="bg-transparent border-b border-slate-200 p-0 w-24 text-sm font-bold focus:ring-0"
-                          placeholder="City, Country"
-                        />
-                      ) : (
-                        data.location || "Earth"
-                      )}
+                      {data.location || "Earth"}
                     </div>
                   </div>
                 </div>
@@ -493,35 +253,7 @@ export default function MyProfileView() {
                       Niche
                     </p>
                     <div className="text-sm font-black text-slate-800 text-left">
-                      {isEditing ? (
-                        <select
-                          value={
-                            INDUSTRIES.includes(editedProfile.category)
-                              ? editedProfile.category
-                              : editedProfile.category
-                                ? "Other"
-                                : ""
-                          }
-                          onChange={(e) =>
-                            setEditedProfile({
-                              ...editedProfile,
-                              category: e.target.value,
-                            })
-                          }
-                          className="bg-white border text-slate-700 border-slate-200 text-xs font-bold py-1.5 px-2 rounded-xl shadow-sm focus:ring-0"
-                        >
-                          <option value="" disabled>
-                            Select Niche...
-                          </option>
-                          {INDUSTRIES.map((i) => (
-                            <option key={i} value={i}>
-                              {i}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        data.category || "-"
-                      )}
+                      {data.category || "-"}
                     </div>
                   </div>
                 </div>
@@ -536,14 +268,7 @@ export default function MyProfileView() {
                       Portfolio
                     </p>
                     <div className="text-sm font-black text-slate-800 text-left">
-                      {isEditing ? (
-                        <a
-                          href="/profile/settings"
-                          className="text-blue-600 font-medium text-xs border border-blue-200 bg-blue-50 px-2 py-1 rounded-md inline-flex items-center gap-1"
-                        >
-                          <FileText size={12} /> Manage in Settings
-                        </a>
-                      ) : Array.isArray(data.portfolio) && data.portfolio.length > 0 ? (
+                      {Array.isArray(data.portfolio) && data.portfolio.length > 0 ? (
                         <span className="text-blue-600">
                           {data.portfolio.length} {data.portfolio.length === 1 ? "Item" : "Items"}
                         </span>
@@ -720,23 +445,10 @@ export default function MyProfileView() {
             <div className="p-12 flex-1">
               {activeTab === "about" && (
                 <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
-                  <SectionHeader title="My Narrative" icon={Edit3} />
-                  {isEditing ? (
-                    <InlineTextarea
-                      value={editedProfile.about}
-                      onChange={(e) =>
-                        setEditedProfile({
-                          ...editedProfile,
-                          about: e.target.value,
-                        })
-                      }
-                      placeholder="Biography, goals, style..."
-                    />
-                  ) : (
-                    <p className="text-slate-600 leading-relaxed font-medium pl-6 border-l-4 border-slate-100 whitespace-pre-wrap text-left">
-                      {data.about || "No story shared yet."}
-                    </p>
-                  )}
+                  <SectionHeader title="My Narrative" icon={Globe} />
+                  <p className="text-slate-600 leading-relaxed font-medium pl-6 border-l-4 border-slate-100 whitespace-pre-wrap text-left">
+                    {data.about || "No story shared yet."}
+                  </p>
                 </div>
               )}
 

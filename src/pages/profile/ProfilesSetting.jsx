@@ -34,7 +34,7 @@ function AvatarUpload({ label, currentUrl, onChange, shape = "circle", size = "l
   const isCircle = shape === "circle";
   const containerClass = isCircle
     ? `${size === "lg" ? "w-24 h-24" : "w-16 h-16"} rounded-2xl`
-    : "w-full h-32 rounded-2xl";
+    : "w-full max-w-[280px] h-24 md:h-24 rounded-2xl aspect-[3/1]";
 
   return (
     <div className="flex flex-col items-center gap-2.5 group">
@@ -250,6 +250,9 @@ export default function ProfileSettings() {
         selectedPlatforms.forEach(p => {
           brandFd.append(`socialMedia[${p}]`, "");
         });
+
+        // Sync logo for brand
+        if (profilePic) brandFd.append("logo", profilePic);
         
         const brandRes = await profileService.updateBrandProfile(brandFd);
         dispatch(setProfileData({ roleProfile: brandRes.brand, completion: brandRes.completion }));
@@ -263,6 +266,9 @@ export default function ProfileSettings() {
         infFd.append("about", about);
         infFd.append("category", category);
         infFd.append("socialMediaUpdate", "true");
+
+        // Sync cover for influencer
+        if (coverPic) infFd.append("coverImage", coverPic);
         
         const socialMedia = {};
         selectedPlatforms.forEach(p => socialMedia[p] = "");
@@ -421,9 +427,18 @@ export default function ProfileSettings() {
       {/* Section 1: Basic Info */}
       <SectionCard title="Basic Identity" saving={saving} onSave={saveUserInfo} icon={User}>
         <div className="flex flex-col md:flex-row gap-12">
-          <div className="flex gap-6 shrink-0">
-            <AvatarUpload label="Avatar" currentUrl={user?.profilePic} onChange={setProfilePic} />
-            <AvatarUpload label="Cover" currentUrl={user?.coverPic} onChange={setCoverPic} shape="rect" />
+          <div className="flex flex-col sm:flex-row items-center gap-6 shrink-0">
+            <AvatarUpload 
+              label={user?.role === 'brand' ? "Logo" : "Avatar"} 
+              currentUrl={user?.profilePic} 
+              onChange={setProfilePic} 
+            />
+            <AvatarUpload 
+              label="Cover Banner" 
+              currentUrl={user?.coverPic} 
+              onChange={setCoverPic} 
+              shape="rect" 
+            />
           </div>
           <div className="flex-1 space-y-6 max-w-2xl">
             <Field label="Full Name" required>

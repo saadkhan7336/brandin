@@ -1,138 +1,107 @@
 import React, { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ShieldCheck, Instagram, Youtube, Twitter, Linkedin, Users, 
-  Sparkles, AlertCircle, ArrowRight, ExternalLink
+  ShieldCheck, Users, 
+  Sparkles, ArrowRight, Star
 } from 'lucide-react';
 import VerifiedTick from '../common/VerifiedTick';
+import SocialIcon from '../common/SocialIcon';
 
 const AIInfluencerCard = memo(({ data, onInvite }) => {
   const navigate = useNavigate();
 
-  const getPlatformIcon = (platformName) => {
-    const name = platformName?.toLowerCase() || '';
-    if (name.includes('instagram')) return <Instagram className="w-4 h-4" />;
-    if (name.includes('youtube')) return <Youtube className="w-4 h-4" />;
-    if (name.includes('twitter') || name.includes('x')) return <Twitter className="w-4 h-4" />;
-    if (name.includes('linkedin')) return <Linkedin className="w-4 h-4" />;
-    return <Users className="w-4 h-4" />;
-  };
-
-  const getPlatformColor = (platformName) => {
-    const name = platformName?.toLowerCase() || '';
-    if (name.includes('instagram')) return 'text-pink-600 bg-pink-50 border-pink-100';
-    if (name.includes('youtube')) return 'text-red-600 bg-red-50 border-red-100';
-    if (name.includes('twitter') || name.includes('x')) return 'text-sky-500 bg-sky-50 border-sky-100';
-    if (name.includes('linkedin')) return 'text-blue-700 bg-blue-50 border-blue-100';
-    return 'text-indigo-600 bg-indigo-50 border-indigo-100';
-  };
-
-  const getMatchLevelStyles = (level) => {
-    switch (level) {
-      case "Excellent Match": return "bg-emerald-500 text-white shadow-emerald-200";
-      case "Good Match": return "bg-blue-500 text-white shadow-blue-200";
-      case "Moderate Match": return "bg-amber-500 text-white shadow-amber-200";
-      default: return "bg-gray-500 text-white shadow-gray-200";
-    }
-  };
-
-  const mainPlatform = data.platforms && data.platforms.length > 0 ? data.platforms[0] : null;
+  let platformName = '';
+  if (data.platforms && data.platforms.length > 0 && data.platforms[0]) {
+      platformName = typeof data.platforms[0] === 'string' ? data.platforms[0] : data.platforms[0].name;
+  }
+  if (!platformName && data.verifiedPlatforms) {
+      const verifiedKeys = Object.keys(data.verifiedPlatforms);
+      if (verifiedKeys.length > 0) platformName = verifiedKeys[0];
+  }
+  if (!platformName && data.socialMedia) {
+      const socialKeys = Object.keys(data.socialMedia);
+      if (socialKeys.length > 0) platformName = socialKeys[0];
+  }
+  
+  const rating = data.averageRating || 0;
+  const reviewCount = data.reviewsCount || 0;
+  const trustLevel = data.trustLevel || 'MODERATE';
 
   return (
-    <div className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col group min-h-[420px]">
+    <div className="bg-white rounded-[24px] border border-gray-100 overflow-hidden flex flex-col h-[420px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] w-full max-w-[340px] mx-auto relative group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.12)] hover:border-indigo-100 cursor-pointer">
       {/* Header Profile with Top Background */}
-      <div className="relative h-24 bg-gradient-to-r from-blue-50 to-indigo-50">
-         <div className="absolute top-4 right-4 z-10">
-            <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg ${getMatchLevelStyles(data.matchLevel)}`}>
-               {data.matchScore}% Match
+      <div className="relative h-[100px] bg-gradient-to-br from-blue-700 to-indigo-800 p-4 flex justify-between items-start transition-all duration-500 group-hover:from-blue-600 group-hover:to-indigo-700">
+         <div className="flex gap-2 z-10">
+            <div className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-[9px] font-black uppercase rounded-full flex items-center gap-1.5 shadow-sm border border-white/20">
+               <Sparkles className="w-3 h-3" /> {data.matchScore || '74.50'}% MATCH
             </div>
+            <div className="px-3 py-1 bg-[#0f172a]/40 backdrop-blur-sm text-white text-[9px] font-black uppercase rounded-full flex items-center gap-1.5 shadow-sm border border-white/10 tracking-wider">
+               <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" /> AVAILABLE
+            </div>
+         </div>
+         <div className="z-10 relative cursor-pointer transition-transform duration-300 hover:scale-110 hover:rotate-6">
+            <SocialIcon platformName={platformName} />
          </div>
       </div>
 
-      <div className="px-6 pb-6 flex-1 flex flex-col -mt-10 relative">
-        <div className="flex items-end justify-between mb-4">
-           <div className="relative">
-              <img
-                src={data.profileImage || `https://ui-avatars.com/api/?name=${data.username}&background=random`}
-                alt={data.name}
-                className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-sm"
-              />
-           </div>
-           
-           <div className="flex gap-2">
-              {data.platforms?.slice(0, 3).map((p, idx) => (
-                 <div key={idx} className={`p-2 rounded-xl border ${getPlatformColor(p.name)} transition-transform hover:scale-110`}>
-                    {getPlatformIcon(p.name)}
-                 </div>
-              ))}
-           </div>
-        </div>
+      <div className="px-6 pb-6 flex-1 flex flex-col -mt-12 relative items-center text-center">
+         {/* Profile Image */}
+         <div className="relative mb-3 transition-transform duration-500 hover:scale-105 cursor-pointer">
+            <img
+              src={data.profileImage || `https://ui-avatars.com/api/?name=${data.username}&background=random`}
+              alt={data.name}
+              className="w-[84px] h-[84px] rounded-[24px] object-cover border-[4px] border-white shadow-md bg-white relative z-10"
+            />
+         </div>
+         
+         <div className="flex items-center gap-1.5 justify-center mb-0.5">
+            <h3 className="text-[16px] font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">{data.name || data.username}</h3>
+            <VerifiedTick user={data} roleProfile={data} size="sm" />
+         </div>
+         <p className="text-[12px] font-medium text-gray-500 mb-4">@{data.username}</p>
 
-        <div>
-           <div className="flex items-center gap-2">
-              <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">{data.name}</h3>
-              <VerifiedTick user={data} roleProfile={data} size="sm" />
-           </div>
-           <p className="text-sm font-medium text-gray-500 mb-4">@{data.username}</p>
-        </div>
-
-        {/* AI Reasons Section */}
-        <div className="bg-gray-50/80 rounded-2xl p-4 mb-6 relative overflow-hidden border border-gray-100/50">
-           <div className="absolute top-0 right-0 p-2 opacity-10">
-              <Sparkles className="w-8 h-8 text-blue-600" />
-           </div>
-           <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center">
-              AI Insight
-           </h4>
-           <div className="space-y-2">
-              {data.reasons?.slice(0, 2).map((reason, idx) => (
-                 <div key={idx} className="flex items-start gap-2 text-sm text-gray-700 leading-tight">
-                    <div className="w-1 h-1 rounded-full bg-blue-400 mt-2 shrink-0"></div>
-                    <p>{reason}</p>
-                 </div>
-              ))}
-           </div>
-        </div>
+         <p className="text-[11px] text-gray-500 leading-relaxed mb-6 line-clamp-2 px-2 h-[34px]">
+            {data.about || "Top-tier creator focused on high-quality content and brand storytelling across multiple platforms."}
+         </p>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-           <div className="p-3 bg-white rounded-2xl border border-gray-100 flex items-center gap-3">
-              <div className="p-2 bg-blue-50 rounded-xl">
-                 <Users className="w-4 h-4 text-blue-600" />
+        <div className="grid grid-cols-2 gap-3 w-full mb-6">
+           <div className="p-3 bg-white rounded-[16px] border border-gray-100 flex items-center gap-3 shadow-sm transition-all duration-300 hover:bg-amber-50/30 hover:border-amber-100 hover:scale-[1.02] hover:shadow-md cursor-default group/rating">
+              <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover/rating:scale-110 group-hover/rating:bg-amber-100">
+                 <Sparkles className="w-4 h-4 text-amber-500" />
               </div>
-              <div>
-                 <p className="text-[10px] font-bold text-gray-400 uppercase leading-none mb-1">Followers</p>
-                 <p className="text-sm font-bold text-gray-900 leading-none">
-                    {mainPlatform?.followers >= 1000 ? (mainPlatform.followers/1000).toFixed(1) + 'k' : mainPlatform?.followers || 'N/A'}
-                 </p>
+              <div className="flex flex-col text-left">
+                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">RATING</span>
+                 <span className="text-[13px] font-black text-gray-900 leading-none mt-0.5">
+                    {reviewCount > 0 && rating > 0 ? rating : 'New'} <span className="text-gray-400 font-bold text-[10px]">({reviewCount})</span>
+                 </span>
               </div>
            </div>
-           <div className="p-3 bg-white rounded-2xl border border-gray-100 flex items-center gap-3">
-              <div className="p-2 bg-emerald-50 rounded-xl">
-                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
+           <div className="p-3 bg-white rounded-[16px] border border-gray-100 flex items-center gap-3 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-md cursor-default group/trust">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 group-hover/trust:scale-110 ${trustLevel.toLowerCase() === 'high' ? 'bg-emerald-50 group-hover/trust:bg-emerald-100' : 'bg-orange-50 group-hover/trust:bg-orange-100'}`}>
+                 <ShieldCheck className={`w-4 h-4 ${trustLevel.toLowerCase() === 'high' ? 'text-emerald-500' : 'text-orange-500'}`} />
               </div>
-              <div>
-                 <p className="text-[10px] font-bold text-gray-400 uppercase leading-none mb-1">Trust</p>
-                 <p className={`text-sm font-bold leading-none ${data.trustLevel === 'High' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {data.trustLevel}
-                 </p>
+              <div className="flex flex-col text-left">
+                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">TRUST</span>
+                 <span className={`text-[12px] font-black uppercase leading-none mt-0.5 ${trustLevel.toLowerCase() === 'high' ? 'text-emerald-600' : 'text-orange-500'}`}>
+                    {trustLevel}
+                 </span>
               </div>
            </div>
         </div>
 
-        <div className="mt-auto flex gap-3">
+        <div className="mt-auto flex gap-3 w-full">
            <button
-             onClick={() => navigate(`/brand/influencer/${data.id}`)}
-             className="flex-1 bg-gray-900 hover:bg-black text-white text-sm font-bold rounded-2xl py-3.5 transition-all flex items-center justify-center gap-2 group/btn"
+             onClick={() => navigate(`/brand/influencer/${data.id || data._id}`)}
+             className="flex-[2] bg-[#111827] hover:bg-black text-white text-[11px] font-bold uppercase tracking-wide rounded-[12px] py-3.5 transition-all flex items-center justify-center gap-2 group/btn shadow-md"
            >
-             View Profile
-             <ExternalLink className="w-4 h-4 transition-transform group-hover/btn:translate-y-[-2px] group-hover/btn:translate-x-[2px]" />
+             VIEW PROFILE <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-1" />
            </button>
            <button 
              onClick={() => onInvite && onInvite(data)}
-             className="px-4 py-3.5 bg-blue-50 text-blue-600 font-bold rounded-2xl hover:bg-blue-100 transition-colors"
+             className="flex-1 bg-[#EFF6FF] text-blue-600 text-[11px] font-bold uppercase tracking-wide rounded-[12px] py-3.5 hover:bg-[#DBEAFE] transition-colors shadow-sm"
             >
-              Invite
+              INVITE
            </button>
         </div>
       </div>

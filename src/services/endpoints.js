@@ -132,6 +132,7 @@ export const ENDPOINTS = {
     complete: (id) => `/collaborations/${id}/complete`,
     requestAction: (id) => `/collaborations/${id}/request-action`,
     handleAction: (id) => `/collaborations/${id}/handle-action`,
+    submitInfluencerReview: (id) => `/collaborations/${id}/influencer-review`,
   },
 
   // Messages

@@ -147,25 +147,58 @@ const CollaborationCard = ({ collaboration, userRole }) => {
           </div>
         ) : (
           /* Review Display for Completed Collaborations */
-          <div className="bg-emerald-50/30 border border-emerald-100/50 rounded-2xl p-4 animate-in fade-in zoom-in duration-500">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Brand Review</p>
-              <div className="flex items-center gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star 
-                    key={i} 
-                    size={10} 
-                    className={cn(
-                      "fill-current",
-                      i < (collaboration.review?.rating || 0) ? "text-amber-400" : "text-gray-200"
-                    )} 
-                  />
-                ))}
+          <div className="space-y-3 animate-in fade-in zoom-in duration-500">
+            {/* Brand's Review */}
+            {collaboration.review && (
+              <div className="bg-emerald-50/30 border border-emerald-100/50 rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Brand Review</p>
+                  <div className="flex items-center gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star 
+                        key={i} 
+                        size={10} 
+                        className={cn(
+                          "fill-current",
+                          i < (collaboration.review?.rating || 0) ? "text-amber-400" : "text-gray-200"
+                        )} 
+                      />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-600 italic leading-relaxed">
+                  "{collaboration.review?.comment || 'No comment provided.'}"
+                </p>
               </div>
-            </div>
-            <p className="text-xs text-gray-600 italic leading-relaxed">
-              "{collaboration.review?.comment || 'No comment provided.'}"
-            </p>
+            )}
+            {/* Influencer's Review */}
+            {collaboration.influencerReview && (
+              <div className="bg-blue-50/30 border border-blue-100/50 rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Influencer Review</p>
+                  <div className="flex items-center gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star 
+                        key={i} 
+                        size={10} 
+                        className={cn(
+                          "fill-current",
+                          i < (collaboration.influencerReview?.rating || 0) ? "text-blue-400" : "text-gray-200"
+                        )} 
+                      />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-600 italic leading-relaxed">
+                  "{collaboration.influencerReview?.comment || 'No comment provided.'}"
+                </p>
+              </div>
+            )}
+            {!collaboration.review && !collaboration.influencerReview && (
+              <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-4 text-center">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No reviews yet</p>
+              </div>
+            )}
           </div>
         )}
       </div>

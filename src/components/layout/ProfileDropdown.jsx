@@ -63,11 +63,11 @@ export default function ProfileDropdown({ user, roleProfile, isOpen, onClose, on
       {/* Avatar overlapping header - Moved outside to prevent overflow clipping */}
       <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20">
         <div className="relative">
-          <div className="w-16 h-16 rounded-2xl bg-blue-500 border-[3px] border-white flex items-center justify-center shadow-lg overflow-hidden">
+          <div className="w-16 h-16 rounded-2xl bg-slate-100 border-[3px] border-white flex items-center justify-center shadow-lg overflow-hidden">
             {avatarUrl ? (
               <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-xl font-bold text-white">{initial}</span>
+              <span className="text-xl font-bold text-slate-500">{initial}</span>
             )}
           </div>
           {/* Status dot */}

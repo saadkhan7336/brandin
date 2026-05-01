@@ -18,7 +18,11 @@ import {
   CheckCircle,
   TrendingUp,
   Send,
-  Sparkles
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  Star,
+  MessageCircle
 } from "lucide-react";
 import api from "../../../services/api";
 import collaborationService from "../../../services/collaborationService";
@@ -26,6 +30,7 @@ import { getAiMatchForInfluencer } from "../../../services/aiService";
 import { useAuth } from "../../../hooks/useAuth";
 import ApplyCampaignModal from "./ApplyCampaignModal";
 import VerifiedTick from "../../common/VerifiedTick";
+import SocialIcon from "../../common/SocialIcon";
 import { clsx } from "clsx";
 import { twMerge } from 'tailwind-merge';
 
@@ -57,172 +62,157 @@ const CampaignCard = ({
   const brandLogo = campaign.brandProfile?.logo || campaign.brandUser?.profilePic;
 
   const startDateStr = campaign.campaignTimeline?.startDate
-    ? new Date(campaign.campaignTimeline.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    ? new Date(campaign.campaignTimeline.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
     : null;
   const endDateStr = campaign.campaignTimeline?.endDate
     ? new Date(campaign.campaignTimeline.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : null;
 
-  // Requirements from db or split from text
-  const requirements = campaign.goals && campaign.goals.length > 0
-    ? campaign.goals.slice(0, 3)
-    : campaign.additionalRequirements
-      ? campaign.additionalRequirements.split(".").filter(Boolean).slice(0, 3)
-      : [];
-
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-200 p-5 space-y-4 flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          {brandLogo ? (
-            <img src={brandLogo} alt={brandName} className="w-10 h-10 rounded-full object-cover border border-gray-100" />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex flex-col justify-center items-center font-bold">
-              {brandName[0]}
+    <div className="bg-white rounded-[24px] border border-gray-100 overflow-hidden flex flex-col h-[465px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] w-full max-w-[380px] mx-auto relative group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.12)] hover:border-blue-100 cursor-pointer">
+      {/* Header Profile with Top Background */}
+      <div className="relative h-[80px] bg-gradient-to-br from-blue-700 to-indigo-800 p-4 flex justify-between items-start transition-all duration-500 group-hover:from-blue-600 group-hover:to-indigo-700">
+          <div className="flex flex-row flex-wrap gap-1.5 z-10 max-w-[80%]">
+            <div className="px-3 py-1 bg-[#0f172a]/40 backdrop-blur-sm text-white text-[9px] font-black uppercase rounded-full flex items-center gap-1.5 shadow-sm border border-white/10 tracking-wider w-fit">
+               <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" /> ACTIVE
             </div>
-          )}
-          <div className="flex items-center gap-1">
-            <p className="text-xs text-gray-500 font-medium whitespace-nowrap">by {brandName}</p>
-            <VerifiedTick user={campaign.brandUser} roleProfile={campaign.brandProfile} size="xs" />
+            {isApplied ? (
+              <div className="px-3 py-1 bg-emerald-50/20 backdrop-blur-sm text-white text-[9px] font-bold uppercase rounded-full flex items-center shadow-sm border border-white/10 w-fit">
+                APPLIED
+              </div>
+            ) : isCollaboration ? (
+              <div className="px-3 py-1 bg-indigo-50/20 backdrop-blur-sm text-white text-[9px] font-bold uppercase rounded-full flex items-center shadow-sm border border-white/10 w-fit">
+                ONGOING
+              </div>
+            ) : isViewed ? (
+              <div className="px-3 py-1 bg-gray-50/20 backdrop-blur-sm text-white text-[9px] font-bold uppercase rounded-full flex items-center shadow-sm border border-white/10 w-fit">
+                VIEWED
+              </div>
+            ) : null}
+         </div>
+          <div className="z-10 relative flex flex-col items-end gap-1">
+            {Array.isArray(campaign.platform) ? (
+              campaign.platform.map((p, idx) => (
+                <SocialIcon key={idx} platformName={p} className="transition-transform duration-300 hover:scale-110" />
+              ))
+            ) : campaign.platform ? (
+              <SocialIcon platformName={campaign.platform} className="transition-transform duration-300 hover:scale-110" />
+            ) : null}
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {isCollaboration ? (
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm">
-              Ongoing Collaboration
-            </span>
-          ) : isApplied ? (
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-              Applied
-            </span>
-          ) : isViewed && (
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
-              Viewed
-            </span>
-          )}
-          <button className="text-gray-300 hover:text-red-500 transition-colors p-1">
-            <Heart size={18} />
-          </button>
-        </div>
       </div>
 
-      {/* Info */}
-      <div>
-        <h3 className="font-bold text-gray-900 text-lg leading-tight line-clamp-2 hover:text-blue-600 cursor-pointer transition-colors" onClick={() => onViewDetails(campaign)}>
-          {campaign.name}
-        </h3>
-        {campaign.description && (
-          <p className="text-sm text-gray-500 mt-2 line-clamp-2">{campaign.description}</p>
-        )}
-      </div>
+      <div className="px-5 pb-5 flex-1 flex flex-col -mt-10 relative items-center text-center">
+         {/* Profile Image (Brand Logo) */}
+         <div className="relative mb-2 transition-transform duration-500 group-hover:scale-105">
+            {brandLogo ? (
+              <img
+                src={brandLogo}
+                alt={brandName}
+                className="w-[84px] h-[84px] rounded-full object-cover border-[4px] border-white shadow-md bg-white relative z-10 transition-transform duration-500 group-hover:scale-110"
+              />
+            ) : (
+              <div className="w-[84px] h-[84px] rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl border-[4px] border-white shadow-md relative z-10 transition-transform duration-500 group-hover:scale-110">
+                {brandName[0]}
+              </div>
+            )}
+         </div>
+         
+         <div className="flex items-center gap-1.5 justify-center mb-0.5">
+            <h3 className="text-[15px] font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate max-w-[180px]">{campaign.name}</h3>
+            {isAIMatch && (
+              <div className="flex items-center gap-1 bg-purple-50 text-purple-600 text-[9px] font-black px-2 py-0.5 rounded-full border border-purple-100 ml-1 whitespace-nowrap">
+                <Sparkles size={10} /> {matchScore}% MATCH
+              </div>
+            )}
+         </div>
+         <p className="text-[11px] font-medium text-gray-500 mb-2">by {brandName} <VerifiedTick user={campaign.brandUser} roleProfile={campaign.brandProfile} size="xs" /></p>
 
-      {/* Tags */}
-      <div className="flex flex-wrap gap-1.5">
-        {campaign.industry && (
-          <span className="text-xs font-medium bg-gray-100 text-gray-700 px-2 py-0.5 rounded border border-gray-200">
-            {campaign.industry}
-          </span>
-        )}
-        {campaign.platform?.map((p) => (
-          <span key={p} className="text-xs font-medium bg-gray-100 text-gray-700 px-2 py-0.5 rounded border border-gray-200 capitalize">
-            {p}
-          </span>
-        ))}
-        {campaign.status === "active" && !isCollaboration && (
-          <span className="text-xs font-medium bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">
-            Active
-          </span>
-        )}
-      </div>
+         <div className="mb-3 px-3 w-full">
+            <p className="text-[10px] text-gray-500 leading-normal line-clamp-2 overflow-hidden h-[30px]">
+              {campaign.description || `Join this exciting ${campaign.industry || "brand"} campaign and showcase your talent.`}
+            </p>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onViewDetails(campaign); }}
+              className="text-[9px] text-blue-600 font-bold hover:underline mt-0.5 block mx-auto"
+            >
+              See More
+            </button>
+         </div>
 
-      {/* AI Match Info */}
-      {isAIMatch && (matchScore || matchLevel) && (
-        <div className="bg-purple-50 rounded-lg p-3 mt-1 border border-purple-100">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1"><Sparkles size={12}/> AI Match</span>
-            <span className={cn(
-              "text-[10px] font-bold px-2 py-0.5 rounded-full border bg-white",
-              matchScore >= 80 ? "text-green-600 border-green-100" :
-              matchScore >= 60 ? "text-blue-600 border-blue-100" :
-              "text-orange-600 border-orange-100"
-            )}>{matchScore}%</span>
-          </div>
-          {reasons.length > 0 && (
-            <div className="space-y-1">
-              {reasons.slice(0, 2).map((r, i) => (
-                <div key={i} className="flex items-center gap-2 text-[10px] font-bold text-purple-700/70">
-                  <div className="w-1 h-1 rounded-full bg-purple-400" />
-                  {r}
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-2.5 w-full mb-3">
+           {/* Budget */}
+           <div className="p-2.5 bg-white rounded-[14px] border border-gray-100 flex items-center gap-2.5 shadow-sm transition-all duration-300 hover:bg-amber-50/30 hover:border-amber-100 hover:scale-[1.02] hover:shadow-md cursor-default group/stat1">
+              <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover/stat1:scale-110 group-hover/stat1:bg-amber-100">
+                 <DollarSign className="w-3.5 h-3.5 text-amber-500" />
+              </div>
+              <div className="flex flex-col text-left">
+                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">BUDGET</span>
+                 <span className="text-[11px] font-black text-gray-900 leading-none mt-0.5">
+                    ${budgetMin}+
+                 </span>
+              </div>
+           </div>
+           {/* Duration */}
+           <div className="p-2.5 bg-white rounded-[14px] border border-gray-100 flex items-center gap-2.5 shadow-sm transition-all duration-300 hover:bg-indigo-50/30 hover:border-indigo-100 hover:scale-[1.02] hover:shadow-md cursor-default group/stat2">
+              <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover/stat2:scale-110 group-hover/stat2:bg-indigo-100">
+                 <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+              </div>
+              <div className="flex flex-col text-left">
+                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">START DATE</span>
+                 <span className="text-[10px] font-black text-gray-900 leading-none mt-0.5">
+                    {startDateStr || "Flexible"}
+                 </span>
+              </div>
+           </div>
+           {/* Applicants */}
+           <div className="p-2.5 bg-white rounded-[14px] border border-gray-100 flex items-center gap-2.5 shadow-sm transition-all duration-300 hover:bg-rose-50/30 hover:border-rose-100 hover:scale-[1.02] hover:shadow-md cursor-default group/stat3 col-span-1">
+              <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover/stat3:scale-110 group-hover/stat3:bg-rose-100">
+                 <Users className="w-3.5 h-3.5 text-rose-500" />
+              </div>
+              <div className="flex flex-col text-left truncate">
+                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">APPLICANTS</span>
+                 <span className="text-[11px] font-black text-gray-900 leading-none mt-0.5 truncate">
+                    {campaign.applicantsCount || 0}
+                 </span>
+              </div>
+           </div>
+           {/* Industry */}
+           <div className="p-2.5 bg-white rounded-[14px] border border-gray-100 flex items-center gap-2.5 shadow-sm transition-all duration-300 hover:bg-purple-50/30 hover:border-purple-100 hover:scale-[1.02] hover:shadow-md cursor-default group/stat4">
+              <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover/stat4:scale-110 group-hover/stat4:bg-purple-100">
+                 <Briefcase className="w-3.5 h-3.5 text-purple-500" />
+              </div>
+              <div className="flex flex-col text-left">
+                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">INDUSTRY</span>
+                 <span className="text-[11px] font-black text-gray-900 leading-none mt-0.5 truncate max-w-[70px]">
+                    {campaign.industry || "General"}
+                 </span>
+              </div>
+           </div>
         </div>
-      )}
 
-      {/* Key Stats Block */}
-      <div className="space-y-2 py-3 border-y border-gray-50 text-sm">
-        <div className="flex justify-between items-center text-gray-600">
-          <div className="flex items-center gap-2"><DollarSign size={15} className="text-gray-400" /> Budget</div>
-          <span className="font-semibold text-gray-900">${budgetMin} - ${budgetMax}</span>
+        <div className="mt-auto flex gap-3 w-full">
+           <button
+             onClick={() => onViewDetails(campaign)}
+             className="flex-1 bg-[#111827] hover:bg-black text-white text-[10px] font-bold uppercase tracking-wide rounded-[12px] py-3 transition-all flex items-center justify-center gap-2 group/btn shadow-md"
+           >
+             VIEW DETAILS <ArrowRight className="w-3 h-3 transition-transform group-hover/btn:translate-x-1" />
+           </button>
+           <button 
+             onClick={() => isCollaboration ? onViewCollaboration(collaborationId) : (!isApplied && onApply(campaign))}
+             disabled={isApplied && !isCollaboration}
+             className={cn(
+               "flex-[1.4] text-[9px] font-bold uppercase tracking-tight rounded-[12px] py-3 transition-all shadow-sm flex items-center justify-center text-center",
+               isCollaboration
+                 ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                 : isApplied
+                   ? "bg-emerald-50 text-emerald-600 border border-emerald-100 cursor-default"
+                   : "bg-[#EFF6FF] text-blue-600 hover:bg-[#DBEAFE]"
+             )}
+            >
+              {isCollaboration ? "GO TO COLLABORATION" : isApplied ? "APPLIED" : "APPLY NOW"}
+           </button>
         </div>
-        <div className="flex justify-between items-center text-gray-600">
-          <div className="flex items-center gap-2"><Calendar size={15} className="text-gray-400" /> Duration</div>
-          <span className="font-medium text-gray-800 text-xs">{startDateStr} - {endDateStr}</span>
-        </div>
-        <div className="flex justify-between items-center text-gray-600">
-          <div className="flex items-center gap-2"><Users size={15} className="text-gray-400" /> Applicants</div>
-          <span className="font-medium text-gray-800 text-xs">{campaign.applicantsCount || 0} applied</span>
-        </div>
-      </div>
-
-      {/* Requirements Placeholder List */}
-      <div className="flex-grow">
-        <p className="text-xs font-semibold text-gray-800 mb-2 uppercase tracking-wide">Requirements</p>
-        <ul className="space-y-1.5 list-disc list-inside text-sm text-gray-600">
-          {requirements.map((req, idx) => (
-            <li key={idx} className="truncate">{req}</li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Footer Buttons */}
-      <div className="flex gap-2 pt-2 mt-auto">
-        <button
-          onClick={() => onViewDetails(campaign)}
-          className={cn(
-            "flex-1 py-2.5 text-sm font-semibold rounded-lg border transition-all",
-            isViewed
-              ? "bg-gray-50 border-gray-200 text-gray-400"
-              : "border-gray-200 text-gray-700 hover:bg-gray-50"
-          )}
-        >
-          {isCollaboration ? "Collaboration Overview" : (isViewed ? "Viewed" : "View Details")}
-        </button>
-
-        <button
-          onClick={() => isCollaboration ? onViewCollaboration(collaborationId) : (!isApplied && onApply(campaign))}
-          disabled={isApplied && !isCollaboration}
-          className={cn(
-            "flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5",
-            isCollaboration
-              ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200"
-              : isApplied
-                ? "bg-emerald-50 text-emerald-600 border border-emerald-100 cursor-default"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-          )}
-        >
-          {isCollaboration ? (
-            <>Collaboration</>
-          ) : (
-            <>
-              {isApplied && <CheckCircle size={14} />}
-              {isApplied ? "Applied" : "Apply Now"}
-            </>
-          )}
-        </button>
-
       </div>
     </div>
   );
@@ -243,6 +233,7 @@ const BrandCard = ({
   aiData,
   collaborationStatus
 }) => {
+  const navigate = useNavigate();
   const name = brand.brandname || (brand.user && brand.user.fullname) || "Brand";
   const logo = brand.logo || (brand.user && brand.user.profilePic);
   
@@ -258,179 +249,158 @@ const BrandCard = ({
   const effectiveCollabId = collaborationId || collaborationStatus?.collaborationId;
   const effectiveCampaignName = activeCampaignName || collaborationStatus?.campaignName;
 
+  const rating = brand.rating || 0;
+  const reviewCount = brand.reviewsCount || 0;
+  const trustLevel = brand.isVerified ? 'High' : 'MODERATE';
+
+  // Determine platform icon
+  let platformName = '';
+  if (brand.socialMedia) {
+      const socialKeys = typeof brand.socialMedia.keys === 'function' 
+        ? Array.from(brand.socialMedia.keys()) 
+        : Object.keys(brand.socialMedia);
+      if (socialKeys.length > 0) platformName = socialKeys[0];
+  }
+  if (!platformName && brand.verifiedPlatforms) {
+      const verifiedKeys = Object.keys(brand.verifiedPlatforms);
+      if (verifiedKeys.length > 0) platformName = verifiedKeys[0];
+  }
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-200 p-5 space-y-4 flex flex-col h-full">
-      {/* Brand header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-4">
-          {logo ? (
-            <img src={logo} alt={name} className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0" />
-          ) : (
-            <div className="w-14 h-14 rounded-xl bg-blue-100 flex flex-col items-center justify-center text-blue-600 font-bold text-xl flex-shrink-0">
-              {name[0]}
+    <div className="bg-white rounded-[24px] border border-gray-100 overflow-hidden flex flex-col h-[445px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] w-full max-w-[380px] mx-auto relative group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.12)] hover:border-indigo-100 cursor-pointer">
+      {/* Header Profile with Top Background */}
+      <div className="relative h-[80px] bg-gradient-to-br from-blue-700 to-indigo-800 p-4 flex justify-between items-start transition-all duration-500 group-hover:from-blue-600 group-hover:to-indigo-700">
+          <div className="flex flex-row flex-wrap gap-1.5 z-10 max-w-[80%]">
+            {/* AI Match moved to profile section */}
+            <div className="px-3 py-1 bg-[#0f172a]/40 backdrop-blur-sm text-white text-[9px] font-black uppercase rounded-full flex items-center gap-1.5 shadow-sm border border-white/10 tracking-wider w-fit">
+               <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" /> ACTIVE
             </div>
-          )}
-          <div className="min-w-0 pt-1">
-            <div className="flex items-center gap-1 min-w-0">
-              <h3 className="font-bold text-gray-900 text-lg group-hover:text-blue-700 transition-colors truncate">
-                {name}
-              </h3>
-              <VerifiedTick user={brand} roleProfile={brand} size="xs" />
-            </div>
-            {brand.description ? (
-              <p className="text-sm text-gray-500 line-clamp-2 mt-0.5 leading-snug">{brand.description}</p>
+            {isRequested ? (
+              <div className="px-3 py-1 bg-emerald-50/20 backdrop-blur-sm text-white text-[9px] font-bold uppercase rounded-full flex items-center shadow-sm border border-white/10 w-fit">
+                REQUESTED
+              </div>
+            ) : null}
+         </div>
+          <div className="z-10 relative flex flex-col items-end gap-2">
+            <SocialIcon platformName={platformName} className="transition-transform duration-300 hover:scale-110 hover:rotate-6" />
+          </div>
+      </div>
+
+      <div className="px-5 pb-5 flex-1 flex flex-col -mt-10 relative items-center text-center">
+         {/* Profile Image */}
+         <div className="relative mb-2 transition-transform duration-500 group-hover:scale-105">
+            {logo ? (
+              <img
+                src={logo}
+                alt={name}
+                className="w-[84px] h-[84px] rounded-[24px] object-cover border-[4px] border-white shadow-md bg-white relative z-10 transition-transform duration-500 group-hover:scale-110"
+              />
             ) : (
-              <p className="text-sm text-gray-500 line-clamp-2 mt-0.5 leading-snug">Leading {brand.industry || "brand"} looking for influencers.</p>
+              <div className="w-[84px] h-[84px] rounded-[24px] bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl border-[4px] border-white shadow-md relative z-10 transition-transform duration-500 group-hover:scale-110">
+                {name[0]}
+              </div>
             )}
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          {isOngoing ? (
-            <>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
-                Collaborating
-              </span>
-              {effectiveCampaignName && (
-                <span className="text-[9px] font-bold text-indigo-400 uppercase truncate max-w-[110px]" title={effectiveCampaignName}>
-                  via: {effectiveCampaignName}
-                </span>
-              )}
-            </>
-          ) : isPreviouslyWorked ? (
-            <>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100">
-                Previously Worked
-              </span>
-              {effectiveCampaignName && (
-                <span className="text-[9px] font-bold text-amber-400 uppercase truncate max-w-[110px]" title={effectiveCampaignName}>
-                  {effectiveCampaignName}
-                </span>
-              )}
-            </>
-          ) : isCancelled ? (
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-100">
-              Cancelled
-            </span>
-          ) : isRequested ? (
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-              Requested
-            </span>
-          ) : isViewed ? (
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
-              Viewed
-            </span>
-          ) : null}
-          <button className="text-gray-300 hover:text-red-500 transition-colors pt-1">
-            <Heart size={18} />
-          </button>
-        </div>
-      </div>
+         </div>
+         
+         <div className="flex items-center gap-1.5 justify-center mb-0.5">
+            <h3 className="text-[15px] font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">{name}</h3>
+            <VerifiedTick user={brand} roleProfile={brand} size="sm" />
+            {isAIMatch && (
+              <div className="flex items-center gap-1 bg-purple-50 text-purple-600 text-[9px] font-black px-2 py-0.5 rounded-full border border-purple-100 ml-1 whitespace-nowrap">
+                <Sparkles size={10} /> {matchScore}% MATCHED
+              </div>
+            )}
+         </div>
+         <p className="text-[11px] font-medium text-gray-500 mb-2">{brand.industry || "Brand"}</p>
 
-      {/* AI Match Stats */}
-      {isAIMatch && (
-        <div className="bg-purple-50 rounded-xl p-3 border border-purple-100 flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest">Match Score</span>
-            <div className="flex items-center gap-1.5">
-              <span className="text-lg font-black text-purple-600">{matchScore}%</span>
-              <span className="text-[10px] font-bold text-purple-400 px-1.5 py-0.5 bg-white rounded-md border border-purple-100">{matchLevel}</span>
-            </div>
-          </div>
-          <div className="flex -space-x-1.5">
-             <Sparkles size={20} className="text-purple-400 opacity-30" />
-          </div>
+         <div className="mb-3 px-3 w-full">
+            <p className="text-[10px] text-gray-500 leading-normal line-clamp-2 overflow-hidden h-[30px]">
+              {brand.description || `Leading ${brand.industry || "brand"} looking for influencers to collaborate on exciting campaigns.`}
+            </p>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onViewProfile(brand); }}
+              className="text-[9px] text-blue-600 font-bold hover:underline mt-0.5 block mx-auto"
+            >
+              See More
+            </button>
+         </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-2.5 w-full mb-2">
+           {/* Rating */}
+           <div className="p-2.5 bg-white rounded-[14px] border border-gray-100 flex items-center gap-2.5 shadow-sm transition-all duration-300 hover:bg-amber-50/30 hover:border-amber-100 hover:scale-[1.02] hover:shadow-md cursor-default group/rating">
+              <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover/rating:scale-110 group-hover/rating:bg-amber-100">
+                 <Star className="w-3.5 h-3.5 text-amber-500" />
+              </div>
+              <div className="flex flex-col text-left">
+                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">RATING</span>
+                 <span className="text-[12px] font-black text-gray-900 leading-none mt-0.5">
+                    {rating > 0 ? rating.toFixed(1) : "New"}
+                 </span>
+              </div>
+           </div>
+           {/* Campaigns */}
+           <div className="p-2.5 bg-white rounded-[14px] border border-gray-100 flex items-center gap-2.5 shadow-sm transition-all duration-300 hover:bg-indigo-50/30 hover:border-indigo-100 hover:scale-[1.02] hover:shadow-md cursor-default group/stat2">
+              <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover/stat2:scale-110 group-hover/stat2:bg-indigo-100">
+                 <Briefcase className="w-3.5 h-3.5 text-indigo-500" />
+              </div>
+              <div className="flex flex-col text-left">
+                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">CAMPAIGNS</span>
+                 <span className="text-[12px] font-black text-gray-900 leading-none mt-0.5">
+                    {brand.activeCampaignsCount || 0} Active
+                 </span>
+              </div>
+           </div>
+           {/* Location */}
+           <div className="p-2.5 bg-white rounded-[14px] border border-gray-100 flex items-center gap-2.5 shadow-sm transition-all duration-300 hover:bg-rose-50/30 hover:border-rose-100 hover:scale-[1.02] hover:shadow-md cursor-default group/stat3 col-span-1">
+              <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover/stat3:scale-110 group-hover/stat3:bg-rose-100">
+                 <MapPin className="w-3.5 h-3.5 text-rose-500" />
+              </div>
+              <div className="flex flex-col text-left truncate">
+                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">LOCATION</span>
+                 <span className="text-[10px] font-black text-gray-900 leading-none mt-0.5 truncate" title={brand.address || brand.location || "N/A"}>
+                    {brand.address || brand.location || "N/A"}
+                 </span>
+              </div>
+           </div>
+           {/* Reviews */}
+           <div className="p-2.5 bg-white rounded-[14px] border border-gray-100 flex items-center gap-2.5 shadow-sm transition-all duration-300 hover:bg-purple-50/30 hover:border-purple-100 hover:scale-[1.02] hover:shadow-md cursor-default group/stat4">
+              <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover/stat4:scale-110 group-hover/stat4:bg-purple-100">
+                 <MessageCircle className="w-3.5 h-3.5 text-purple-500" />
+              </div>
+              <div className="flex flex-col text-left">
+                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">REVIEWS</span>
+                 <span className="text-[12px] font-black text-gray-900 leading-none mt-0.5">
+                    {reviewCount || 0} Total
+                 </span>
+              </div>
+           </div>
         </div>
-      )}
 
-      {/* AI Reasons */}
-      {isAIMatch && reasons.length > 0 && (
-        <div className="space-y-1.5 bg-gray-50/50 p-2.5 rounded-xl border border-gray-100">
-          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Why this Brand?</p>
-          {reasons.map((r, i) => (
-            <div key={i} className="flex items-center gap-2 text-[10px] font-bold text-gray-600">
-              <div className="w-1 h-1 rounded-full bg-purple-400" />
-              {r}
-            </div>
-          ))}
+        <div className="mt-auto flex gap-3 w-full">
+           <button
+             onClick={() => onViewProfile(brand)}
+             className="flex-1 bg-[#111827] hover:bg-black text-white text-[10px] font-bold uppercase tracking-wide rounded-[12px] py-3 transition-all flex items-center justify-center gap-2 group/btn shadow-md"
+           >
+             VIEW PROFILE <ArrowRight className="w-3 h-3 transition-transform group-hover/btn:translate-x-1" />
+           </button>
+           <button 
+             onClick={() => isOngoing ? onViewCollaboration(effectiveCollabId) : isPreviouslyWorked ? onViewCollaboration(effectiveCollabId) : (!isRequested && onSendRequest(brand))}
+             disabled={isRequested && !isOngoing && !isPreviouslyWorked}
+             className={cn(
+               "flex-[1.4] text-[9px] font-bold uppercase tracking-tight rounded-[12px] py-3 transition-all shadow-sm flex items-center justify-center text-center",
+               isOngoing
+                 ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                 : isPreviouslyWorked
+                   ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                   : isRequested
+                     ? "bg-emerald-50 text-emerald-600 border border-emerald-100 cursor-default"
+                     : "bg-[#EFF6FF] text-blue-600 hover:bg-[#DBEAFE]"
+             )}
+            >
+              {isOngoing ? "GO TO COLLABORATION" : isPreviouslyWorked ? "PAST WORK" : isRequested ? "SENT" : "REQUEST"}
+           </button>
         </div>
-      )}
-
-      {brand.industry && (
-        <span className="text-xs font-medium bg-gray-100 text-gray-700 px-2.5 py-1 rounded border border-gray-200">
-          {brand.industry}
-        </span>
-      )}
-      {brand.lookingFor?.slice(0, 2).map((item, idx) => (
-        <span key={idx} className="text-xs font-medium bg-gray-100 text-gray-700 px-2.5 py-1 rounded border border-gray-200">
-          {item.length > 15 ? item.substring(0, 15) + "..." : item}
-        </span>
-      ))}
-
-      {/* Stats row */}
-      <div className="space-y-2.5 py-3 text-sm flex-grow">
-        <div className="flex items-center gap-3 text-gray-600">
-          <MapPin size={16} className="text-gray-400" />
-          <span className="text-sm font-medium">{brand.address || brand.location || "Location not provided"}</span>
-        </div>
-        {brand.budgetRange && (
-          <div className="flex items-center gap-3 text-gray-600">
-            <DollarSign size={16} className="text-gray-400" />
-            <span className="text-sm font-medium">
-              Avg. list: ${brand.budgetRange.min?.toLocaleString()} – ${brand.budgetRange.max?.toLocaleString()}
-            </span>
-          </div>
-        )}
-        <div className="flex items-center gap-3 text-gray-600">
-          <Briefcase size={16} className="text-gray-400" />
-          <span className="text-sm font-medium pr-1">{brand.activeCampaignsCount || 0} active campaigns</span>
-        </div>
-        <div className="flex items-center gap-3 text-gray-600">
-          <TrendingUp size={16} className="text-gray-400" />
-          <span className="text-sm font-medium">{(brand.followersCount || 0).toLocaleString()}+ Followers</span>
-        </div>
-      </div>
-
-      <div className="flex gap-2 mt-auto">
-        <button
-          onClick={() => onViewProfile(brand)}
-          className={cn(
-            "flex-1 py-2.5 text-sm font-semibold border rounded-lg transition-colors",
-            isViewed
-              ? "bg-gray-50 border-gray-200 text-gray-400"
-              : "border-gray-200 text-gray-700 hover:bg-gray-50"
-          )}
-        >
-          {isViewed ? "Viewed" : "View Profile"}
-        </button>
-
-        <button
-          onClick={() => isOngoing ? onViewCollaboration(effectiveCollabId) : isPreviouslyWorked ? onViewCollaboration(effectiveCollabId) : (!isRequested && onSendRequest(brand))}
-          disabled={isRequested && !isOngoing && !isPreviouslyWorked}
-          className={cn(
-            "flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5",
-            isOngoing
-              ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200"
-              : isPreviouslyWorked
-                ? "bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100"
-                : isCancelled
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
-                  : isRequested
-                    ? "bg-emerald-50 text-emerald-600 border border-emerald-100 cursor-default"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-          )}
-        >
-          {isOngoing ? (
-            <>Collaboration</>
-          ) : isPreviouslyWorked ? (
-            <>View Past Work</>
-          ) : (
-            <>
-              {isRequested ? <CheckCircle size={15} /> : <Send size={15} />}
-              {isRequested ? "Requested" : "Send Request"}
-            </>
-          )}
-        </button>
-
       </div>
     </div>
   );
@@ -699,7 +669,7 @@ const SearchExplore = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 pt-6 pb-4">
           {/* Page title + search bar */}
           <div className="flex flex-col md:flex-row gap-6 items-start justify-between">
@@ -1086,6 +1056,12 @@ const SearchExplore = () => {
           onClose={() => setSelectedApplicationCampaign(null)}
           onSuccess={() => {
             setAppliedCampaignIds(prev => [...prev, selectedApplicationCampaign._id]);
+            // Manually increment applicant count in local state for realtime feel
+            setCampaigns(prev => prev.map(c => 
+              String(c._id) === String(selectedApplicationCampaign._id) 
+                ? { ...c, applicantsCount: (c.applicantsCount || 0) + 1 }
+                : c
+            ));
             setSelectedApplicationCampaign(null);
           }}
         />
@@ -1099,6 +1075,9 @@ const SearchExplore = () => {
           onClose={() => setSelectedBrand(null)}
           onSuccess={() => {
             setRequestedBrandIds(prev => [...prev, selectedBrand._id]);
+            // Note: If brand requests also affect a specific campaign count, 
+            // that logic would be more complex since the user selects the campaign in the modal.
+            // For now, we update the requested status which is the primary feedback.
             setSelectedBrand(null);
           }}
         />

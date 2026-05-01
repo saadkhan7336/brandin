@@ -45,6 +45,11 @@ const CollabDetailView = () => {
   const [rating, setRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
 
+  // Influencer Review States
+  const [isInfluencerReviewOpen, setIsInfluencerReviewOpen] = useState(false);
+  const [influencerRating, setInfluencerRating] = useState(5);
+  const [influencerComment, setInfluencerComment] = useState("");
+
   const fetchCollaboration = useCallback(async () => {
     try {
       setLoading(true);
@@ -125,14 +130,15 @@ const CollabDetailView = () => {
           setIsCompleteModalOpen(false);
           break;
         case 'CANCEL':
-          res = await collaborationService.requestAction(id, { type: 'CANCEL', reason: cancelReason }); // Direct cancel for brand is also a request for consistency or use updateStatus
-          // Let's use requestAction with approval if influencer, or direct cancel for brand
+          res = await collaborationService.requestAction(id, { type: 'CANCEL', reason: cancelReason });
           if (user.role === 'brand') {
-             // For brand, we can just cancel directly if needed, but the user said "asked for reason"
-             // Our service updateCollaborationStatus handles this.
-             // But let's stick to the prompt: brand can suspend/pause at any time.
-             // Cancellation prompt for both.
           }
+          break;
+        case 'INFLUENCER_REVIEW':
+          res = await collaborationService.submitInfluencerReview(id, { rating: influencerRating, comment: influencerComment });
+          setIsInfluencerReviewOpen(false);
+          setInfluencerRating(5);
+          setInfluencerComment("");
           break;
         default:
           break;
@@ -283,15 +289,18 @@ const CollabDetailView = () => {
       </div>
 
       {/* Review Summary (Visible after completion) */}
-      {collaboration.review && (
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-6 mb-8 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-5">
-             <Star size={120} className="fill-amber-400 text-amber-400" />
-          </div>
-          <div className="relative z-10">
-             <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                   <div className="flex">
+      {status === 'completed' && (
+        <div className="space-y-4 mb-8">
+          {/* Brand's Review of Influencer */}
+          {collaboration.review && (
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-5">
+                <Star size={120} className="fill-amber-400 text-amber-400" />
+              </div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex">
                       {[1,2,3,4,5].map((s) => (
                         <Star 
                           key={s} 
@@ -299,23 +308,81 @@ const CollabDetailView = () => {
                           className={cn(s <= collaboration.review.rating ? "fill-amber-400 text-amber-400" : "text-gray-200")} 
                         />
                       ))}
-                   </div>
-                   <span className="text-xs font-black text-amber-600 uppercase tracking-widest">Project Review</span>
+                    </div>
+                    <span className="text-xs font-black text-amber-600 uppercase tracking-widest">Brand's Review</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">
+                    {new Date(collaboration.review.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
-                <span className="text-[10px] font-bold text-gray-400 uppercase">
-                  {new Date(collaboration.review.createdAt).toLocaleDateString()}
-                </span>
-             </div>
-             <p className="text-gray-700 font-bold italic text-sm leading-relaxed max-w-2xl">
-                "{collaboration.review.comment}"
-             </p>
-             <div className="mt-4 flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-amber-200 flex items-center justify-center">
-                   <CheckCircle2 size={12} className="text-amber-700" />
+                <p className="text-gray-700 font-bold italic text-sm leading-relaxed max-w-2xl">
+                  "{collaboration.review.comment || 'No comment provided.'}"
+                </p>
+                <div className="mt-4 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-amber-200 flex items-center justify-center">
+                    <CheckCircle2 size={12} className="text-amber-700" />
+                  </div>
+                  <span className="text-[11px] font-black text-amber-700 uppercase tracking-widest">Verified Brand Review</span>
                 </div>
-                <span className="text-[11px] font-black text-amber-700 uppercase tracking-widest">Verified Collaboration Outcome</span>
-             </div>
-          </div>
+              </div>
+            </div>
+          )}
+
+          {/* Influencer's Review of Brand */}
+          {collaboration.influencerReview && (
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-5">
+                <Star size={120} className="fill-blue-400 text-blue-400" />
+              </div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex">
+                      {[1,2,3,4,5].map((s) => (
+                        <Star 
+                          key={s} 
+                          size={18} 
+                          className={cn(s <= collaboration.influencerReview.rating ? "fill-blue-400 text-blue-400" : "text-gray-200")} 
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs font-black text-blue-600 uppercase tracking-widest">Influencer's Review</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">
+                    {new Date(collaboration.influencerReview.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-gray-700 font-bold italic text-sm leading-relaxed max-w-2xl">
+                  "{collaboration.influencerReview.comment || 'No comment provided.'}"
+                </p>
+                <div className="mt-4 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-blue-200 flex items-center justify-center">
+                    <CheckCircle2 size={12} className="text-blue-700" />
+                  </div>
+                  <span className="text-[11px] font-black text-blue-700 uppercase tracking-widest">Verified Influencer Review</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Rate Brand CTA for Influencer */}
+          {user.role === 'influencer' && !collaboration.influencerReview && (
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-dashed border-indigo-200 rounded-2xl p-8 text-center">
+              <div className="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Star size={24} className="text-indigo-600" />
+              </div>
+              <h3 className="text-lg font-black text-gray-900 mb-2">Rate this Brand</h3>
+              <p className="text-sm text-gray-500 font-medium mb-5 max-w-md mx-auto">
+                Share your experience working with {brand?.fullname || 'this brand'}. Your feedback helps other influencers make informed decisions.
+              </p>
+              <button
+                onClick={() => setIsInfluencerReviewOpen(true)}
+                className="px-8 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-95"
+              >
+                Leave a Review
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -605,6 +672,66 @@ const CollabDetailView = () => {
             className="w-full py-4 bg-gray-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-gray-200"
           >
             {actionLoading ? "Finalizing..." : "Complete Collaboration"}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Influencer Review Modal (post-completion, mirrors brand completion modal) */}
+      <Modal 
+        isOpen={isInfluencerReviewOpen} 
+        onClose={() => setIsInfluencerReviewOpen(false)} 
+        title="Rate this Brand"
+        maxWidth="max-w-xl"
+      >
+        <div className="space-y-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              {[1,2,3,4,5].map((star) => (
+                <button 
+                  key={star}
+                  onClick={() => setInfluencerRating(star)}
+                  className="p-1 transition-transform hover:scale-110 active:scale-95"
+                >
+                  <Star 
+                    size={40} 
+                    className={cn(
+                      "transition-colors",
+                      star <= influencerRating ? "fill-blue-500 text-blue-500" : "text-gray-200"
+                    )} 
+                  />
+                </button>
+              ))}
+            </div>
+            <p className="text-sm font-bold text-gray-500">How was your experience working with {brand?.fullname}?</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Your Feedback</label>
+            <textarea 
+              value={influencerComment}
+              onChange={(e) => setInfluencerComment(e.target.value)}
+              placeholder="Share your experience about the brand's communication, professionalism, and collaboration..."
+              className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none h-32"
+            />
+          </div>
+
+          <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+            <div className="flex gap-3">
+              <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                <AlertCircle size={10} className="text-white" />
+              </div>
+              <p className="text-xs font-medium text-blue-700 leading-relaxed">
+                Your review will be visible on the brand's profile and helps other influencers make informed decisions.
+              </p>
+            </div>
+          </div>
+
+          <button 
+            disabled={actionLoading}
+            onClick={() => handleAction('INFLUENCER_REVIEW')}
+            className="w-full py-4 bg-gray-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-gray-200"
+          >
+            {actionLoading ? "Submitting..." : "Submit Review"}
           </button>
         </div>
       </Modal>

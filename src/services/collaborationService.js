@@ -225,6 +225,18 @@ const collaborationService = {
     }
   },
 
+  /**
+   * Submit influencer's review of a brand (post-completion)
+   */
+  submitInfluencerReview: async (id, reviewData) => {
+    try {
+      const response = await api.post(ENDPOINTS.collaborations.submitInfluencerReview(id), { reviewData });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
   api
 };
 
