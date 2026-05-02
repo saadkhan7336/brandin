@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import collaborationService from '../../services/collaborationService';
+import paymentService from '../../services/paymentService';
+import { toast } from 'sonner';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -125,22 +127,48 @@ const DeliverablesPage = () => {
   const handleSubmitDeliverable = async (e) => {
     e.preventDefault();
     try {
-      await collaborationService.submitDeliverable(id, selectedDeliverable._id, {
+      if (!collaboration.escrowFunded) {
+        toast.error("Escrow must be funded before submission");
+        return;
+      }
+      await paymentService.submitDeliverable(selectedDeliverable._id, {
         submissionFiles: [submissionLink]
       });
+      toast.success("Deliverable submitted for review");
       setIsSubmitModalOpen(false);
       fetchCollaboration();
     } catch (err) {
-      alert('Error submitting deliverable');
+      toast.error(err.message || 'Error submitting deliverable');
+    }
+  };
+
+  const handleStartDeliverable = async (delivId) => {
+    try {
+      if (!collaboration.escrowFunded) {
+        toast.error("Escrow must be funded before starting task");
+        return;
+      }
+      await paymentService.startDeliverable(delivId);
+      toast.success("Task started! Good luck.");
+      fetchCollaboration();
+    } catch (err) {
+      toast.error(err.message || "Failed to start task");
     }
   };
 
   const handleReview = async (delivId, status) => {
     try {
-      await collaborationService.reviewDeliverable(id, delivId, { status });
+      if (status === 'APPROVED') {
+        if (!window.confirm("Approve and release payment for this task?")) return;
+        await paymentService.approveDeliverable(delivId);
+        toast.success("Deliverable approved and payment released!");
+      } else {
+        await collaborationService.reviewDeliverable(id, delivId, { status });
+        toast.success("Status updated");
+      }
       fetchCollaboration();
     } catch (err) {
-      alert('Error updating status');
+      toast.error(err.message || 'Error updating status');
     }
   };
 
@@ -280,21 +308,20 @@ const DeliverablesPage = () => {
                 </div>
 
                 {/* Right: Actions */}
-                <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                  {userRole === 'brand' ? (
+                   {userRole === 'brand' ? (
                     <>
                       {deliv.status === 'SUBMITTED' && (
                         <>
                           <button 
                             onClick={() => handleReview(deliv._id, 'APPROVED')}
-                            className="p-2 text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
-                            title="Approve"
+                            className="p-2 text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors border border-emerald-100"
+                            title="Approve & Pay"
                           >
                             <Check size={18} />
                           </button>
                           <button 
                             onClick={() => handleReview(deliv._id, 'REVISION_REQUESTED')}
-                            className="p-2 text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors"
+                            className="p-2 text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors border border-amber-100"
                             title="Request Revision"
                           >
                             <ArrowLeft size={18} />
@@ -303,14 +330,14 @@ const DeliverablesPage = () => {
                       )}
                       <button 
                         onClick={() => handleOpenModal(deliv)}
-                        className="p-2 text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        className="p-2 text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
                         title="Edit"
                       >
                         <Edit3 size={18} />
                       </button>
                       <button 
                          onClick={() => handleDelete(deliv._id)}
-                        className="p-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                        className="p-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors border border-red-100"
                         title="Delete"
                       >
                         <Trash2 size={18} />
@@ -318,28 +345,40 @@ const DeliverablesPage = () => {
                     </>
                   ) : (
                     <>
-                      {deliv.status !== 'APPROVED' && (
+                      {deliv.status === 'PENDING' && (
                         <button 
-                          onClick={() => handleOpenSubmitModal(deliv)}
+                          onClick={() => handleStartDeliverable(deliv._id)}
+                          disabled={!collaboration.escrowFunded}
                           className={cn(
                             "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all",
-                            deliv.status === 'SUBMITTED' || deliv.status === 'REVISION_REQUESTED' 
-                              ? "bg-amber-50 text-amber-700 border border-amber-100" 
-                              : "bg-blue-600 text-white hover:bg-blue-700"
+                            !collaboration.escrowFunded ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-indigo-600 text-white hover:bg-indigo-700"
                           )}
                         >
-                          {deliv.status === 'SUBMITTED' ? 'Resubmit' : 'Submit Now'}
+                          <Clock size={16} /> Start Task
                         </button>
                       )}
+                      {(deliv.status === 'IN_PROGRESS' || deliv.status === 'REVISION_REQUESTED') && (
+                        <button 
+                          onClick={() => handleOpenSubmitModal(deliv)}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all"
+                        >
+                          Submit Now
+                        </button>
+                      )}
+                      {deliv.status === 'SUBMITTED' && (
+                        <div className="flex items-center gap-2 text-blue-600 font-bold text-sm bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                           <Loader2 size={16} className="animate-spin" />
+                           In Review
+                        </div>
+                      )}
                       {deliv.status === 'APPROVED' && (
-                        <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
+                        <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
                            <CheckCircle size={18} />
                            Completed
                         </div>
                       )}
                     </>
                   )}
-                </div>
               </div>
             </div>
           ))

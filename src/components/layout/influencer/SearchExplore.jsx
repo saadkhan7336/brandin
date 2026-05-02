@@ -125,7 +125,7 @@ const CampaignCard = ({
               </div>
             )}
          </div>
-         <p className="text-[11px] font-medium text-gray-500 mb-2">by {brandName} <VerifiedTick user={campaign.brandUser} roleProfile={campaign.brandProfile} size="xs" /></p>
+         <div className="text-[11px] font-medium text-gray-500 mb-2 flex items-center justify-center gap-1">by {brandName} <VerifiedTick user={campaign.brandUser} roleProfile={campaign.brandProfile} size="xs" /></div>
 
          <div className="mb-3 px-3 w-full">
             <p className="text-[10px] text-gray-500 leading-normal line-clamp-2 overflow-hidden h-[30px]">

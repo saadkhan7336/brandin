@@ -123,8 +123,18 @@ const CollaborationCard = ({ collaboration, userRole }) => {
             )}
 
             <p className="text-xs font-medium text-gray-500">
-              {formatDate(collaboration.startDate)} to {formatDate(collaboration.endDate)} • <span className="text-blue-600 font-bold">${collaboration.agreedBudget?.toLocaleString()}</span>
+              {formatDate(collaboration.startDate)} to {formatDate(collaboration.endDate)}
             </p>
+            <div className="flex items-center gap-3 mt-1">
+               <div className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
+                  <span className="text-[10px] font-black uppercase tracking-widest">Funded:</span>
+                  <span className="text-xs font-black">${collaboration.agreedBudget?.toLocaleString()}</span>
+               </div>
+               <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">
+                  <span className="text-[10px] font-black uppercase tracking-widest">Paid:</span>
+                  <span className="text-xs font-black">${(collaboration.totalPaidAmount || 0).toLocaleString()}</span>
+               </div>
+            </div>
           </div>
         </div>
 

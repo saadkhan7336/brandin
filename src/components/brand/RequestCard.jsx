@@ -16,39 +16,33 @@ import {
 const RequestCard = ({ request, onAccept, onReject, onViewProfile, onResend }) => {
   const navigate = useNavigate();
   const { 
-    influencerDetails, 
-    campaignDetails, 
     status, 
     note, 
     createdAt, 
-    senderDetails, 
-    receiverDetails,
     proposedBudget,
     previouslyRejected,
-    collaborationId 
+    collaborationId,
+    initiatedBy
   } = request;
   
-  // Logic to determine if I am the sender or receiver
-  // In the brand dashboard, usually we check if we are the brand
-  // But more simply: if it's in 'Sent' tab, we are the sender.
-  // The backend 'getRequests' populates 'receiverDetails' if we are the sender.
+  const isInfluencerInitiated = initiatedBy === 'influencer';
   
-  const isSentRequest = request.senderDetails?.role === 'brand'; // Simple heuristic
+  // In the brand dashboard, we are interacting with the influencer.
+  const otherParty = request.influencerUser || {};
+  const roleProfile = request.influencerProfile || {};
   
-  // Influencer details logic
-  const influencer = influencerDetails || {};
-  const otherParty = isSentRequest ? (receiverDetails || {}) : (senderDetails || {});
-  
-  const username = influencer.username || otherParty.fullname || influencer.userData?.fullname || 'Unknown Influencer';
-  const avatar = otherParty.profilePic || influencer.userData?.profilePic || `https://ui-avatars.com/api/?name=${username}&background=random`;
+  const username = otherParty.fullname || 'Unknown User';
+  const avatar = otherParty.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`;
   
   // Campaign details
-  const campaignName = campaignDetails?.name || request.title || 'Unknown Campaign';
+  const campaignName = request.campaignDetails?.name || request.title || 'Collaboration';
   
-  // Platform logic
-  const platform = influencer.platforms?.[0] || {};
-  const platformName = platform.name?.toLowerCase() || 'instagram';
-  const followers = platform.followers ? `${(platform.followers / 1000).toFixed(1)}K` : '0';
+  // Platform logic from roleProfile (populated by aggregation)
+  const platforms = roleProfile.platforms || roleProfile.verifiedPlatforms || [];
+  const platform = (Array.isArray(platforms) && platforms.length > 0) ? platforms[0] : (roleProfile.youtube ? { platform: 'youtube' } : null);
+  const platformName = (platform?.platform || platform?.name || 'instagram').toLowerCase();
+  const followers = roleProfile.platforms?.youtube?.subscribers || roleProfile.followersCount || '0';
+  const displayFollowers = typeof followers === 'number' ? `${(followers / 1000).toFixed(1)}K` : followers;
   
   // Format Date
   const date = new Date(createdAt).toLocaleDateString('en-US', {
@@ -70,7 +64,7 @@ const RequestCard = ({ request, onAccept, onReject, onViewProfile, onResend }) =
   const getStatusBadge = (status) => {
     const base = "px-2 py-0.5 rounded text-[11px] font-bold capitalize";
     switch (status) {
-      case 'pending': return `${base} bg-[#F1F5F9] text-gray-500`;
+      case 'requested': return `${base} bg-[#F1F5F9] text-gray-500`;
       case 'accepted': return `${base} bg-emerald-50 text-green-600`;
       case 'rejected': return `${base} bg-red-50 text-red-600`;
       case 'cancelled': return `${base} bg-gray-50 text-gray-400`;
@@ -96,7 +90,12 @@ const RequestCard = ({ request, onAccept, onReject, onViewProfile, onResend }) =
             <h3 className="text-[17px] font-bold text-[#0F172A] truncate tracking-tight">{username}</h3>
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className={getStatusBadge(status)}>{status}</span>
-              {status === 'pending' && previouslyRejected && (
+              {status === 'requested' && String(request.sender) === String(otherParty._id) && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-tight">
+                  Counter Offer
+                </span>
+              )}
+              {status === 'requested' && previouslyRejected && (
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-500 border border-rose-100 uppercase tracking-tight">
                   Previously Rejected
                 </span>
@@ -121,7 +120,7 @@ const RequestCard = ({ request, onAccept, onReject, onViewProfile, onResend }) =
               <span className="capitalize text-gray-600">{platformName}</span>
             </div>
             <span className="text-gray-300">•</span>
-            <div><span className="text-gray-600">{followers}</span> followers</div>
+            <div><span className="text-gray-600">{displayFollowers}</span> followers</div>
             <span className="text-gray-300">•</span>
             <div><span className="text-gray-600">4.5%</span> engagement</div>
             <span className="text-gray-300">•</span>
@@ -168,7 +167,7 @@ const RequestCard = ({ request, onAccept, onReject, onViewProfile, onResend }) =
               Go to Collaboration
               <ChevronRight className="w-4 h-4" />
             </button>
-          ) : status === 'rejected' && isSentRequest ? (
+          ) : status === 'rejected' && !isInfluencerInitiated ? (
             <button
               onClick={() => onResend && onResend(request)}
               className="px-5 py-2 text-[13px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all border border-blue-100 flex items-center gap-1.5"
@@ -179,15 +178,13 @@ const RequestCard = ({ request, onAccept, onReject, onViewProfile, onResend }) =
           ) : (
             <>
               <button
-                onClick={() => onViewProfile && onViewProfile(influencer?._id || otherParty?._id)}
+                onClick={() => onViewProfile && onViewProfile(request.influencerUser?._id)}
                 className="px-5 py-2 text-[13px] font-bold text-[#334155] bg-white hover:bg-gray-50 rounded-xl transition-all border border-gray-200 shadow-sm"
               >
                 View Profile
               </button>
               
-
-
-              {status === 'pending' && !isSentRequest && (
+              {status === 'requested' && String(request.sender) !== String(request.brand) && (
                 <div className="flex items-center gap-2 ml-1">
                   <button 
                     onClick={() => onAccept(request._id)}

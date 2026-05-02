@@ -57,11 +57,16 @@ const SendCollabModal = ({ targetUser, targetType, onClose, onSuccess, initialCa
     setLoading(true);
     setError(null);
     try {
+      // Get budget from selected campaign
+      const selectedCampaign = campaigns.find(c => c._id === selectedCampaignId);
+      const budget = selectedCampaign?.budget?.min || 0;
+
       await api.post("/collaborations/request", {
         receiverId: targetUser._id,
         campaignId: selectedCampaignId,
         note: note.trim(),
-        deliveryDays: "TBD", // Sending a default to pass validation gracefully
+        proposedBudget: budget,
+        deliveryDays: null, // Will be set during collaboration onboarding
       });
 
       setIsSuccess(true);

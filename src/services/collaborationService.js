@@ -53,6 +53,20 @@ const collaborationService = {
       throw error.response?.data || error.message;
     }
   },
+  
+  /**
+   * Send a counter-offer
+   * @param {string} requestId 
+   * @param {Object} data - { newBudget, note }
+   */
+  counterOffer: async (requestId, data) => {
+    try {
+      const response = await api.post(ENDPOINTS.collaborations.counterOffer(requestId), data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 
   /**
    * Get all collaborations

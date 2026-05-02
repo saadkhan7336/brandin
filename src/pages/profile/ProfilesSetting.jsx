@@ -7,8 +7,9 @@ import {
   ShieldClose, LogOut,
   Plus, Instagram, Twitter, Linkedin, Youtube, Globe, Facebook,
   Shield, ShieldCheck, Zap, Info, ExternalLink,
-  ChevronRight, Loader2, X, Link, File, UploadCloud
+  ChevronRight, Loader2, X, Link, File, UploadCloud, CreditCard
 } from "lucide-react";
+import PaymentSettings from "./PaymentSettings";
 import { updateProfileComplete, updateUserFields } from "../../redux/slices/authSlice";
 import {
   setProfileLoading, setProfileSaving, setProfileError,
@@ -989,6 +990,20 @@ export default function ProfileSettings() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Section: Payments & Payouts */}
+      <div id="payments" className="pt-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+            <CreditCard size={18} />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 tracking-tight">Payments & Financials</h2>
+            <p className="text-sm font-medium text-gray-500">Manage your payment methods and view transaction history.</p>
+          </div>
+        </div>
+        <PaymentSettings user={user} />
       </div>
 
       {/* Section 3: Danger Zone */}

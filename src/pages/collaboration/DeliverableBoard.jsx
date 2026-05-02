@@ -22,7 +22,8 @@ const DeliverableBoard = () => {
     handleOpenSubmitModal, 
     handleOpenModal: handleEdit,
     handleDelete, 
-    handleOnDragEnd: onDragEnd 
+    handleOnDragEnd: onDragEnd,
+    handleStartDeliverable 
   } = useOutletContext();
 
   if (!collaboration) return null;
@@ -119,6 +120,12 @@ const DeliverableBoard = () => {
                             )}>
                               {task.priority || 'MEDIUM'}
                             </span>
+                            {task.paymentStatus === 'paid' && (
+                              <div className="flex items-center gap-1 text-[9px] font-black text-emerald-600 uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                                <CheckCircle size={10} />
+                                Paid
+                              </div>
+                            )}
                             {task.status === 'SUBMITTED' && collaboration.status !== 'completed' && (
                               <div className="flex items-center gap-1.5 text-[9px] font-bold text-blue-500 uppercase tracking-wider animate-pulse">
                                 <AlertCircle size={10} />
@@ -187,7 +194,7 @@ const DeliverableBoard = () => {
                                    onClick={(e) => { e.stopPropagation(); handleReview(task._id, 'APPROVED'); }}
                                    className="flex-1 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 hover:bg-emerald-700"
                                  >
-                                   Approve
+                                   Approve & Pay
                                  </button>
                                  <button 
                                    onClick={(e) => { e.stopPropagation(); handleReview(task._id, 'REVISION_REQUESTED'); }}
@@ -196,13 +203,34 @@ const DeliverableBoard = () => {
                                    Revise
                                  </button>
                                 </div>
-                             ) : userRole === 'influencer' && (task.status === 'PENDING' || task.status === 'IN_PROGRESS' || task.status === 'REVISION_REQUESTED') ? (
-                               <button 
-                                  onClick={(e) => { e.stopPropagation(); handleOpenSubmitModal(task); }}
-                                  className="w-full py-2.5 bg-[#1A1A1A] text-white text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 hover:bg-black"
-                               >
-                                 Submit Now
-                               </button>
+                             ) : userRole === 'influencer' ? (
+                               <>
+                                 {task.status === 'PENDING' && (
+                                   <button 
+                                      onClick={(e) => { e.stopPropagation(); handleStartDeliverable(task._id); }}
+                                      disabled={!collaboration.escrowFunded}
+                                      className={cn(
+                                        "w-full py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2",
+                                        !collaboration.escrowFunded ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-indigo-600 text-white hover:bg-indigo-700"
+                                      )}
+                                   >
+                                     <Calendar size={14} /> Start Task
+                                   </button>
+                                 )}
+                                 {(task.status === 'IN_PROGRESS' || task.status === 'REVISION_REQUESTED') && (
+                                   <button 
+                                      onClick={(e) => { e.stopPropagation(); handleOpenSubmitModal(task); }}
+                                      className="w-full py-2.5 bg-[#1A1A1A] text-white text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 hover:bg-black"
+                                   >
+                                     Submit Now
+                                   </button>
+                                 )}
+                                 {task.status === 'SUBMITTED' && (
+                                    <div className="w-full py-2.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-xl flex items-center justify-center gap-2 border border-blue-100">
+                                       <AlertCircle size={14} /> In Review
+                                    </div>
+                                 )}
+                               </>
                              ) : null}
                           </div>
                         </div>

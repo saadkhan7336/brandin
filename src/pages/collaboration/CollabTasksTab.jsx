@@ -3,19 +3,24 @@ import {
   Plus, 
   X, 
   LayoutGrid,
-  List
+  List,
+  DollarSign
 } from 'lucide-react';
 import { useOutletContext, NavLink, Outlet } from 'react-router-dom';
 import collaborationService from '../../services/collaborationService';
+import paymentService from '../../services/paymentService';
+import { toast } from 'sonner';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import PayoutConfirmationModal from '../../components/collaboration/PayoutConfirmationModal';
 
 const cn = (...inputs) => twMerge(clsx(inputs));
 
 const CollabTasksTab = () => {
-  const { collaboration, userRole, onRefresh } = useOutletContext();
+  const { collaboration, userRole, user, onRefresh } = useOutletContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
   const [selectedDeliverable, setSelectedDeliverable] = useState(null);
   
   const [formData, setFormData] = useState({
@@ -23,7 +28,8 @@ const CollabTasksTab = () => {
     platform: 'instagram',
     description: '',
     dueDate: '',
-    priority: 'MEDIUM'
+    priority: 'MEDIUM',
+    allocatedBudget: 0
   });
 
   const [submissionLink, setSubmissionLink] = useState('');
@@ -36,7 +42,8 @@ const CollabTasksTab = () => {
         platform: deliv.platform,
         description: deliv.description,
         dueDate: deliv.dueDate ? new Date(deliv.dueDate).toISOString().split('T')[0] : '',
-        priority: deliv.priority || 'MEDIUM'
+        priority: deliv.priority || 'MEDIUM',
+        allocatedBudget: deliv.allocatedBudget || 0
       });
     } else {
       setSelectedDeliverable(null);
@@ -45,7 +52,8 @@ const CollabTasksTab = () => {
         platform: 'instagram',
         description: '',
         dueDate: '',
-        priority: 'MEDIUM'
+        priority: 'MEDIUM',
+        allocatedBudget: 0
       });
     }
     setIsModalOpen(true);
@@ -54,6 +62,16 @@ const CollabTasksTab = () => {
   const handleAddOrUpdate = async (e) => {
     e.preventDefault();
     try {
+      // Basic Budget Check
+      const otherTasksBudget = collaboration.deliverables
+        ?.filter(d => d._id !== selectedDeliverable?._id)
+        ?.reduce((sum, d) => sum + (d.allocatedBudget || 0), 0) || 0;
+      
+      if (otherTasksBudget + Number(formData.allocatedBudget) > collaboration.agreedBudget) {
+        toast.error(`Cannot exceed total budget of $${collaboration.agreedBudget}`);
+        return;
+      }
+
       if (selectedDeliverable) {
         await collaborationService.updateDeliverable(collaboration._id, selectedDeliverable._id, formData);
       } else {
@@ -61,8 +79,9 @@ const CollabTasksTab = () => {
       }
       setIsModalOpen(false);
       onRefresh();
+      toast.success("Task saved successfully");
     } catch (err) {
-      alert('Error saving deliverable');
+      toast.error(err.response?.data?.message || 'Error saving deliverable');
     }
   };
 
@@ -85,23 +104,67 @@ const CollabTasksTab = () => {
   const handleSubmitDeliverable = async (e) => {
     e.preventDefault();
     try {
-      await collaborationService.submitDeliverable(collaboration._id, selectedDeliverable._id, {
+      if (!collaboration.escrowFunded) {
+        toast.error("Escrow must be funded before submission");
+        return;
+      }
+      if (!user?.stripeAccountId || !user?.stripeOnboardingComplete) {
+        toast.error("Please connect your Stripe account in the dashboard before submitting tasks");
+        return;
+      }
+      await paymentService.submitDeliverable(selectedDeliverable._id, {
         submissionFiles: [submissionLink]
       });
+      toast.success("Deliverable submitted for review");
       setIsSubmitModalOpen(false);
       onRefresh();
     } catch (err) {
-      alert('Error submitting task');
+      toast.error(err.message || 'Error submitting task');
     }
   };
 
-  const handleReview = async (delivId, status) => {
+  const handleStartDeliverable = async (delivId) => {
     try {
-      await collaborationService.reviewDeliverable(collaboration._id, delivId, { status });
+      if (!collaboration.escrowFunded) {
+        toast.error("Escrow must be funded before starting task");
+        return;
+      }
+      if (!user?.stripeAccountId || !user?.stripeOnboardingComplete) {
+        toast.error("Please connect your Stripe account in the dashboard before starting tasks");
+        return;
+      }
+      await paymentService.startDeliverable(delivId);
+      toast.success("Task started! Good luck.");
       onRefresh();
     } catch (err) {
-      alert('Error updating status');
+      toast.error(err.message || "Failed to start task");
     }
+  };
+
+  const handleReview = async (delivId, status, extraData = {}) => {
+    try {
+      if (status === 'APPROVED' && !isPayoutModalOpen) {
+        const deliv = collaboration.deliverables.find(d => d._id === delivId);
+        setSelectedDeliverable(deliv);
+        setIsPayoutModalOpen(true);
+        return;
+      }
+
+      await collaborationService.reviewDeliverable(collaboration._id, delivId, { 
+        status, 
+        ...extraData 
+      });
+      
+      toast.success(status === 'APPROVED' ? "Deliverable approved and payment released!" : "Status updated");
+      onRefresh();
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Error updating status');
+    }
+  };
+
+  const handleConfirmPayout = async (isFinal) => {
+    await handleReview(selectedDeliverable._id, 'APPROVED', { isFinal });
+    setIsPayoutModalOpen(false);
   };
 
   const handleOnDragEnd = async (result) => {
@@ -183,7 +246,8 @@ const CollabTasksTab = () => {
           handleOpenModal,
           handleDelete,
           handleOpenSubmitModal,
-          handleOnDragEnd
+          handleOnDragEnd,
+          handleStartDeliverable
         }} />
       </div>
 
@@ -246,6 +310,26 @@ const CollabTasksTab = () => {
                       placeholder="Enter detailed requirements..."
                     />
                   </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Allocated Budget ($)</label>
+                    <div className="relative">
+                      <input 
+                        required
+                        type="number" 
+                        min="1"
+                        max={collaboration.agreedBudget}
+                        value={formData.allocatedBudget}
+                        onChange={(e) => setFormData({...formData, allocatedBudget: Number(e.target.value)})}
+                        className="w-full pl-8 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium transition-all text-sm"
+                        placeholder="0"
+                      />
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                    </div>
+                    <p className="text-[10px] font-bold text-gray-400 mt-2 ml-1 uppercase tracking-widest">
+                      Total Campaign Budget: ${collaboration.agreedBudget.toLocaleString()}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-2">
@@ -293,7 +377,17 @@ const CollabTasksTab = () => {
                 </button>
               </form>
            </div>
-        </div>
+         </div>
+      )}
+
+      {isPayoutModalOpen && (
+        <PayoutConfirmationModal 
+          isOpen={isPayoutModalOpen}
+          onClose={() => setIsPayoutModalOpen(false)}
+          onConfirm={handleConfirmPayout}
+          deliverable={selectedDeliverable}
+          remainingBudget={collaboration.agreedBudget - (collaboration.totalPaidAmount || 0)}
+        />
       )}
     </div>
   );

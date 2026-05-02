@@ -20,6 +20,7 @@ import {
 import collaborationService from '../../services/collaborationService';
 import InfluencerRequestCard from '../../components/influencer/InfluencerRequestCard';
 import ApplyCampaignModal from '../../components/layout/influencer/ApplyCampaignModal';
+import CounterOfferModal from '../../components/layout/influencer/CounterOfferModal';
 
 const InfluencerRequests = () => {
   const dispatch = useDispatch();
@@ -31,6 +32,7 @@ const InfluencerRequests = () => {
   const [localSearch, setLocalSearch] = useState(filters.search);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [resendingRequest, setResendingRequest] = useState(null);
+  const [counterOfferRequest, setCounterOfferRequest] = useState(null);
 
   // Sync URL params to Redux filters
   useEffect(() => {
@@ -100,6 +102,20 @@ const InfluencerRequests = () => {
 
   const handleResend = (request) => {
     setResendingRequest(request);
+  };
+
+  const handleCounterOffer = async (data) => {
+    if (!counterOfferRequest) return;
+    try {
+      const response = await collaborationService.counterOffer(counterOfferRequest._id, data);
+      if (response.success) {
+        fetchRequests();
+      }
+    } catch (err) {
+      console.error('Failed to send counter offer:', err);
+    } finally {
+      setCounterOfferRequest(null);
+    }
   };
 
   const mainTabs = [
@@ -259,6 +275,7 @@ const InfluencerRequests = () => {
                   onAccept={() => handleAccept(request._id)}
                   onReject={() => handleReject(request._id)}
                   onResend={() => handleResend(request)}
+                  onCounterOffer={() => setCounterOfferRequest(request)}
                 />
               ))}
             </div>
@@ -318,6 +335,14 @@ const InfluencerRequests = () => {
             setResendingRequest(null);
             fetchRequests(); // Refresh to see the new pending card
           }}
+        />
+      )}
+
+      {counterOfferRequest && (
+        <CounterOfferModal 
+          request={counterOfferRequest}
+          onClose={() => setCounterOfferRequest(null)}
+          onSubmit={handleCounterOffer}
         />
       )}
     </div>

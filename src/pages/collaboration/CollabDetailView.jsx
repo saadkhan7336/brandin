@@ -23,6 +23,9 @@ import { setActiveConversation } from '../../redux/slices/chatSlice';
 import Modal from '../../components/common/Modal';
 import { cn } from '../../utils/helper';
 import { io } from 'socket.io-client';
+import paymentService from '../../services/paymentService';
+import PaymentModal from '../../components/payment/PaymentModal';
+import { toast } from 'sonner';
 
 const ENDPOINT = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
@@ -44,11 +47,11 @@ const CollabDetailView = () => {
   const [resumeReason, setResumeReason] = useState("");
   const [rating, setRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
-
-  // Influencer Review States
   const [isInfluencerReviewOpen, setIsInfluencerReviewOpen] = useState(false);
   const [influencerRating, setInfluencerRating] = useState(5);
   const [influencerComment, setInfluencerComment] = useState("");
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [clientSecret, setClientSecret] = useState("");
 
   const fetchCollaboration = useCallback(async () => {
     try {
@@ -130,7 +133,8 @@ const CollabDetailView = () => {
           setIsCompleteModalOpen(false);
           break;
         case 'CANCEL':
-          res = await collaborationService.requestAction(id, { type: 'CANCEL', reason: cancelReason });
+          res = await collaborationService.requestAction(id, { type: 'CANCEL', reason: cancelReason }); // Direct cancel for brand is also a request for consistency or use updateStatus
+          // Let's use requestAction with approval if influencer, or direct cancel for brand
           if (user.role === 'brand') {
           }
           break;
@@ -153,6 +157,26 @@ const CollabDetailView = () => {
     }
   };
 
+  const handleFundEscrow = async () => {
+    try {
+      setActionLoading(true);
+      const res = await paymentService.fundEscrow(id);
+      setClientSecret(res?.data?.clientSecret || res.clientSecret);
+      setIsPaymentModalOpen(true);
+    } catch (err) {
+      console.error("Failed to initialize escrow funding:", err);
+      toast.error(err.message || "Failed to start payment process");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    setIsPaymentModalOpen(false);
+    toast.success("Escrow funded successfully! The project is now active.");
+    fetchCollaboration();
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -164,7 +188,7 @@ const CollabDetailView = () => {
 
   if (error || !collaboration) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 bg-white">
         <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-4">
           <AlertCircle className="text-red-500 w-8 h-8" />
         </div>
@@ -180,7 +204,7 @@ const CollabDetailView = () => {
     );
   }
 
-  const { campaign, influencer, brand, status, deliverables = [], actionRequest } = collaboration;
+  const { campaign, influencer, brand, status, deliverables = [], actionRequest, agreedBudget } = collaboration;
   const partner = user.role === 'brand' ? influencer : brand;
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(partner?.fullname || 'User')}&background=random&size=150`;
 
@@ -234,15 +258,16 @@ const CollabDetailView = () => {
                <span className={cn(
                  "px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border",
                  status === 'active' || status === 'in_progress' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                 status === 'awaiting_funds' ? "bg-blue-50 text-blue-600 border-blue-100" :
                  status === 'paused' ? "bg-amber-50 text-amber-600 border-amber-100" :
                  status === 'suspended' ? "bg-red-50 text-red-600 border-red-100" :
                  status === 'completed' ? "bg-blue-50 text-blue-600 border-blue-100" :
                  "bg-gray-50 text-gray-600 border-gray-100"
                )}>
-                 {status || 'ONGOING'}
+                 {status?.replace('_', ' ') || 'ONGOING'}
                </span>
                
-               {actionRequest && actionRequest.status === 'PENDING' && (
+               {actionRequest && actionRequest.status === 'PENDING' && status !== 'completed' && (
                  <span className="px-3 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-purple-100 animate-pulse">
                    PENDING {actionRequest.type} REQUEST
                  </span>
@@ -258,8 +283,12 @@ const CollabDetailView = () => {
                 <span className="text-sm font-bold">{new Date(collaboration.startDate).toLocaleDateString()} - {new Date(collaboration.endDate || Date.now()).toLocaleDateString()}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-600">
-                <DollarSign size={16} className="text-emerald-500" />
-                <span className="text-sm font-bold">Project Budget: ${collaboration.agreedBudget?.toLocaleString()}</span>
+                <DollarSign size={16} className="text-blue-500" />
+                <span className="text-sm font-bold">Total Funded: ${collaboration.agreedBudget?.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-600">
+                <CheckCircle2 size={16} className="text-emerald-500" />
+                <span className="text-sm font-bold">Total Paid: ${(collaboration.totalPaidAmount || 0).toLocaleString()}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-600">
                 <TrendingUp size={16} className="text-amber-500" />
@@ -287,6 +316,23 @@ const CollabDetailView = () => {
           </div>
         </div>
       </div>
+
+      {/* Cancellation Reason Banner */}
+      {status === 'cancelled' && (
+        <div className="mb-8 bg-rose-50 border border-rose-100 rounded-3xl p-6 flex items-start gap-5 shadow-sm">
+           <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center shrink-0">
+              <XCircle size={24} className="text-rose-600" />
+           </div>
+           <div>
+              <h2 className="text-lg font-bold text-rose-900">Collaboration Cancelled</h2>
+              <p className="text-rose-700 text-sm font-medium mt-1 leading-relaxed">
+                This project was cancelled by <span className="font-bold">{collaboration.cancelledBy?.fullname || (collaboration.cancelledBy === brand?._id ? 'the Brand' : 'the Influencer')}</span>.
+                <br/>
+                <span className="font-bold">Reason:</span> "{collaboration.cancellationReason || 'No reason provided.'}"
+              </p>
+           </div>
+        </div>
+      )}
 
       {/* Review Summary (Visible after completion) */}
       {status === 'completed' && (
@@ -386,13 +432,79 @@ const CollabDetailView = () => {
         </div>
       )}
 
+      {/* ── ACTION GUIDANCE BANNERS ──────────────────────────────── */}
+      {status === 'awaiting_funds' && user.role === 'brand' && !collaboration.escrowFunded && (
+        <div className="mb-8 bg-blue-600 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 animate-in slide-in-from-top-4 duration-500">
+           <div className="flex items-center gap-5">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shrink-0">
+                 <DollarSign size={28} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold tracking-tight">Escrow Funding Required</h2>
+                <p className="text-blue-100 text-sm font-medium opacity-90 max-w-md">
+                  To activate this collaboration and allow the influencer to start tasks, you must fund the agreed budget of <b>${agreedBudget.toLocaleString()}</b> into escrow.
+                </p>
+              </div>
+           </div>
+           <button 
+             onClick={handleFundEscrow}
+             className="bg-white text-blue-600 px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-blue-50 transition-all shadow-lg active:scale-95 shrink-0"
+           >
+             Fund Escrow Now
+           </button>
+        </div>
+      )}
+
+      {status === 'active' && user.role === 'influencer' && !collaboration.escrowFunded && (
+        <div className="mb-8 bg-amber-500 rounded-3xl p-6 text-white shadow-xl flex items-center gap-5">
+           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+              <AlertCircle size={24} />
+           </div>
+           <div>
+              <h2 className="text-lg font-bold">Waiting for Escrow</h2>
+              <p className="text-amber-50 text-sm font-medium opacity-90">The brand has accepted your request, but tasks cannot be started until the escrow is funded.</p>
+           </div>
+        </div>
+      )}
+
+      {user.role === 'influencer' && (!user.stripeAccountId || !user.stripeOnboardingComplete) && (
+        <div className="mb-8 bg-gradient-to-r from-rose-600 to-red-700 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+           <div className="flex items-center gap-5 relative z-10">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shrink-0">
+                 <AlertCircle size={28} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold tracking-tight">Payment Method Required</h2>
+                <p className="text-rose-100 text-sm font-medium opacity-90 max-w-md">
+                  You haven't set up your payouts yet. <b>You cannot start or submit tasks</b> until your Stripe account is connected.
+                </p>
+              </div>
+           </div>
+           <button 
+             onClick={() => navigate('/influencer/dashboard')}
+             className="bg-white text-rose-600 px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-rose-50 transition-all shadow-lg active:scale-95 shrink-0 relative z-10"
+           >
+             Set Up Payouts
+           </button>
+        </div>
+      )}
+
       {/* Action Bar (Contextual) */}
       <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-8 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
            {/* BRAND ACTIONS */}
            {user.role === 'brand' && status !== 'completed' && status !== 'cancelled' && (
              <>
-               {status === 'active' || status === 'in_progress' ? (
+               {status === 'awaiting_funds' && !collaboration.escrowFunded && (
+                 <button 
+                   disabled={actionLoading}
+                   onClick={handleFundEscrow}
+                   className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 hover:scale-105 transition-all shadow-lg shadow-blue-200"
+                 >
+                   <DollarSign size={14} /> Fund Escrow
+                 </button>
+               )}
+               {(status === 'active' || status === 'in_progress') && (
                  <button 
                    disabled={actionLoading}
                    onClick={() => handleAction('PAUSE')}
@@ -400,7 +512,8 @@ const CollabDetailView = () => {
                  >
                    <Pause size={14} /> Pause
                  </button>
-               ) : (
+               )}
+                {status === "paused" && (
                  <button 
                    disabled={actionLoading}
                    onClick={() => handleAction('RESUME')}
@@ -408,7 +521,7 @@ const CollabDetailView = () => {
                  >
                    <Play size={14} /> Resume
                  </button>
-               )}
+                               )}
                
                {status !== 'suspended' && (
                  <button 
@@ -459,20 +572,20 @@ const CollabDetailView = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          {status !== 'completed' && status !== 'cancelled' && (
+          {status !== 'completed' && status !== 'cancelled' && user.role === 'brand' && (
             <button 
               disabled={actionLoading || (actionRequest?.type === 'CANCEL' && actionRequest.status === 'PENDING')}
               onClick={() => setIsCancelModalOpen(true)}
               className="flex items-center gap-2 px-6 py-2.5 text-red-500 hover:bg-red-50 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
             >
-              <XCircle size={14} /> {user.role === 'brand' ? 'Cancel Project' : 'Request Cancellation'}
+              <XCircle size={14} /> Cancel Project
             </button>
           )}
         </div>
       </div>
 
       {/* Incoming Requests Notification Section */}
-      {actionRequest && actionRequest.status === 'PENDING' && actionRequest.requestedBy !== user._id && (
+      {actionRequest && actionRequest.status === 'PENDING' && actionRequest.requestedBy !== user._id && status !== 'completed' && status !== 'cancelled' && (
         <div className="bg-purple-600 text-white rounded-2xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-purple-200 border-2 border-white/20">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
@@ -540,7 +653,7 @@ const CollabDetailView = () => {
 
       {/* Tab Content */}
       <div className="animate-in fade-in duration-300">
-        <Outlet context={{ collaboration, userRole: user.role, onRefresh: fetchCollaboration }} />
+        <Outlet context={{ collaboration, userRole: user.role, user, onRefresh: fetchCollaboration }} />
       </div>
 
       {/* --- MODALS --- */}
@@ -676,11 +789,11 @@ const CollabDetailView = () => {
         </div>
       </Modal>
 
-      {/* Influencer Review Modal (post-completion, mirrors brand completion modal) */}
+      {/* Influencer Review Modal */}
       <Modal 
         isOpen={isInfluencerReviewOpen} 
         onClose={() => setIsInfluencerReviewOpen(false)} 
-        title="Rate this Brand"
+        title="Leave a Review for Brand"
         maxWidth="max-w-xl"
       >
         <div className="space-y-8">
@@ -696,34 +809,23 @@ const CollabDetailView = () => {
                     size={40} 
                     className={cn(
                       "transition-colors",
-                      star <= influencerRating ? "fill-blue-500 text-blue-500" : "text-gray-200"
+                      star <= influencerRating ? "fill-blue-400 text-blue-400" : "text-gray-200"
                     )} 
                   />
                 </button>
               ))}
             </div>
-            <p className="text-sm font-bold text-gray-500">How was your experience working with {brand?.fullname}?</p>
+            <p className="text-sm font-bold text-gray-500">How was your experience with {brand?.fullname}?</p>
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Your Feedback</label>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Public Feedback</label>
             <textarea 
               value={influencerComment}
               onChange={(e) => setInfluencerComment(e.target.value)}
-              placeholder="Share your experience about the brand's communication, professionalism, and collaboration..."
+              placeholder="Share your feedback about the brand's communication and project..."
               className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none h-32"
             />
-          </div>
-
-          <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-            <div className="flex gap-3">
-              <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                <AlertCircle size={10} className="text-white" />
-              </div>
-              <p className="text-xs font-medium text-blue-700 leading-relaxed">
-                Your review will be visible on the brand's profile and helps other influencers make informed decisions.
-              </p>
-            </div>
           </div>
 
           <button 
@@ -735,6 +837,16 @@ const CollabDetailView = () => {
           </button>
         </div>
       </Modal>
+
+      {isPaymentModalOpen && (
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          clientSecret={clientSecret}
+          onSuccess={handlePaymentSuccess}
+          amount={collaboration?.agreedBudget}
+        />
+      )}
     </div>
   );
 };

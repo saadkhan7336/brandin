@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { X, CheckCircle2, Info, AlertTriangle, CircleDollarSign, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchNotifications, markAsRead, markAllAsRead, deleteActivity } from '../../redux/slices/notificationSlice';
+import { fetchNotifications, markAsRead, markAllAsRead, deleteNotification } from '../../redux/slices/notificationSlice';
 import { formatDistanceToNow } from 'date-fns';
 
 const typeConfig = {
@@ -10,6 +10,9 @@ const typeConfig = {
   info: { icon: Info, bg: 'bg-blue-50', color: 'text-blue-500' },
   warning: { icon: AlertTriangle, bg: 'bg-amber-50', color: 'text-amber-500' },
   payment: { icon: CircleDollarSign, bg: 'bg-green-50', color: 'text-green-500' },
+  payment_success: { icon: CheckCircle2, bg: 'bg-emerald-50', color: 'text-emerald-500' },
+  payout_released: { icon: CircleDollarSign, bg: 'bg-green-50', color: 'text-green-500' },
+  escrow_funded: { icon: Info, bg: 'bg-blue-50', color: 'text-blue-500' },
   application: { icon: Info, bg: 'bg-blue-50', color: 'text-blue-500' },
   collaboration: { icon: CheckCircle2, bg: 'bg-indigo-50', color: 'text-indigo-500' },
   system: { icon: AlertTriangle, bg: 'bg-gray-50', color: 'text-gray-500' },
@@ -51,7 +54,7 @@ export default function NotificationPanel({ isOpen, onClose }) {
 
   const handleDelete = (e, id) => {
     e.stopPropagation();
-    dispatch(deleteActivity(id));
+    dispatch(deleteNotification(id));
   };
 
   const handleViewAll = () => {
@@ -97,7 +100,7 @@ export default function NotificationPanel({ isOpen, onClose }) {
           <div className="py-10 text-center text-gray-500 text-sm">No notifications found</div>
         ) : (
           notifications.map((notif) => {
-            const cfg = typeConfig[notif.category] || typeConfig.info;
+            const cfg = typeConfig[notif.type] || typeConfig[notif.category] || typeConfig.info;
             const Icon = cfg.icon;
             return (
               <div
@@ -112,7 +115,7 @@ export default function NotificationPanel({ isOpen, onClose }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-900">{notif.title}</p>
-                  <p className="text-sm text-gray-500 mt-0.5 leading-snug">{notif.description}</p>
+                  <p className="text-sm text-gray-500 mt-0.5 leading-snug">{notif.message || notif.description}</p>
                   <p className="text-xs text-gray-400 mt-1">
                     {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
                   </p>

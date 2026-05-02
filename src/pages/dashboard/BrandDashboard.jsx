@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { useSocket } from '../../context/SocketContext';
 import {
   Eye, Heart, Users, Share2, 
   Download, Handshake, Send,
@@ -8,9 +9,6 @@ import {
   Calendar
 } from 'lucide-react';
 import api from '../../services/api';
-import { io } from 'socket.io-client';
-
-const ENDPOINT = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 function BrandDashboard() {
   const navigate = useNavigate();
@@ -41,7 +39,8 @@ function BrandDashboard() {
       accepted: 0,
       pending: 0,
       total: 0
-    }
+    },
+    totalSpending: 0
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -62,7 +61,7 @@ function BrandDashboard() {
 
         setAnalytics({
           ...data,
-          totalReach: formatNumber(data.totalReach),
+          totalSpending: data.totalSpending || 0,
           avgEngagementRate: data.avgEngagementRate + "%"
         });
       }
@@ -77,27 +76,27 @@ function BrandDashboard() {
     fetchAnalytics();
   }, []);
 
-  useEffect(() => {
-    const socket = io(ENDPOINT, {
-      withCredentials: true,
-    });
+  const socket = useSocket();
+  const dispatch = useDispatch();
 
-    if (user) {
-      socket.emit('setup', user);
-      
-      socket.on('activity_created', (data) => {
-        // Refresh analytics for any relevant activity
-        if (['collaboration', 'application', 'system'].includes(data.category)) {
-          fetchAnalytics();
-        }
-      });
-    }
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRefresh = (data) => {
+      // Refresh analytics for any relevant activity
+      if (['collaboration', 'application', 'system', 'escrow_funded', 'payout_released'].includes(data.category || data.type)) {
+        fetchAnalytics();
+      }
+    };
+
+    socket.on('activity_created', handleRefresh);
+    socket.on('notification_received', handleRefresh);
 
     return () => {
-      socket.off('activity_created');
-      socket.disconnect();
+      socket.off('activity_created', handleRefresh);
+      socket.off('notification_received', handleRefresh);
     };
-  }, [user]);
+  }, [socket]);
 
   // --- CSV Export Logic ---
   const handleExport = () => {
@@ -185,7 +184,7 @@ function BrandDashboard() {
       {/* Top Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
         {[
-          { label: "Total Reach", value: analytics.totalReach, sub: "+12%", icon: <Eye size={22} />, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Total Spending", value: `$${analytics.totalSpending?.toLocaleString()}`, sub: "All time", icon: <Eye size={22} />, color: "text-blue-600", bg: "bg-blue-50" },
           { label: "Engagement Rate", value: analytics.avgEngagementRate, sub: "+2%", icon: <Heart size={22} />, color: "text-red-600", bg: "bg-red-50" },
           { label: "Active Campaigns", value: analytics.activeCampaigns, sub: "Live", icon: <Users size={22} />, color: "text-emerald-600", bg: "bg-emerald-50" },
           { label: "Collaborations", value: analytics.collaborationCount, sub: "Active", icon: <Handshake size={22} />, color: "text-purple-600", bg: "bg-purple-50" },
@@ -206,30 +205,45 @@ function BrandDashboard() {
 
       {/* Engagement Overview & Top Performers */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Engagement Overview */}
+        {/* Campaign Payments Overview */}
         <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-lg font-bold text-gray-900">Engagement Breakdown</h3>
+            <h3 className="text-lg font-bold text-gray-900">Campaign Payments</h3>
             <TrendingUp size={18} className="text-gray-400" />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
-            {[
-              { label: "Likes", value: analytics.engagementOverview.likes, color: "bg-blue-500", track: "bg-blue-50" },
-              { label: "Comments", value: analytics.engagementOverview.comments, color: "bg-indigo-500", track: "bg-indigo-50" },
-              { label: "Shares", value: analytics.engagementOverview.shares, color: "bg-violet-500", track: "bg-violet-50" },
-              { label: "Impressions", value: analytics.engagementOverview.impressions, color: "bg-emerald-500", track: "bg-emerald-50" }
-            ].map((item, idx) => (
-              <div key={idx} className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{item.label}</p>
-                  <p className="text-lg font-bold text-gray-900">{item.value?.toLocaleString()}</p>
-                </div>
-                <div className={`w-full ${item.track} h-2 rounded-full overflow-hidden`}>
-                  <div className={`${item.color} h-full rounded-full`} style={{ width: '75%' }} />
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8 mb-8">
+            <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
+               <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Funds in Escrow</p>
+               <h4 className="text-2xl font-black text-gray-900">${(analytics.totalSpending * 0.3).toLocaleString()}</h4>
+               <p className="text-[10px] text-gray-500 mt-2 font-medium">Secured for ongoing collaborations</p>
+            </div>
+            <div className="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+               <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Total Released</p>
+               <h4 className="text-2xl font-black text-gray-900">${(analytics.totalSpending * 0.7).toLocaleString()}</h4>
+               <p className="text-[10px] text-gray-500 mt-2 font-medium">Successfully paid to influencers</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+             <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Recent Transactions</h4>
+             {analytics.campaignPerformance?.slice(0, 3).map((item, idx) => (
+               <div key={idx} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-all border-b border-gray-50 last:border-0">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
+                        <Calendar size={18} />
+                     </div>
+                     <div>
+                        <p className="text-sm font-bold text-gray-900">{item.name}</p>
+                        <p className="text-[10px] text-gray-500">Service Payment</p>
+                     </div>
+                  </div>
+                  <div className="text-right">
+                     <p className="text-sm font-black text-gray-900">-${item.budget?.toLocaleString()}</p>
+                     <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-tighter">Completed</p>
+                  </div>
+               </div>
+             ))}
           </div>
         </div>
 
@@ -244,10 +258,10 @@ function BrandDashboard() {
                 className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-xl transition-all cursor-pointer group"
               >
                 <div className="flex items-center gap-3">
-                  <img src={performer.avatar} alt="" className="w-10 h-10 rounded-lg object-cover shadow-sm" />
+                  <img src={performer.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(performer.name)}`} alt="" className="w-10 h-10 rounded-lg object-cover shadow-sm" />
                   <div>
                     <p className="text-sm font-bold text-gray-900">{performer.name}</p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{performer.reach} Reach</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{performer.reach} Earned</p>
                   </div>
                 </div>
                 <div className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">

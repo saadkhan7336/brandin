@@ -118,6 +118,7 @@ export const ENDPOINTS = {
     acceptRequest: (id) => `/collaborations/request/${id}/accept`,
     rejectRequest: (id) => `/collaborations/request/${id}/reject`,
     cancelRequest: (id) => `/collaborations/request/${id}/cancel`,
+    counterOffer: (id) => `/collaborations/request/${id}/counter-offer`,
     getAll: "/collaborations",
     getOne: (id) => `/collaborations/${id}`,
     getLatestWithUser: (otherUserId) => `/collaborations/latest/${otherUserId}`,

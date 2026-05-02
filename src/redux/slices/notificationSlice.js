@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import activityService from '../../services/activityService';
+import notificationService from '../../services/notificationService';
 
 export const fetchNotifications = createAsyncThunk(
   'notifications/fetchAll',
-  async (params, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const response = await activityService.getActivities(params);
-      return response.data; // { activities, total, pages, page }
+      const response = await notificationService.getNotifications();
+      return response.data; // Array of notifications
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
@@ -17,7 +17,7 @@ export const markAsRead = createAsyncThunk(
   'notifications/markRead',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await activityService.markAsRead(id);
+      const response = await notificationService.markAsRead(id);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -29,7 +29,7 @@ export const markAllAsRead = createAsyncThunk(
   'notifications/markAllRead',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await activityService.markAllAsRead();
+      const response = await notificationService.markAllAsRead();
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -37,11 +37,11 @@ export const markAllAsRead = createAsyncThunk(
   }
 );
 
-export const deleteActivity = createAsyncThunk(
+export const deleteNotification = createAsyncThunk(
   'notifications/delete',
   async (id, { rejectWithValue }) => {
     try {
-      await activityService.deleteActivity(id);
+      await notificationService.deleteNotification(id);
       return id;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -53,18 +53,16 @@ const notificationSlice = createSlice({
   name: 'notifications',
   initialState: {
     items: [],
-    total: 0,
     unreadCount: 0,
     loading: false,
-    error: null,
-    pagination: {
-      page: 1,
-      pages: 1,
-    }
+    error: null
   },
   reducers: {
-    setPage: (state, action) => {
-      state.pagination.page = action.payload;
+    addNotification: (state, action) => {
+      state.items.unshift(action.payload);
+      if (!action.payload.isRead) {
+        state.unreadCount += 1;
+      }
     }
   },
   extraReducers: (builder) => {
@@ -74,10 +72,8 @@ const notificationSlice = createSlice({
       })
       .addCase(fetchNotifications.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.activities;
-        state.total = action.payload.total;
-        state.pagination.pages = action.payload.pages;
-        state.unreadCount = action.payload.activities.filter(n => !n.isRead).length; // This is naive, ideally backend returns unreadCount
+        state.items = action.payload;
+        state.unreadCount = action.payload.filter(n => !n.isRead).length;
       })
       .addCase(fetchNotifications.rejected, (state, action) => {
         state.loading = false;
@@ -97,12 +93,12 @@ const notificationSlice = createSlice({
         state.unreadCount = 0;
       })
       // Delete
-      .addCase(deleteActivity.fulfilled, (state, action) => {
+      .addCase(deleteNotification.fulfilled, (state, action) => {
         state.items = state.items.filter(n => n._id !== action.payload);
-        state.total -= 1;
+        state.unreadCount = state.items.filter(n => !n.isRead).length;
       });
   }
 });
 
-export const { setPage } = notificationSlice.actions;
+export const { addNotification } = notificationSlice.actions;
 export default notificationSlice.reducer;

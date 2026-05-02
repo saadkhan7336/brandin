@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
   Star, ChevronRight, AlertCircle,
@@ -8,13 +8,20 @@ import {
 } from 'lucide-react';
 import api from '../../services/api';
 import collaborationService from '../../services/collaborationService';
-import { io } from 'socket.io-client';
+import paymentService from '../../services/paymentService';
+import { useSocket } from '../../context/SocketContext';
+import { toast } from 'sonner';
 import './InfluencerDashboard.css';
 
 const ENDPOINT = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 function InfluencerDashboard() {
   const { user } = useSelector((state) => state.auth);
+  console.log("InfluencerDashboard User State:", {
+    id: user?._id,
+    stripeAccountId: user?.stripeAccountId,
+    stripeOnboardingComplete: user?.stripeOnboardingComplete
+  });
   const navigate = useNavigate();
 
   // Data State
@@ -49,27 +56,27 @@ function InfluencerDashboard() {
     fetchDashboardData(selectedPeriod);
   }, [selectedPeriod]);
 
-  useEffect(() => {
-    const socket = io(ENDPOINT, {
-      withCredentials: true,
-    });
+  const socket = useSocket();
+  const dispatch = useDispatch();
 
-    if (user) {
-      socket.emit('setup', user);
-      
-      socket.on('activity_created', (data) => {
-        // Refresh dashboard for any relevant activity
-        if (['collaboration', 'application', 'system'].includes(data.category)) {
-          fetchDashboardData(selectedPeriod);
-        }
-      });
-    }
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRefresh = (data) => {
+      // Refresh dashboard for any relevant activity
+      if (['collaboration', 'application', 'system', 'escrow_funded', 'payout_released'].includes(data.category || data.type)) {
+        fetchDashboardData(selectedPeriod);
+      }
+    };
+
+    socket.on('activity_created', handleRefresh);
+    socket.on('notification_received', handleRefresh);
 
     return () => {
-      socket.off('activity_created');
-      socket.disconnect();
+      socket.off('activity_created', handleRefresh);
+      socket.off('notification_received', handleRefresh);
     };
-  }, [user, selectedPeriod]);
+  }, [socket, selectedPeriod]);
 
   // ── Accept / Decline handlers ──────────────────────────────
   const handleAccept = async (requestId) => {
@@ -98,6 +105,23 @@ function InfluencerDashboard() {
       console.error('Failed to reject request:', err);
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleOnboardStripe = async () => {
+    try {
+      const res = await paymentService.onboardConnect();
+      // res = ApiResponse: { statusCode, data: { url }, ... } OR direct { url }
+      const url = res?.data?.url || res?.url;
+      if (url) {
+        window.location.href = url;
+      } else {
+        console.error("Onboard response shape:", res);
+        toast.error("Onboarding link not received. Please try again.");
+      }
+    } catch (err) {
+      console.error("Stripe onboard error:", err);
+      toast.error(err?.message || "Failed to start onboarding");
     }
   };
 
@@ -196,18 +220,43 @@ function InfluencerDashboard() {
         </div>
       )}
 
+      {(!user?.stripeAccountId || !user?.stripeOnboardingComplete) && (
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-20 -mt-20 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-5 rounded-full -ml-16 -mb-16 pointer-events-none"></div>
+          
+          <div className="flex items-center gap-5 relative z-10">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shrink-0">
+               <Briefcase size={28} className="text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">Set up your payouts to get paid</h2>
+              <p className="text-blue-100 text-sm font-medium opacity-90 max-w-md">Connect your Stripe account to receive secure escrow payments from brands automatically.</p>
+            </div>
+          </div>
+          
+          <button 
+            onClick={handleOnboardStripe}
+            className="bg-white text-blue-600 px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-blue-50 transition-all shadow-lg active:scale-95 shrink-0 relative z-10"
+          >
+            Connect Stripe
+          </button>
+        </div>
+      )}
+
       {/* ── Top Metric Cards ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between h-40">
            <div className="flex justify-between items-start">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
-                <Star size={20} />
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
+                <Award size={20} />
               </div>
-              {renderGrowthBadge(growth.reach || 0)}
+              {renderGrowthBadge(growth.earnings || 0)}
            </div>
            <div>
-             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Reach</p>
-             <h3 className="text-3xl font-black text-gray-900 tracking-tight">{formatNumber(analytics.totalReach || 0)}</h3>
+             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Earnings</p>
+             <h3 className="text-3xl font-black text-gray-900 tracking-tight">{formatBudget(analytics.totalEarnings || 0)}</h3>
+             <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">All time: {formatBudget(analytics.allTimeEarnings || 0)}</p>
            </div>
         </div>
 
@@ -291,34 +340,48 @@ function InfluencerDashboard() {
         {/* ── LEFT COLUMN (Engagement + Table) ── */}
         <div className="xl:col-span-2 flex flex-col gap-6">
           
-          {/* Engagement Overview */}
+          {/* Payment Overview */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h3 className="text-base font-bold text-gray-900 mb-6">Engagement Overview</h3>
-            <div className="space-y-6">
-              {[
-                { label: 'Likes', value: analytics.engagementOverview?.likes || 0 },
-                { label: 'Comments', value: analytics.engagementOverview?.comments || 0 },
-                { label: 'Shares', value: analytics.engagementOverview?.shares || 0 },
-                { label: 'Impressions', value: analytics.engagementOverview?.impressions || 0 },
-              ].map((stat, i) => {
-                const maxVal = Math.max(
-                  analytics.engagementOverview?.impressions || 100, 
-                  analytics.engagementOverview?.likes || 10,
-                  100
-                );
-                const percentage = (stat.value / maxVal) * 100;
-                return (
-                  <div key={i} className="space-y-2">
-                    <div className="flex justify-between items-center text-xs font-bold text-gray-500">
-                      <span className="flex items-center gap-2"><Star size={12}/>{stat.label}</span>
-                      <span className="text-gray-900">{stat.value.toLocaleString()}</span>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-base font-bold text-gray-900">Payment Overview</h3>
+              <div className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-xs font-bold">
+                 <CheckCircle2 size={14} />
+                 Verified Payouts
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Available for Payout</p>
+                <h4 className="text-2xl font-black text-gray-900">{formatBudget(analytics.availablePayout || 0)}</h4>
+                <p className="text-[10px] text-gray-500 mt-2 font-medium">Ready to be transferred to your bank</p>
+              </div>
+              <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pending Clearance</p>
+                <h4 className="text-2xl font-black text-gray-400">{formatBudget(analytics.pendingClearance || 0)}</h4>
+                <p className="text-[10px] text-gray-500 mt-2 font-medium">Currently in verification/escrow</p>
+              </div>
+            </div>
+
+            <div className="mt-8 space-y-4">
+              <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest">Recent Activity</h4>
+              {dashboardData?.collaborations?.filter(c => c.status === 'completed' || c.status === 'active').slice(0, 3).map((collab, i) => (
+                <div key={i} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center overflow-hidden">
+                      <img src={collab.brand?.profilePic} alt="" className="w-full h-full object-cover" />
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2">
-                      <div className="bg-blue-500 h-2 rounded-full transition-all duration-1000" style={{ width: `${Math.min(percentage, 100)}%` }} />
+                    <div>
+                      <p className="text-xs font-bold text-gray-900">{collab.campaign?.name}</p>
+                      <p className="text-[10px] font-medium text-gray-400">{new Date(collab.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
-                );
-              })}
+                  <div className="text-right">
+                    <p className="text-xs font-black text-emerald-600">+{formatBudget(collab.agreedBudget)}</p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase">{collab.status === 'completed' ? 'Paid' : 'In Escrow'}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -395,7 +458,7 @@ function InfluencerDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-bold text-gray-900 truncate">{brand.name}</h4>
-                    <p className="text-xs font-medium text-gray-500 truncate">{formatBudget(brand.earnings)} earned</p>
+                    <p className="text-xs font-medium text-gray-500 truncate">{formatBudget(brand.totalSpending)} spent</p>
                   </div>
                   <div className="text-xs font-bold bg-gray-50 text-gray-600 px-2.5 py-1 rounded-lg border border-gray-100 shrink-0">
                     {brand.rate}%

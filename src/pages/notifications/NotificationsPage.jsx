@@ -10,9 +10,11 @@ import {
   Handshake,
   MessageSquare,
   Settings,
-  CheckCircle2
+  CheckCircle2,
+  CircleDollarSign,
+  Info
 } from 'lucide-react';
-import { fetchNotifications, markAsRead, markAllAsRead, deleteActivity } from '../../redux/slices/notificationSlice';
+import { fetchNotifications, markAsRead, markAllAsRead, deleteNotification } from '../../redux/slices/notificationSlice';
 import { formatDistanceToNow } from 'date-fns';
 
 const categories = [
@@ -24,8 +26,13 @@ const categories = [
 ];
 
 const typeConfig = {
+  payment_success: { icon: CheckCircle2, bg: 'bg-green-50', color: 'text-green-500', actionLabel: 'View Payment' },
+  payout_released: { icon: CircleDollarSign, bg: 'bg-emerald-50', color: 'text-emerald-500', actionLabel: 'View Earnings' },
+  escrow_funded: { icon: Info, bg: 'bg-blue-50', color: 'text-blue-500', actionLabel: 'View Escrow' },
   application: { icon: Briefcase, bg: 'bg-blue-50', color: 'text-blue-500', actionLabel: 'View Application' },
   collaboration: { icon: Handshake, bg: 'bg-indigo-50', color: 'text-indigo-500', actionLabel: 'View Collaboration' },
+  collaboration_request: { icon: Handshake, bg: 'bg-amber-50', color: 'text-amber-500', actionLabel: 'View Request' },
+  collaboration_accepted: { icon: CheckCircle2, bg: 'bg-green-50', color: 'text-green-500', actionLabel: 'View Collab' },
   message: { icon: MessageSquare, bg: 'bg-purple-50', color: 'text-purple-500', actionLabel: 'View Message' },
   system: { icon: Settings, bg: 'bg-gray-50', color: 'text-gray-500', actionLabel: 'View Details' },
 };
@@ -55,7 +62,7 @@ export default function NotificationsPage() {
   };
 
   const handleDelete = (id) => {
-    dispatch(deleteActivity(id));
+    dispatch(deleteNotification(id));
   };
 
   return (
@@ -149,7 +156,7 @@ export default function NotificationsPage() {
           </div>
         ) : (
           notifications.map((notif) => {
-            const cfg = typeConfig[notif.category] || typeConfig.system;
+            const cfg = typeConfig[notif.type] || typeConfig[notif.category] || typeConfig.system;
             const Icon = cfg.icon;
 
             return (
@@ -168,7 +175,7 @@ export default function NotificationsPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2">
                         <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
-                          {notif.category}
+                          {notif.type || notif.category}
                         </span>
                         {!notif.isRead && (
                           <span className="bg-blue-600 text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">
@@ -185,7 +192,7 @@ export default function NotificationsPage() {
                       {notif.title}
                     </h4>
                     <p className="text-gray-600 text-sm mb-5 leading-relaxed">
-                      {notif.description}
+                      {notif.message || notif.description}
                     </p>
 
                     <div className="flex flex-wrap items-center gap-3">
