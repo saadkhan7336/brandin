@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, Fragment } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -377,14 +377,17 @@ const ChatLayout = () => {
   };
 
   return (
-    <div className="flex bg-white overflow-hidden w-full h-full">
+    <div className="flex bg-white overflow-hidden w-full h-full relative">
       {/* Sidebar - Conversation List */}
-      <div className="w-80 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col">
+      <div className={`
+        ${activeConversation ? 'hidden lg:flex' : 'flex'}
+        w-full lg:w-80 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col z-20
+      `}>
         <div className="p-4 border-b border-gray-100 bg-white">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900 tracking-tight">Messages</h2>
-            <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
-              <MessageCircle className="w-5 h-5" />
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Messages</h2>
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+              <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
           <div className="relative group">
@@ -484,7 +487,10 @@ const ChatLayout = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-white overflow-hidden">
+      <div className={`
+        ${activeConversation ? 'flex' : 'hidden lg:flex'}
+        flex-1 flex flex-col bg-white overflow-hidden z-10
+      `}>
         {activeConversation ? (
           (() => {
              const chatOtherUser = getOtherParticipant(activeConversation.participants);
@@ -495,8 +501,8 @@ const ChatLayout = () => {
              const lastActiveText = chatOtherUserPresence?.lastActive ? `Active ${formatDistanceToNow(new Date(chatOtherUserPresence.lastActive), { addSuffix: true })}` : "Offline";
 
              return (
-          <>
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-md z-10 sticky top-0 transition-all">
+          <Fragment>
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-md z-10 sticky top-0 transition-all">
                {selectMode ? (
                  <div className="flex w-full items-center justify-between animate-in fade-in slide-in-from-top-4">
                     <div className="flex items-center space-x-3">
@@ -521,45 +527,51 @@ const ChatLayout = () => {
                     </div>
                  </div>
                ) : (
-                <>
-                <div className="flex items-center space-x-4">
+                <Fragment>
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <button 
+                    onClick={() => dispatch(setActiveConversation(null))}
+                    className="lg:hidden p-2 -ml-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
                   <div className="relative">
-                    <div className="h-11 w-11 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-800 font-bold overflow-hidden shadow-sm">
+                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-800 font-bold overflow-hidden shadow-sm">
                       {chatOtherUser?.profilePic ? 
                           <img className="h-full w-full object-cover" src={chatOtherUser?.profilePic} alt="" /> 
                           : <span>{chatOtherUser?.fullname?.charAt(0)}</span>}
                     </div>
                     {isOnline && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full ring-2 ring-transparent transition-all"></span>
+                      <span className="absolute -top-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-green-500 border-2 border-white rounded-full ring-2 ring-transparent transition-all"></span>
                     )}
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <h3 className="text-lg font-bold text-gray-900 leading-none">
+                      <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-none">
                         {chatOtherUser?.fullname}
                       </h3>
                       <VerifiedTick user={chatOtherUser} size="xs" />
                     </div>
                     <div className={`flex items-center gap-1.5 ${isTyping ? 'animate-pulse' : ''}`}>
-                       <span className="text-xs font-medium text-gray-400">
+                       <span className="text-[10px] sm:text-xs font-medium text-gray-400">
                           {isTyping ? "Typing..." : (isOnline ? "Online" : lastActiveText)}
                        </span>
                     </div>
                   </div>
                </div>
-               <div className="flex items-center space-x-2">
-                  <button className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
-                     <Phone className="w-5 h-5" />
+               <div className="flex items-center space-x-1 sm:space-x-2">
+                  <button className="p-2 sm:p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
+                     <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
-                  <button className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
-                     <Video className="w-5 h-5" />
+                  <button className="p-2 sm:p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
+                     <Video className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
-                  <div className="w-px h-6 bg-gray-100 mx-2"></div>
-                   <button className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-                     <MoreVertical className="w-5 h-5" />
+                  <div className="w-px h-6 bg-gray-100 mx-1 sm:mx-2 hidden sm:block"></div>
+                   <button className="p-2 sm:p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+                     <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5" />
                    </button>
-                </div>
-                </>
+                 </div>
+                </Fragment>
                )}
             </div>
 
@@ -588,32 +600,32 @@ const ChatLayout = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-6 bg-white border-t border-gray-100">
+            <div className="p-4 sm:p-6 bg-white border-t border-gray-100">
               {(editingMessage || replyingToMessage) && (
-                 <div className="w-full bg-indigo-50/50 border-l-4 border-indigo-500 px-4 py-3 mb-4 rounded-xl flex items-start justify-between">
+                 <div className="w-full bg-indigo-50/50 border-l-4 border-indigo-500 px-4 py-2 sm:py-3 mb-3 sm:mb-4 rounded-xl flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest block mb-1">
+                      <span className="text-[10px] sm:text-xs font-bold text-indigo-600 uppercase tracking-widest block mb-0.5 sm:mb-1">
                         {editingMessage ? 'Editing Message' : `Replying to ${replyingToMessage.sender?.fullname || 'User'}`}
                       </span>
-                      <p className="text-sm text-gray-600 truncate italic">
+                      <p className="text-xs sm:text-sm text-gray-600 truncate italic">
                         {editingMessage?.text || replyingToMessage?.text || "Shared Attachment"}
                       </p>
                     </div>
-                    <button type="button" onClick={cancelContext} className="p-1.5 hover:bg-indigo-100 rounded-lg text-indigo-500 transition-colors">
-                       <X className="w-4 h-4" />
+                    <button type="button" onClick={cancelContext} className="p-1 sm:p-1.5 hover:bg-indigo-100 rounded-lg text-indigo-500 transition-colors">
+                       <X className="w-3 h-3 sm:w-4 sm:h-4" />
                     </button>
                  </div>
               )}
               
-              <form onSubmit={handleSendMessage} className="flex items-end gap-3">
-                <div className="flex gap-1">
+              <form onSubmit={handleSendMessage} className="flex items-end gap-2 sm:gap-3">
+                <div className="flex gap-0.5 sm:gap-1">
                   <input type="file" ref={allFileInputRef} onChange={handleGenericFileUpload} className="hidden" />
                   <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,video/*" />
                   
                   <button 
                     type="button" 
                     onClick={() => allFileInputRef.current?.click()}
-                    className="p-3 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-2xl transition-all"
+                    className="p-2 sm:p-3 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl sm:rounded-2xl transition-all"
                     title="Attach File"
                   >
                     <Paperclip className="w-5 h-5" />
@@ -622,19 +634,19 @@ const ChatLayout = () => {
                     type="button" 
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="p-3 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-2xl transition-all"
+                    className="p-2 sm:p-3 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl sm:rounded-2xl transition-all hidden sm:block"
                     title="Attach Media"
                   >
                     <ImageIcon className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="flex-1 relative bg-gray-50 rounded-2xl border border-transparent focus-within:border-indigo-100 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-50 transition-all">
-                  <div className="flex items-center pr-2">
+                <div className="flex-1 relative bg-gray-50 rounded-xl sm:rounded-2xl border border-transparent focus-within:border-indigo-100 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-50 transition-all">
+                  <div className="flex items-center pr-1 sm:pr-2">
                     <button
                       type="button"
                       onClick={() => setShowEmojiPicker((prev) => !prev)}
-                      className="p-3 text-gray-400 hover:text-indigo-500 transition-colors"
+                      className="p-2 sm:p-3 text-gray-400 hover:text-indigo-500 transition-colors hidden sm:block"
                     >
                       <Smile className="w-5 h-5" />
                     </button>
@@ -658,8 +670,8 @@ const ChatLayout = () => {
                           handleSendMessage();
                         }
                       }}
-                      placeholder={`Message ${chatOtherUser?.fullname?.split(' ')[0]}...`}
-                      className="w-full bg-transparent py-3.5 px-1 focus:outline-none text-sm resize-none"
+                      placeholder={`Message...`}
+                      className="w-full bg-transparent py-3 sm:py-3.5 px-3 sm:px-1 focus:outline-none text-sm resize-none"
                     />
                   </div>
                   {showEmojiPicker && (
@@ -691,22 +703,22 @@ const ChatLayout = () => {
                 <button
                   type="submit"
                   disabled={!newMessage.trim()}
-                  className="bg-indigo-600 text-white rounded-2xl p-4 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="bg-indigo-600 text-white rounded-xl sm:rounded-2xl p-3 sm:p-4 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   <Send className="w-5 h-5" />
                 </button>
               </form>
             </div>
-          </>
+          </Fragment>
           );
         })()
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center bg-[#FAFBFF]">
-            <div className="w-24 h-24 bg-white rounded-3xl shadow-xl shadow-indigo-100 flex items-center justify-center mb-6">
-              <MessageCircle className="w-10 h-10 text-indigo-500" />
+          <div className="flex-1 flex flex-col items-center justify-center bg-[#FAFBFF] p-6 text-center">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-3xl shadow-xl shadow-indigo-100 flex items-center justify-center mb-6">
+              <MessageCircle className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-500" />
             </div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">Your Inbox</h2>
-            <p className="text-sm text-gray-400 max-w-xs text-center">Select a conversation from the left to start messaging your partners.</p>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">Your Inbox</h2>
+            <p className="text-xs sm:text-sm text-gray-400 max-w-xs leading-relaxed">Select a conversation from the left to start messaging your partners.</p>
           </div>
         )}
       </div>

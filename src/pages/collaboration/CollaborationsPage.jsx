@@ -138,7 +138,7 @@ const CollaborationsPage = () => {
       </div>
 
       {/* Tabs Section */}
-      <div className="flex items-center gap-1 mb-10 bg-gray-50/50 p-1 rounded-2xl w-fit border border-gray-100">
+      <div className="flex items-center gap-1 mb-10 bg-gray-50/50 p-1 rounded-2xl w-full sm:w-fit border border-gray-100 overflow-x-auto no-scrollbar">
         {tabs.map((tab) => (
           <NavLink
             key={tab.id}

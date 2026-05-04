@@ -107,7 +107,7 @@ export default function DashboardLayout() {
         />
 
         {/* Main content — dynamic pages via <Outlet> */}
-        <main className={`flex-1 min-w-0 overflow-y-auto ${location.pathname === '/messages' ? 'p-0' : 'p-5 sm:p-6 lg:p-8'}`}>
+        <main className={`flex-1 min-w-0 overflow-y-auto w-full ${location.pathname === '/messages' ? 'p-0' : 'p-4 sm:p-6 lg:p-8'}`}>
           {/* Social Verification Banner */}
           <VerificationBanner 
             user={user} 

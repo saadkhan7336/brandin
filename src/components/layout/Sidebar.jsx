@@ -179,10 +179,10 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout, isCollaps
     <>
       <aside
         className={`
-          fixed lg:static inset-y-0 left-0 z-30 bg-white border-r border-gray-200
+          fixed lg:static left-0 z-30 bg-white border-r border-gray-200
           flex flex-col transition-all duration-300 ease-in-out
-          lg:translate-x-0 top-[80px] lg:top-0 h-[calc(100vh-80px)] lg:h-screen
-          ${isCollapsed ? "w-20" : "w-72"}
+          lg:translate-x-0 top-[80px] lg:top-0 h-[calc(100vh-80px)] lg:h-full
+          ${isCollapsed ? "w-20" : "w-64 xl:w-72"}
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >

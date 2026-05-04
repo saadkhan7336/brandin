@@ -51,7 +51,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) => {
             </div>
             
             {/* Body */}
-            <div className="p-6">
+            <div className="p-6 max-h-[calc(90vh-64px)] overflow-y-auto">
               {children}
             </div>
           </motion.div>

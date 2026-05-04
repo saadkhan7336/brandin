@@ -322,53 +322,41 @@ const CollabDetailView = () => {
               {campaign?.name || collaboration.title || 'Untitled Project'}
             </h1>
             
-            <div className="flex flex-wrap gap-6 mt-6">
-              <div className="flex items-center gap-3 text-gray-600">
-                <Calendar size={16} className="text-gray-400" />
-                <span className="text-sm font-bold">{new Date(collaboration.startDate).toLocaleDateString()} - {new Date(collaboration.endDate || Date.now()).toLocaleDateString()}</span>
-                {status === 'active' && (
-                  <span className={cn(
-                    "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest",
-                    daysLeft < 0 ? "bg-red-50 text-red-600 border border-red-100" :
-                    daysLeft <= 3 ? "bg-amber-50 text-amber-600 border border-amber-100 animate-pulse" :
-                    "bg-blue-50 text-blue-600 border border-blue-100"
-                  )}>
-                    {daysLeft < 0 ? 'Past Deadline' : `${daysLeft} Days Left`}
-                  </span>
-                )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+              <div className="flex items-center gap-3 text-gray-600 bg-gray-50/50 p-3 rounded-2xl">
+                <Calendar size={16} className="text-gray-400 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Timeline</p>
+                  <p className="text-xs font-bold truncate">{new Date(collaboration.startDate).toLocaleDateString()} - {new Date(collaboration.endDate || Date.now()).toLocaleDateString()}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-gray-600 bg-gray-50/30 p-2 rounded-2xl pr-4">
-                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500 shadow-sm border border-blue-100/50">
+
+              <div className="flex items-center gap-3 text-gray-600 bg-gray-50/50 p-3 rounded-2xl">
+                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500 shadow-sm border border-blue-100/50 shrink-0">
                   <DollarSign size={20} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
-                    Amount Funded in Platform
-                  </p>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Funded</p>
                   <p className="text-base font-black text-gray-900">${collaboration.escrowFunded ? collaboration.agreedBudget?.toLocaleString() : '0'}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 text-gray-600 bg-gray-50/30 p-2 rounded-2xl pr-4">
-                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 shadow-sm border border-emerald-100/50">
+              <div className="flex items-center gap-3 text-gray-600 bg-gray-50/50 p-3 rounded-2xl">
+                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 shadow-sm border border-emerald-100/50 shrink-0">
                   <CheckCircle2 size={20} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
-                    {isInfluencer ? 'Payment Received' : 'Total Paid'}
-                  </p>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Paid</p>
                   <p className="text-base font-black text-gray-900">${(collaboration.totalPaidAmount || 0).toLocaleString()}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 text-gray-600 bg-gray-50/30 p-2 rounded-2xl pr-4">
-                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500 shadow-sm border border-amber-100/50">
+              <div className="flex items-center gap-3 text-gray-600 bg-gray-50/50 p-3 rounded-2xl">
+                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500 shadow-sm border border-amber-100/50 shrink-0">
                   <Clock size={20} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
-                    {isInfluencer ? 'Unreleased Balance' : 'To Be Released'}
-                  </p>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Balance</p>
                   <p className="text-base font-black text-gray-900">${((collaboration.agreedBudget || 0) - (collaboration.totalPaidAmount || 0)).toLocaleString()}</p>
                 </div>
               </div>
@@ -647,7 +635,7 @@ const CollabDetailView = () => {
 
       {/* Incoming Requests Notification Section */}
       {actionRequest && actionRequest.status === 'PENDING' && actionRequest.requestedBy !== user._id && status !== 'completed' && status !== 'cancelled' && (
-        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl p-3 px-5 mb-8 flex items-center justify-between gap-4 shadow-lg shadow-indigo-500/10 border border-white/10 animate-in slide-in-from-top-4 duration-500">
+        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl p-4 sm:p-3 px-5 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg shadow-indigo-500/10 border border-white/10 animate-in slide-in-from-top-4 duration-500">
           <div className="flex items-center gap-4 flex-1">
             <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
               <AlertCircle size={16} />

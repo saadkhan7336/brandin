@@ -156,9 +156,9 @@ function BrandDashboard() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-8 border-b border-gray-100 pb-8">
         <div>
-          <p className="text-blue-600 font-bold text-xs uppercase tracking-wider mb-1">Welcome back, {user?.name || 'Partner'}!</p>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Dashboard Analytics</h1>
-          <p className="text-gray-500 font-medium text-sm mt-1">Monitor your campaign performance and platform growth.</p>
+          <p className="text-blue-600 font-bold text-[10px] sm:text-xs uppercase tracking-wider mb-1">Welcome back, {user?.name || 'Partner'}!</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Dashboard Analytics</h1>
+          <p className="text-gray-500 font-medium text-xs sm:text-sm mt-1">Monitor your campaign performance and platform growth.</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -182,7 +182,7 @@ function BrandDashboard() {
       </div>
 
       {/* Top Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-5">
         {[
           { label: "Total Spending", value: `$${analytics.totalSpending?.toLocaleString()}`, sub: "All time", icon: <Eye size={22} />, color: "text-blue-600", bg: "bg-blue-50" },
           { label: "Engagement Rate", value: analytics.avgEngagementRate, sub: "+2%", icon: <Heart size={22} />, color: "text-red-600", bg: "bg-red-50" },
@@ -289,31 +289,31 @@ function BrandDashboard() {
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase tracking-wider">
               <tr>
-                <th className="px-8 py-4">Campaign</th>
-                <th className="px-6 py-4">Reach</th>
-                <th className="px-6 py-4">Engagement</th>
-                <th className="px-6 py-4">ROI</th>
-                <th className="px-6 py-4">Budget</th>
-                <th className="px-8 py-4 text-right">Action</th>
+                <th className="px-4 sm:px-8 py-4">Campaign</th>
+                <th className="px-3 sm:px-6 py-4">Reach</th>
+                <th className="px-3 sm:px-6 py-4">Engagement</th>
+                <th className="px-3 sm:px-6 py-4">ROI</th>
+                <th className="px-3 sm:px-6 py-4">Budget</th>
+                <th className="px-4 sm:px-8 py-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {analytics.campaignPerformance.map((campaign, idx) => (
                 <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-8 py-5">
-                    <p className="font-bold text-gray-900 text-sm">{campaign.name}</p>
+                  <td className="px-4 sm:px-8 py-5">
+                    <p className="font-bold text-gray-900 text-sm truncate max-w-[120px] sm:max-w-none">{campaign.name}</p>
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Active</p>
                   </td>
-                  <td className="px-6 py-5 text-sm font-bold text-gray-600">{campaign.reach?.toLocaleString()}</td>
-                  <td className="px-6 py-5">
+                  <td className="px-3 sm:px-6 py-5 text-sm font-bold text-gray-600">{campaign.reach?.toLocaleString()}</td>
+                  <td className="px-3 sm:px-6 py-5">
                     <span className="bg-gray-100 px-2 py-0.5 rounded-lg text-[10px] font-bold text-gray-600">{campaign.engagement}%</span>
                   </td>
-                  <td className="px-6 py-5 text-sm font-bold text-emerald-600">{campaign.roi}%</td>
-                  <td className="px-6 py-5 text-sm font-bold text-gray-600">${campaign.budget?.toLocaleString()}</td>
-                  <td className="px-8 py-5 text-right">
+                  <td className="px-3 sm:px-6 py-5 text-sm font-bold text-emerald-600">{campaign.roi}%</td>
+                  <td className="px-3 sm:px-6 py-5 text-sm font-bold text-gray-600">${campaign.budget?.toLocaleString()}</td>
+                  <td className="px-4 sm:px-8 py-5 text-right">
                     <button 
                       onClick={() => navigate(`/brand/campaigns`)}
-                      className="text-[10px] font-bold text-gray-900 border border-gray-200 rounded-lg px-4 py-1.5 hover:bg-gray-50 transition-all"
+                      className="text-[10px] font-bold text-gray-900 border border-gray-200 rounded-lg px-3 sm:px-4 py-1.5 hover:bg-gray-50 transition-all"
                     >
                       View Logic
                     </button>
