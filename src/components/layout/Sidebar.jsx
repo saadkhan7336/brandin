@@ -98,12 +98,14 @@
 
 // src/components/layout/Sidebar.jsx
 import React from "react";
-import { NavLink } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { NavLink, useLocation } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import {
   LayoutDashboard, Search, FileText, Settings, User,
-  LogOut, Target, Handshake, Building2, AlertCircle, MessageCircle
+  LogOut, Target, Handshake, Building2, AlertCircle, MessageCircle, CreditCard
 } from "lucide-react";
+import { clearPendingRequestCount, clearActiveCollabCount } from "../../redux/slices/collaborationSlice";
+import { markMessagesAsRead } from "../../redux/slices/chatSlice";
 
 const brandNavItems = [
   { icon: LayoutDashboard, label: "Dashboard",   path: "/brand/dashboard" },
@@ -112,6 +114,7 @@ const brandNavItems = [
   { icon: Handshake,       label: "Collaborations",     path: "/brand/collaborations" },
   { icon: Target,          label: "Campaigns",          path: "/brand/campaigns" },
   { icon: MessageCircle,   label: "Messages",           path: "/messages" },
+  { icon: CreditCard,      label: "Payments",           path: "/brand/payments" },
   { icon: User,            label: "My Profile",         path: "/brand/profile" },
 ];
 
@@ -121,6 +124,7 @@ const influencerNavItems = [
   { icon: FileText,        label: "Collaboration Requests", path: "/influencer/requests" },
   { icon: Handshake,       label: "Collaborations",         path: "/influencer/collaborations" },
   { icon: MessageCircle,   label: "Messages",               path: "/messages" },
+  { icon: CreditCard,      label: "Payments",               path: "/influencer/payments" },
   { icon: User,            label: "My Profile",             path: "/influencer/profile" },
 ];
 
@@ -131,9 +135,13 @@ const adminNavItems = [
 ];
 
 export default function Sidebar({ userRole, isOpen, onClose, onLogout, isCollapsed }) {
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { completion } = useSelector((state) => state.profile);
   const { conversations } = useSelector((state) => state.chat || { conversations: [] });
+  const { pendingRequestCount, activeCollabCount } = useSelector(
+    (state) => state.collaboration
+  );
 
   const unreadMessageCount = conversations.reduce((count, conv) => {
     if (conv.lastMessage && !conv.lastMessage.isRead) {
@@ -144,6 +152,19 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout, isCollaps
     }
     return count;
   }, 0);
+
+  const location = useLocation();
+
+  React.useEffect(() => {
+    if (location.pathname.includes("/requests")) {
+      dispatch(clearPendingRequestCount());
+    }
+    if (location.pathname.includes("/collaborations")) {
+      dispatch(clearActiveCollabCount());
+    }
+    // Note: Messages are cleared in ChatLayout when a specific conversation is opened,
+    // but we can also clear the global "new message" indicator if needed.
+  }, [location.pathname, dispatch]);
 
   const navItems =
     userRole === "brand"      ? brandNavItems :
@@ -197,11 +218,25 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout, isCollaps
                 {/* Unread message badge */}
                 {item.label === "Messages" && unreadMessageCount > 0 && (
                   <span className={`
-                    ${isCollapsed ? 'absolute top-1 right-1' : 'ml-2'}
-                    min-w-[20px] h-[20px] bg-indigo-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1
-                  `}>
-                    {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
-                  </span>
+                    absolute ${isCollapsed ? 'top-1 right-1' : 'right-3 top-1/2 -translate-y-1/2'}
+                    w-2 h-2 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.6)]
+                  `} />
+                )}
+
+                {/* Pending Requests dot */}
+                {(item.label === "My Requests" || item.label === "Collaboration Requests") && pendingRequestCount > 0 && (
+                  <span className={`
+                    absolute ${isCollapsed ? 'top-1 right-1' : 'right-3 top-1/2 -translate-y-1/2'}
+                    w-2 h-2 bg-orange-500 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.6)]
+                  `} />
+                )}
+
+                {/* Active Collaborations dot */}
+                {item.label === "Collaborations" && activeCollabCount > 0 && (
+                  <span className={`
+                    absolute ${isCollapsed ? 'top-1 right-1' : 'right-3 top-1/2 -translate-y-1/2'}
+                    w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)]
+                  `} />
                 )}
               </NavLink>
             );

@@ -59,9 +59,12 @@ const CollaborationCard = ({ collaboration, userRole }) => {
   // Next Up Task Logic - Find first task not yet started (exclude IN_PROGRESS, APPROVED, DELIVERED, SUBMITTED)
   const nextTask = deliverables?.find(d => !['APPROVED', 'DELIVERED', 'IN_PROGRESS', 'SUBMITTED', 'REVISION_REQUESTED'].includes(d.status));
   
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, isFunded) => {
     const s = status?.toLowerCase();
-    if (s === 'active' || s === 'ongoing') return 'bg-blue-50 text-blue-600 border-blue-100';
+    if (s === 'active' || s === 'ongoing' || (s === 'awaiting_funds' && isFunded)) return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+    if (s === 'awaiting_funds') return 'bg-blue-50 text-blue-600 border-blue-100';
+    if (s === 'paused') return 'bg-amber-50 text-amber-600 border-amber-100';
+    if (s === 'suspended') return 'bg-red-50 text-red-600 border-red-100';
     if (s === 'completed') return 'bg-gray-100 text-gray-600 border-gray-200';
     return 'bg-amber-50 text-amber-600 border-amber-100';
   };
@@ -100,9 +103,11 @@ const CollaborationCard = ({ collaboration, userRole }) => {
               </h3>
               <span className={cn(
                 "px-2.5 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider border",
-                getStatusBadge(collaboration.status)
+                getStatusBadge(collaboration.status, collaboration.escrowFunded)
               )}>
-                {collaboration.status || 'ONGOING'}
+                {(collaboration.status === 'awaiting_funds' && collaboration.escrowFunded) 
+                  ? 'ACTIVE' 
+                  : (collaboration.status?.replace(/_/g, ' ') || 'ONGOING')}
               </span>
             </div>
             
@@ -128,7 +133,7 @@ const CollaborationCard = ({ collaboration, userRole }) => {
             <div className="flex items-center gap-3 mt-1">
                <div className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
                   <span className="text-[10px] font-black uppercase tracking-widest">Funded:</span>
-                  <span className="text-xs font-black">${collaboration.agreedBudget?.toLocaleString()}</span>
+                  <span className="text-xs font-black">${collaboration.escrowFunded ? (collaboration.agreedBudget || 0).toLocaleString() : '0'}</span>
                </div>
                <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">
                   <span className="text-[10px] font-black uppercase tracking-widest">Paid:</span>
@@ -258,6 +263,11 @@ const CollaborationCard = ({ collaboration, userRole }) => {
                <span className="font-sans font-bold border border-emerald-500 text-emerald-500 w-3.5 h-3.5 rounded flex items-center justify-center text-[8px]">$</span>
                Payment Paid
              </div>
+           ) : collaboration.escrowFunded ? (
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-500">
+              <span className="font-sans font-bold border border-emerald-500 text-emerald-500 w-3.5 h-3.5 rounded flex items-center justify-center text-[8px]">$</span>
+              Escrow Funded
+            </div>
            ) : (
              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-500">
                <span className="font-sans font-bold border border-amber-500 text-amber-500 w-3.5 h-3.5 rounded flex items-center justify-center text-[8px]">$</span>

@@ -166,6 +166,7 @@ import DeliverableBoard from "../pages/collaboration/DeliverableBoard";
 
 // Profile settings (shared page, role-aware)
 import ProfileSettings from "../pages/profile/ProfilesSetting";
+import PaymentsDashboard from "../pages/payments/PaymentsDashboard";
 
 // Messages
 import MessagesPage from "../pages/MessagesPage";
@@ -248,6 +249,7 @@ export default function AppRoutes() {
             {/* Always accessible for brands */}
             <Route path="/brand/profile" element={<MyProfileView />} />
             <Route path="/brand/settings" element={<ProfileSettings />} />
+            <Route path="/brand/payments" element={<PaymentsDashboard />} />
           </Route>
         </Route>
 
@@ -283,6 +285,7 @@ export default function AppRoutes() {
             {/* Always accessible for influencers */}
             <Route path="/influencer/profile" element={<MyProfileViewInfluencer />} />
             <Route path="/influencer/settings" element={<ProfileSettings />} />
+            <Route path="/influencer/payments" element={<PaymentsDashboard />} />
           </Route>
         </Route>
 

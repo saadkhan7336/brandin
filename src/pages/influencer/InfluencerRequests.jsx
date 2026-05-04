@@ -15,7 +15,8 @@ import {
   setError, 
   setRequests, 
   setFilters, 
-  updateRequestInState
+  updateRequestInState,
+  fetchSidebarCounts
 } from '../../redux/slices/collaborationSlice';
 import collaborationService from '../../services/collaborationService';
 import InfluencerRequestCard from '../../components/influencer/InfluencerRequestCard';
@@ -83,6 +84,7 @@ const InfluencerRequests = () => {
       const response = await collaborationService.acceptRequest(id);
       if (response.success) {
         dispatch(updateRequestInState({ _id: id, status: 'accepted' }));
+        dispatch(fetchSidebarCounts());
       }
     } catch (err) {
       console.error('Failed to accept request:', err);
@@ -94,6 +96,7 @@ const InfluencerRequests = () => {
       const response = await collaborationService.rejectRequest(id);
       if (response.success) {
         dispatch(updateRequestInState({ _id: id, status: 'rejected' }));
+        dispatch(fetchSidebarCounts());
       }
     } catch (err) {
       console.error('Failed to reject request:', err);

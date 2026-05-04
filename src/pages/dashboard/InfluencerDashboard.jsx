@@ -304,7 +304,7 @@ function InfluencerDashboard() {
       </div>
 
       {/* ── Performance Overview ──────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="bg-[#f8fafc] border border-gray-100 rounded-2xl p-6 flex items-center justify-between shadow-sm">
           <div>
             <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Average Rating</div>
@@ -320,15 +320,6 @@ function InfluencerDashboard() {
             <div className="text-2xl font-black text-yellow-600 flex items-center gap-2">
               <CheckCircle2 size={24} />
               {performance.completionRate || '0%'}
-            </div>
-          </div>
-        </div>
-        <div className="bg-[#fff1f2] border border-rose-100 rounded-2xl p-6 flex items-center justify-between shadow-sm">
-          <div>
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Avg. Response Time</div>
-            <div className="text-2xl font-black text-rose-600 flex items-center gap-2">
-              <Clock size={24} />
-              {performance.averageResponseTime || 'N/A'}
             </div>
           </div>
         </div>
@@ -365,79 +356,28 @@ function InfluencerDashboard() {
 
             <div className="mt-8 space-y-4">
               <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest">Recent Activity</h4>
-              {dashboardData?.collaborations?.filter(c => c.status === 'completed' || c.status === 'active').slice(0, 3).map((collab, i) => (
+              {analytics.recentTransactions?.length > 0 ? analytics.recentTransactions.map((transaction, i) => (
                 <div key={i} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-all">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center overflow-hidden">
-                      <img src={collab.brand?.profilePic} alt="" className="w-full h-full object-cover" />
+                      <img src={transaction.brandPic || `https://ui-avatars.com/api/?name=Brand`} alt="" className="w-full h-full object-cover" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-gray-900">{collab.campaign?.name}</p>
-                      <p className="text-[10px] font-medium text-gray-400">{new Date(collab.createdAt).toLocaleDateString()}</p>
+                      <p className="text-xs font-bold text-gray-900">{transaction.campaignName}</p>
+                      <p className="text-[10px] font-medium text-gray-400">{new Date(transaction.date).toLocaleDateString()}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-black text-emerald-600">+{formatBudget(collab.agreedBudget)}</p>
-                    <p className="text-[9px] font-bold text-gray-400 uppercase">{collab.status === 'completed' ? 'Paid' : 'In Escrow'}</p>
+                    <p className="text-xs font-black text-emerald-600">+{formatBudget(transaction.amount)}</p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase">{transaction.status}</p>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <p className="text-xs text-gray-500">No recent transactions.</p>
+              )}
             </div>
           </div>
 
-          {/* Collaboration Performance Table */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-1">
-            <div className="p-6 border-b border-gray-50 flex justify-between items-center">
-              <h3 className="text-base font-bold text-gray-900">Collaboration Performance</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50/50">
-                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Brand</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Reach</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Engagement</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Earnings</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Deliverables</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {analytics.collaborationPerformance?.length > 0 ? analytics.collaborationPerformance.map((collab, i) => (
-                    <tr key={i} className="hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => navigate(`/influencer/collaboration/${collab.id}`)}>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-bold text-gray-900">{collab.brand}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-medium text-gray-600">{formatNumber(collab.reach)}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-xs font-bold bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md">{collab.engagement}%</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-bold text-emerald-600">{formatBudget(collab.earnings)}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-medium text-gray-600">{collab.deliverablesCount} posts</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); navigate(`/influencer/collaboration/${collab.id}`); }} 
-                          className="text-xs font-bold flex flex-row items-center justify-center text-gray-700 border border-gray-200 bg-white px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-all shadow-sm"
-                        >
-                          View Details
-                        </button>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan="6" className="px-6 py-12 text-center text-sm font-medium text-gray-400 italic">No collaboration records found</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
 
         </div>
 

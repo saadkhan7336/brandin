@@ -113,7 +113,7 @@ const CampaignCard = ({ campaign, onEdit, onDelete, onReactivate }) => {
           )}
         </div>
 
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className={`flex-1 grid grid-cols-1 md:grid-cols-4 gap-6 ${campaign.ongoingCollaborationId ? 'md:pr-48' : 'md:pr-10'}`}>
           <div className="md:col-span-1 flex flex-col items-start">
             <h3 className="text-lg font-bold text-blue-600 uppercase tracking-tight mb-1">
               {campaign.name || 'Untitled Campaign'}

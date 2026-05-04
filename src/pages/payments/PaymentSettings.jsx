@@ -338,7 +338,7 @@ const PaymentSettings = ({ user }) => {
                               : "bg-blue-50 text-blue-600",
                           )}
                         >
-                          {tx.status === "completed" ? (
+                          {user.role === "brand" ? (
                             <ArrowUpRight size={18} />
                           ) : (
                             <ArrowDownLeft size={18} />
@@ -346,9 +346,9 @@ const PaymentSettings = ({ user }) => {
                         </div>
                         <div>
                           <p className="text-sm font-black text-gray-900 uppercase">
-                            {tx.status === "completed"
-                              ? "Payout Release"
-                              : "Payment"}
+                            {user.role === "brand"
+                              ? tx.status === "completed" ? "Payment Sent" : "Payment Initiated"
+                              : tx.status === "completed" ? "Payout Received" : "Funds Pending"}
                           </p>
                           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
                             ID:{" "}
@@ -388,12 +388,12 @@ const PaymentSettings = ({ user }) => {
                       <p
                         className={cn(
                           "text-sm font-black",
-                          tx.status === "completed"
+                          user.role === "influencer" && tx.status === "completed"
                             ? "text-emerald-600"
                             : "text-gray-900",
                         )}
                       >
-                        ${tx.amount?.toFixed(2) || "0.00"}
+                        {user.role === "influencer" && tx.status === "completed" ? "+" : (user.role === "brand" ? "-" : "")}${tx.amount?.toFixed(2) || "0.00"}
                       </p>
                       <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
                         {tx.currency || "USD"}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Outlet, NavLink } from 'react-router-dom';
+import { useParams, useNavigate, Outlet, NavLink, useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeft, 
   MessageCircle, 
@@ -10,11 +10,11 @@ import {
   DollarSign,
   TrendingUp,
   AlertCircle,
-  Pause,
-  Play,
   XCircle,
   CheckCircle2,
-  Star
+  Star,
+  RefreshCw,
+  Clock
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import collaborationService from '../../services/collaborationService';
@@ -22,7 +22,7 @@ import { chatService } from '../../services/chatService';
 import { setActiveConversation } from '../../redux/slices/chatSlice';
 import Modal from '../../components/common/Modal';
 import { cn } from '../../utils/helper';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../context/SocketContext';
 import paymentService from '../../services/paymentService';
 import PaymentModal from '../../components/payment/PaymentModal';
 import { toast } from 'sonner';
@@ -33,6 +33,7 @@ const CollabDetailView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useSelector((state) => state.auth);
   const [collaboration, setCollaboration] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -42,13 +43,11 @@ const CollabDetailView = () => {
   // Modal States
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
-  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
-  const [resumeReason, setResumeReason] = useState("");
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
   const [isInfluencerReviewOpen, setIsInfluencerReviewOpen] = useState(false);
-  const [influencerRating, setInfluencerRating] = useState(5);
+  const [influencerRating, setInfluencerRating] = useState(0);
   const [influencerComment, setInfluencerComment] = useState("");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [clientSecret, setClientSecret] = useState("");
@@ -71,14 +70,10 @@ const CollabDetailView = () => {
     fetchCollaboration();
   }, [fetchCollaboration]);
 
-  useEffect(() => {
-    const socket = io(ENDPOINT, {
-      withCredentials: true,
-    });
+  const socket = useSocket();
 
-    if (user) {
-      socket.emit('setup', user);
-      
+  useEffect(() => {
+    if (socket && user) {
       socket.on('activity_created', (data) => {
         // Refresh if the activity is related to this specific collaboration
         if (data.relatedId === id || (['collaboration', 'system'].includes(data.category))) {
@@ -88,10 +83,11 @@ const CollabDetailView = () => {
     }
 
     return () => {
-      socket.off('activity_created');
-      socket.disconnect();
+      if (socket) {
+        socket.off('activity_created');
+      }
     };
-  }, [user, id, fetchCollaboration]);
+  }, [user, id, fetchCollaboration, socket]);
 
   const handleAction = async (actionType, payload = {}) => {
     try {
@@ -99,12 +95,6 @@ const CollabDetailView = () => {
       let res;
       
       switch(actionType) {
-        case 'PAUSE':
-          res = await collaborationService.pause(id);
-          break;
-        case 'RESUME':
-          res = await collaborationService.resume(id);
-          break;
         case 'SUSPEND':
           res = await collaborationService.suspend(id);
           break;
@@ -115,11 +105,6 @@ const CollabDetailView = () => {
           break;
         case 'REQUEST_COMPLETE':
           res = await collaborationService.requestAction(id, { type: 'COMPLETE', reason: "Work finished, ready for completion." });
-          break;
-        case 'REQUEST_RESUME':
-          res = await collaborationService.requestAction(id, { type: 'RESUME', reason: resumeReason });
-          setIsResumeModalOpen(false);
-          setResumeReason("");
           break;
         case 'APPROVE_REQUEST':
           res = await collaborationService.handleAction(id, { decision: 'APPROVED', reviewData: payload.reviewData });
@@ -141,7 +126,7 @@ const CollabDetailView = () => {
         case 'INFLUENCER_REVIEW':
           res = await collaborationService.submitInfluencerReview(id, { rating: influencerRating, comment: influencerComment });
           setIsInfluencerReviewOpen(false);
-          setInfluencerRating(5);
+          setInfluencerRating(0);
           setInfluencerComment("");
           break;
         default:
@@ -161,7 +146,20 @@ const CollabDetailView = () => {
     try {
       setActionLoading(true);
       const res = await paymentService.fundEscrow(id);
-      setClientSecret(res?.data?.clientSecret || res.clientSecret);
+      const data = res?.data || res;
+
+      if (data.alreadyFunded) {
+        toast.success("Project is already funded!");
+        fetchCollaboration();
+        return;
+      }
+
+      const secret = data.clientSecret;
+      if (!secret) {
+        throw new Error("Failed to initialize payment: No client secret received.");
+      }
+
+      setClientSecret(secret);
       setIsPaymentModalOpen(true);
     } catch (err) {
       console.error("Failed to initialize escrow funding:", err);
@@ -171,11 +169,34 @@ const CollabDetailView = () => {
     }
   };
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = useCallback(async () => {
     setIsPaymentModalOpen(false);
-    toast.success("Escrow funded successfully! The project is now active.");
-    fetchCollaboration();
-  };
+    toast.success("Escrow funded successfully! Updating project status...");
+    
+    try {
+      // Manually trigger a sync in case webhooks are slow
+      await paymentService.syncEscrowStatus(id);
+    } catch (err) {
+      console.warn("Sync failed, falling back to delay refresh:", err);
+    }
+
+    // Small delay to allow backend to process webhook/sync before refresh
+    setTimeout(() => {
+      fetchCollaboration();
+    }, 1500);
+  }, [fetchCollaboration, id]);
+
+  // Handle redirect back from Stripe (e.g. 3DS or other redirects)
+  useEffect(() => {
+    if (searchParams.get('payment_success') === 'true') {
+      // Clear the param from URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('payment_success');
+      setSearchParams(newParams, { replace: true });
+      
+      handlePaymentSuccess();
+    }
+  }, [searchParams, setSearchParams, handlePaymentSuccess]);
 
   if (loading) {
     return (
@@ -213,6 +234,16 @@ const CollabDetailView = () => {
   const delivCompleted = deliverables.filter(d => ['APPROVED', 'DELIVERED'].includes(d.status)).length;
   const progress = delivTotal > 0 ? Math.round((delivCompleted / delivTotal) * 100) : 0;
   const canComplete = delivTotal > 0 && delivCompleted === delivTotal;
+
+  // Timeline & Advanced Status Logic
+  const endDate = new Date(collaboration.endDate || Date.now());
+  const now = new Date();
+  const diffTime = endDate - now;
+  const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  const hasRevisionRequested = deliverables.some(d => d.status === 'REVISION_REQUESTED');
+  const hasSubmitted = deliverables.some(d => d.status === 'SUBMITTED');
+  const isInfluencer = user.role === 'influencer';
 
   const handleChatClick = async () => {
     try {
@@ -255,17 +286,31 @@ const CollabDetailView = () => {
                <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold uppercase tracking-wider">
                  Campaign Project
                </span>
-               <span className={cn(
-                 "px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border",
-                 status === 'active' || status === 'in_progress' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                 status === 'awaiting_funds' ? "bg-blue-50 text-blue-600 border-blue-100" :
-                 status === 'paused' ? "bg-amber-50 text-amber-600 border-amber-100" :
-                 status === 'suspended' ? "bg-red-50 text-red-600 border-red-100" :
-                 status === 'completed' ? "bg-blue-50 text-blue-600 border-blue-100" :
-                 "bg-gray-50 text-gray-600 border-gray-100"
-               )}>
-                 {status?.replace('_', ' ') || 'ONGOING'}
-               </span>
+                <span className={cn(
+                  "px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border flex items-center gap-2",
+                  (status === 'active' || status === 'in_progress' || (status === 'awaiting_funds' && collaboration.escrowFunded)) ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                  status === 'awaiting_funds' ? "bg-blue-50 text-blue-600 border-blue-100" :
+                  status === 'suspended' ? "bg-red-50 text-red-600 border-red-100" :
+                  status === 'completed' ? "bg-blue-50 text-blue-600 border-blue-100" :
+                  "bg-gray-50 text-gray-600 border-gray-100"
+                )}>
+                  { (status === 'awaiting_funds' && collaboration.escrowFunded) ? 'ACTIVE' : 
+                    (hasRevisionRequested && status === 'active') ? 'REVISION IN PROGRESS' :
+                    (hasSubmitted && status === 'active') ? (isInfluencer ? 'IN REVIEW' : 'PENDING YOUR REVIEW') :
+                    (status?.replace(/_/g, ' ') || 'ONGOING') 
+                  }
+                  {status === 'awaiting_funds' && !collaboration.escrowFunded && (
+                    <RefreshCw 
+                      size={10} 
+                      className={cn("cursor-pointer hover:rotate-180 transition-all duration-500", loading && "animate-spin")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fetchCollaboration();
+                      }}
+                      title="Sync Payment Status"
+                    />
+                  )}
+                </span>
                
                {actionRequest && actionRequest.status === 'PENDING' && status !== 'completed' && (
                  <span className="px-3 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-purple-100 animate-pulse">
@@ -278,21 +323,54 @@ const CollabDetailView = () => {
             </h1>
             
             <div className="flex flex-wrap gap-6 mt-6">
-              <div className="flex items-center gap-2 text-gray-600">
+              <div className="flex items-center gap-3 text-gray-600">
                 <Calendar size={16} className="text-gray-400" />
                 <span className="text-sm font-bold">{new Date(collaboration.startDate).toLocaleDateString()} - {new Date(collaboration.endDate || Date.now()).toLocaleDateString()}</span>
+                {status === 'active' && (
+                  <span className={cn(
+                    "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest",
+                    daysLeft < 0 ? "bg-red-50 text-red-600 border border-red-100" :
+                    daysLeft <= 3 ? "bg-amber-50 text-amber-600 border border-amber-100 animate-pulse" :
+                    "bg-blue-50 text-blue-600 border border-blue-100"
+                  )}>
+                    {daysLeft < 0 ? 'Past Deadline' : `${daysLeft} Days Left`}
+                  </span>
+                )}
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <DollarSign size={16} className="text-blue-500" />
-                <span className="text-sm font-bold">Total Funded: ${collaboration.agreedBudget?.toLocaleString()}</span>
+              <div className="flex items-center gap-3 text-gray-600 bg-gray-50/30 p-2 rounded-2xl pr-4">
+                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500 shadow-sm border border-blue-100/50">
+                  <DollarSign size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
+                    Amount Funded in Platform
+                  </p>
+                  <p className="text-base font-black text-gray-900">${collaboration.escrowFunded ? collaboration.agreedBudget?.toLocaleString() : '0'}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <CheckCircle2 size={16} className="text-emerald-500" />
-                <span className="text-sm font-bold">Total Paid: ${(collaboration.totalPaidAmount || 0).toLocaleString()}</span>
+
+              <div className="flex items-center gap-3 text-gray-600 bg-gray-50/30 p-2 rounded-2xl pr-4">
+                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 shadow-sm border border-emerald-100/50">
+                  <CheckCircle2 size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
+                    {isInfluencer ? 'Payment Received' : 'Total Paid'}
+                  </p>
+                  <p className="text-base font-black text-gray-900">${(collaboration.totalPaidAmount || 0).toLocaleString()}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <TrendingUp size={16} className="text-amber-500" />
-                <span className="text-sm font-bold">{progress}% Progress ({delivCompleted}/{delivTotal})</span>
+
+              <div className="flex items-center gap-3 text-gray-600 bg-gray-50/30 p-2 rounded-2xl pr-4">
+                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500 shadow-sm border border-amber-100/50">
+                  <Clock size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
+                    {isInfluencer ? 'Unreleased Balance' : 'To Be Released'}
+                  </p>
+                  <p className="text-base font-black text-gray-900">${((collaboration.agreedBudget || 0) - (collaboration.totalPaidAmount || 0)).toLocaleString()}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -339,36 +417,34 @@ const CollabDetailView = () => {
         <div className="space-y-4 mb-8">
           {/* Brand's Review of Influencer */}
           {collaboration.review && (
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-6 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 opacity-5">
-                <Star size={120} className="fill-amber-400 text-amber-400" />
+            <div className="bg-gradient-to-br from-amber-50/50 to-orange-50/50 border border-amber-100 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+              <div className="absolute -top-2 -right-2 opacity-5 rotate-12">
+                <Star size={80} className="fill-amber-400 text-amber-400" />
               </div>
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <div className="flex">
                       {[1,2,3,4,5].map((s) => (
                         <Star 
                           key={s} 
-                          size={18} 
+                          size={14} 
                           className={cn(s <= collaboration.review.rating ? "fill-amber-400 text-amber-400" : "text-gray-200")} 
                         />
                       ))}
                     </div>
-                    <span className="text-xs font-black text-amber-600 uppercase tracking-widest">Brand's Review</span>
+                    <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Brand's Review</span>
                   </div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">
+                  <span className="text-[9px] font-bold text-gray-400 uppercase">
                     {new Date(collaboration.review.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                <p className="text-gray-700 font-bold italic text-sm leading-relaxed max-w-2xl">
+                <p className="text-gray-700 font-bold italic text-xs leading-relaxed max-w-2xl">
                   "{collaboration.review.comment || 'No comment provided.'}"
                 </p>
-                <div className="mt-4 flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-amber-200 flex items-center justify-center">
-                    <CheckCircle2 size={12} className="text-amber-700" />
-                  </div>
-                  <span className="text-[11px] font-black text-amber-700 uppercase tracking-widest">Verified Brand Review</span>
+                <div className="mt-3 flex items-center gap-2">
+                  <CheckCircle2 size={12} className="text-amber-500" />
+                  <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Verified Review</span>
                 </div>
               </div>
             </div>
@@ -376,36 +452,34 @@ const CollabDetailView = () => {
 
           {/* Influencer's Review of Brand */}
           {collaboration.influencerReview && (
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 opacity-5">
-                <Star size={120} className="fill-blue-400 text-blue-400" />
+            <div className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 border border-blue-100 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+              <div className="absolute -top-2 -right-2 opacity-5 rotate-12">
+                <Star size={80} className="fill-blue-400 text-blue-400" />
               </div>
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <div className="flex">
                       {[1,2,3,4,5].map((s) => (
                         <Star 
                           key={s} 
-                          size={18} 
+                          size={14} 
                           className={cn(s <= collaboration.influencerReview.rating ? "fill-blue-400 text-blue-400" : "text-gray-200")} 
                         />
                       ))}
                     </div>
-                    <span className="text-xs font-black text-blue-600 uppercase tracking-widest">Influencer's Review</span>
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Influencer's Review</span>
                   </div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">
+                  <span className="text-[9px] font-bold text-gray-400 uppercase">
                     {new Date(collaboration.influencerReview.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                <p className="text-gray-700 font-bold italic text-sm leading-relaxed max-w-2xl">
+                <p className="text-gray-700 font-bold italic text-xs leading-relaxed max-w-2xl">
                   "{collaboration.influencerReview.comment || 'No comment provided.'}"
                 </p>
-                <div className="mt-4 flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-blue-200 flex items-center justify-center">
-                    <CheckCircle2 size={12} className="text-blue-700" />
-                  </div>
-                  <span className="text-[11px] font-black text-blue-700 uppercase tracking-widest">Verified Influencer Review</span>
+                <div className="mt-3 flex items-center gap-2">
+                  <CheckCircle2 size={12} className="text-blue-500" />
+                  <span className="text-[9px] font-black text-blue-700 uppercase tracking-widest">Verified Review</span>
                 </div>
               </div>
             </div>
@@ -447,10 +521,11 @@ const CollabDetailView = () => {
               </div>
            </div>
            <button 
+             disabled={actionLoading}
              onClick={handleFundEscrow}
-             className="bg-white text-blue-600 px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-blue-50 transition-all shadow-lg active:scale-95 shrink-0"
+             className="bg-white text-blue-600 px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-blue-50 transition-all shadow-lg active:scale-95 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
            >
-             Fund Escrow Now
+             {actionLoading ? "Initializing..." : "Fund Escrow Now"}
            </button>
         </div>
       )}
@@ -504,34 +579,16 @@ const CollabDetailView = () => {
                    <DollarSign size={14} /> Fund Escrow
                  </button>
                )}
-               {(status === 'active' || status === 'in_progress') && (
-                 <button 
-                   disabled={actionLoading}
-                   onClick={() => handleAction('PAUSE')}
-                   className="flex items-center gap-2 px-6 py-2.5 bg-amber-50 text-amber-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-amber-100 transition-all"
-                 >
-                   <Pause size={14} /> Pause
-                 </button>
-               )}
-                {status === "paused" && (
-                 <button 
-                   disabled={actionLoading}
-                   onClick={() => handleAction('RESUME')}
-                   className="flex items-center gap-2 px-6 py-2.5 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-100 transition-all"
-                 >
-                   <Play size={14} /> Resume
-                 </button>
-                               )}
                
-               {status !== 'suspended' && (
-                 <button 
-                   disabled={actionLoading}
-                   onClick={() => handleAction('SUSPEND')}
-                   className="flex items-center gap-2 px-6 py-2.5 bg-red-50 text-red-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-100 transition-all"
-                 >
-                   <AlertCircle size={14} /> Suspend
-                 </button>
-               )}
+               {(status === 'active' || status === 'in_progress') && (
+                  <button 
+                    disabled={actionLoading}
+                    onClick={() => handleAction('SUSPEND')}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-red-50 text-red-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-100 transition-all"
+                  >
+                    <AlertCircle size={14} /> Suspend
+                  </button>
+                )}
 
                {canComplete && (
                  <button 
@@ -548,23 +605,27 @@ const CollabDetailView = () => {
            {/* INFLUENCER ACTIONS */}
            {user.role === 'influencer' && status !== 'completed' && status !== 'cancelled' && (
              <>
-               {(status === 'paused' || status === 'suspended') && (
-                 <button 
-                   disabled={actionLoading || (actionRequest?.type === 'RESUME' && actionRequest.status === 'PENDING')}
-                   onClick={() => setIsResumeModalOpen(true)}
-                   className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-all"
-                 >
-                   <Play size={14} /> Request Resume
-                 </button>
-               )}
-
-               {canComplete && status !== 'paused' && status !== 'suspended' && (
+               {status === 'suspended' && (
+                  <div className="flex items-center gap-2 px-6 py-2.5 bg-red-50 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-100 mb-4">
+                    <AlertCircle size={12} /> Project Suspended
+                  </div>
+                )}
+               {canComplete && (
                  <button 
                    disabled={actionLoading || (actionRequest?.type === 'COMPLETE' && actionRequest.status === 'PENDING')}
                    onClick={() => handleAction('REQUEST_COMPLETE')}
-                   className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                    className={cn(
+                      "flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg",
+                      (actionRequest?.type === 'COMPLETE' && actionRequest.status === 'PENDING') 
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none" 
+                        : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 shadow-blue-200"
+                    )}
                  >
-                   <CheckCircle2 size={14} /> Request Completion
+                    { (actionRequest?.type === 'COMPLETE' && actionRequest.status === 'PENDING') ? (
+                      <><Clock size={14} /> Completion Requested</>
+                    ) : (
+                      <><CheckCircle2 size={14} /> Request Completion</>
+                    )}
                  </button>
                )}
              </>
@@ -586,25 +647,24 @@ const CollabDetailView = () => {
 
       {/* Incoming Requests Notification Section */}
       {actionRequest && actionRequest.status === 'PENDING' && actionRequest.requestedBy !== user._id && status !== 'completed' && status !== 'cancelled' && (
-        <div className="bg-purple-600 text-white rounded-2xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-purple-200 border-2 border-white/20">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <AlertCircle className="text-white w-6 h-6" />
+        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl p-3 px-5 mb-8 flex items-center justify-between gap-4 shadow-lg shadow-indigo-500/10 border border-white/10 animate-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center gap-4 flex-1">
+            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+              <AlertCircle size={16} />
             </div>
-            <div>
-              <h3 className="font-black uppercase tracking-wider text-sm">Action Required: {actionRequest.type} Request</h3>
-              <p className="text-purple-100 text-xs font-medium mt-1">
-                The partner has requested to <span className="font-black italic">{actionRequest.type.toLowerCase()}</span> this collaboration.
-                <br/>
-                <span className="italic opacity-80">Reason: "{actionRequest.reason}"</span>
+            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
+              <h4 className="text-[11px] font-black uppercase tracking-tight whitespace-nowrap">{actionRequest.type} REQUEST</h4>
+              <p className="text-[10px] font-bold text-indigo-50/80 leading-tight line-clamp-1">
+                The partner requested to {actionRequest.type.toLowerCase()} this project. 
+                <span className="ml-2 italic opacity-60 font-medium">Reason: "{actionRequest.reason}"</span>
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
              <button 
                disabled={actionLoading}
                onClick={() => handleAction('REJECT_REQUEST')}
-               className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-white/20"
+               className="px-4 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
              >
                Reject
              </button>
@@ -617,9 +677,9 @@ const CollabDetailView = () => {
                    handleAction('APPROVE_REQUEST');
                  }
                }}
-               className="px-8 py-2.5 bg-white text-purple-600 rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105"
+               className="px-5 py-1.5 bg-white text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
              >
-               Approve Request
+               Approve
              </button>
           </div>
         </div>
@@ -669,6 +729,19 @@ const CollabDetailView = () => {
              <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1">Confirm Project</p>
              <p className="text-sm font-bold text-gray-900">{campaign?.name || "This Collaboration"}</p>
           </div>
+
+          {collaboration.escrowFunded && user.role === 'brand' && (
+             <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex gap-3">
+               <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+               <div>
+                 <p className="text-xs font-bold text-amber-900 mb-1 uppercase tracking-tight">Escrow & Refund Policy</p>
+                 <p className="text-[11px] font-medium text-amber-800 leading-relaxed">
+                   Tasks in progress for over 24 hours will incur a <b>50% deduction</b> to compensate the influencer. 
+                   All remaining unallocated funds will be <b>automatically refunded</b> to your original payment method.
+                 </p>
+               </div>
+             </div>
+          )}
           
           <div className="space-y-2">
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Reason for cancellation</label>
@@ -690,37 +763,7 @@ const CollabDetailView = () => {
         </div>
       </Modal>
 
-      {/* Resume Request Modal */}
-      <Modal 
-        isOpen={isResumeModalOpen} 
-        onClose={() => setIsResumeModalOpen(false)} 
-        title="Request to Resume"
-      >
-        <div className="space-y-6">
-          <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-             <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Project Status</p>
-             <p className="text-sm font-bold text-gray-900 capitalize">{status}</p>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Message to brand</label>
-            <textarea 
-              value={resumeReason}
-              onChange={(e) => setResumeReason(e.target.value)}
-              placeholder="Why should this project be resumed now?"
-              className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none h-32"
-            />
-          </div>
 
-          <button 
-            disabled={!resumeReason || actionLoading}
-            onClick={() => handleAction('REQUEST_RESUME')}
-            className="w-full py-4 bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-50 transition-all"
-          >
-            {actionLoading ? "Sending..." : "Send Resume Request"}
-          </button>
-        </div>
-      </Modal>
 
       {/* Complete Modal (with Review) */}
       <Modal 
@@ -773,7 +816,7 @@ const CollabDetailView = () => {
           </div>
 
           <button 
-            disabled={actionLoading}
+            disabled={actionLoading || rating === 0}
             onClick={() => {
                const payload = { reviewData: { rating, comment: reviewComment } };
                if (actionRequest?.type === 'COMPLETE') {
@@ -809,7 +852,7 @@ const CollabDetailView = () => {
                     size={40} 
                     className={cn(
                       "transition-colors",
-                      star <= influencerRating ? "fill-blue-400 text-blue-400" : "text-gray-200"
+                      star <= influencerRating ? "fill-amber-400 text-amber-400" : "text-gray-200"
                     )} 
                   />
                 </button>
@@ -829,9 +872,9 @@ const CollabDetailView = () => {
           </div>
 
           <button 
-            disabled={actionLoading}
+            disabled={actionLoading || influencerRating === 0}
             onClick={() => handleAction('INFLUENCER_REVIEW')}
-            className="w-full py-4 bg-gray-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-gray-200"
+            className="w-full py-4 bg-gray-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xl shadow-gray-200"
           >
             {actionLoading ? "Submitting..." : "Submit Review"}
           </button>
@@ -843,7 +886,8 @@ const CollabDetailView = () => {
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
           clientSecret={clientSecret}
-          onSuccess={handlePaymentSuccess}
+          collaborationId={id}
+          onPaymentSuccess={handlePaymentSuccess}
           amount={collaboration?.agreedBudget}
         />
       )}

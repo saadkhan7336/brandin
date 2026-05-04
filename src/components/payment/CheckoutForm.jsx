@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react'; // Re-saved to clear stale eslint error
 import {
   PaymentElement,
   useStripe,
@@ -18,6 +18,12 @@ const CheckoutForm = ({ collaborationId, onSuccess }) => {
 
   const [message, setMessage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  // Memoize options to prevent re-renders of the PaymentElement
+  const paymentElementOptions = useMemo(() => ({
+    layout: "tabs",
+  }), []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,8 +61,12 @@ const CheckoutForm = ({ collaborationId, onSuccess }) => {
 
   return (
     <form id="payment-form" onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement id="payment-element" options={{ layout: "tabs" }} />
-      
+      <PaymentElement
+        id="payment-element"
+        options={paymentElementOptions}
+        onReady={() => setIsReady(true)}
+      />
+
       {message && (
         <div id="payment-message" className="text-red-500 text-sm font-medium animate-pulse">
           {message}
@@ -64,7 +74,7 @@ const CheckoutForm = ({ collaborationId, onSuccess }) => {
       )}
 
       <button
-        disabled={isLoading || !stripe || !elements}
+        disabled={isLoading || !isReady || !stripe || !elements}
         id="submit"
         className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >

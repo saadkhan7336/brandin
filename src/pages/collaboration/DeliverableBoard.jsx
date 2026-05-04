@@ -23,7 +23,8 @@ const DeliverableBoard = () => {
     handleOpenModal: handleEdit,
     handleDelete, 
     handleOnDragEnd: onDragEnd,
-    handleStartDeliverable 
+    handleStartDeliverable,
+    setRevisionModal
   } = useOutletContext();
 
   if (!collaboration) return null;
@@ -189,20 +190,20 @@ const DeliverableBoard = () => {
                                  Finalized
                                </div>
                              ) : userRole === 'brand' && task.status === 'SUBMITTED' ? (
-                               <div className="flex gap-2">
-                                 <button 
-                                   onClick={(e) => { e.stopPropagation(); handleReview(task._id, 'APPROVED'); }}
-                                   className="flex-1 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 hover:bg-emerald-700"
-                                 >
-                                   Approve & Pay
-                                 </button>
-                                 <button 
-                                   onClick={(e) => { e.stopPropagation(); handleReview(task._id, 'REVISION_REQUESTED'); }}
-                                   className="flex-1 py-2 bg-white border border-amber-200 text-amber-600 text-xs font-bold rounded-xl transition-all active:scale-95 hover:bg-amber-50"
-                                 >
-                                   Revise
-                                 </button>
-                                </div>
+                                 <div className="flex gap-2">
+                                   <button 
+                                     onClick={(e) => { e.stopPropagation(); handleReview(task._id, 'APPROVED'); }}
+                                     className="flex-1 py-2 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95 hover:bg-emerald-700"
+                                   >
+                                     Approve & Pay
+                                   </button>
+                                   <button 
+                                     onClick={(e) => { e.stopPropagation(); setRevisionModal({ isOpen: true, deliverableId: task._id, notes: '' }); }}
+                                     className="flex-1 py-2 bg-white border border-amber-200 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 hover:bg-amber-50"
+                                   >
+                                     Revise
+                                   </button>
+                                  </div>
                              ) : userRole === 'influencer' ? (
                                <>
                                  {task.status === 'PENDING' && (

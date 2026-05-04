@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -21,14 +21,14 @@ import {
 import { updateUserPresence } from "../../redux/slices/presenceSlice";
 import MessageBubble from "./MessageBubble";
 import ForwardModal from "./ForwardModal";
-import { io } from "socket.io-client";
+import { useSocket } from "../../context/SocketContext";
 import { Send, Menu, Phone, Video, MoreVertical, Paperclip, ImageIcon, Check, CheckCheck, Smile, Search, X, Forward, Trash2, MessageCircle, Target, FileText } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import EmojiPicker from 'emoji-picker-react';
 import collaborationService from "../../services/collaborationService";
 import VerifiedTick from "../common/VerifiedTick";
 
-const ENDPOINT = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
 
 const ChatLayout = () => {
   const dispatch = useDispatch();
@@ -39,7 +39,7 @@ const ChatLayout = () => {
   );
   const presenceUsers = useSelector((state) => state.presence.users);
 
-  const [socket, setSocket] = useState(null);
+  const socket = useSocket();
   const [newMessage, setNewMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,67 +66,27 @@ const ChatLayout = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    const newSocket = io(ENDPOINT, {
-      withCredentials: true,
-    });
-    setSocket(newSocket);
-
-    if (user) {
-      newSocket.on("connect", () => {
-        console.log("Socket Connected! ID:", newSocket.id);
-        newSocket.emit("setup", user);
-      });
-
-      newSocket.on("message recieved", (newMessageRecieved) => {
-        dispatch(receiveMessage(newMessageRecieved));
-      });
-      newSocket.on("messages read", ({ conversationId, readBy }) => {
-        dispatch(markConversationReadLocal(conversationId));
-      });
-      
-      // Fallback handlers if backend supports these realtime custom broadcasts
-      newSocket.on("message updated", (updatedMsg) => {
-         dispatch(updateMessageLocal(updatedMsg));
-      });
-      newSocket.on("message deleted", ({ messageId, conversationId }) => {
-         dispatch(removeMessageLocal({ messageId, conversationId }));
-      });
-      
-      newSocket.on("user_status_changed", (data) => {
-        dispatch(updateUserPresence(data));
-      });
-
-      newSocket.on("typing", (room) => {
+    if (socket && user) {
+      socket.on("typing", (room) => {
         if (activeConversation?._id === room) {
            setIsTyping(true);
         }
       });
 
-      newSocket.on("stop typing", (room) => {
+      socket.on("stop typing", (room) => {
         if (activeConversation?._id === room) {
            setIsTyping(false);
         }
       });
-
-      // Handle re-setup on manual reconnection event if needed by socket.io
-      newSocket.on("reconnect", () => {
-         newSocket.emit("setup", user);
-      });
     }
 
     return () => {
-      if (newSocket) {
-        newSocket.off("message recieved");
-        newSocket.off("messages read");
-        newSocket.off("message updated");
-        newSocket.off("message deleted");
-        newSocket.off("user_status_changed");
-        newSocket.off("typing");
-        newSocket.off("stop typing");
-        newSocket.disconnect();
+      if (socket) {
+        socket.off("typing");
+        socket.off("stop typing");
       }
     };
-  }, [user, dispatch, activeConversation?._id]);
+  }, [user, socket, activeConversation?._id]);
 
   useEffect(() => {
     if (activeConversation) {
@@ -153,43 +113,62 @@ const ChatLayout = () => {
   const [activeCollaboration, setActiveCollaborationData] = useState(null);
   const [fetchingCollab, setFetchingCollab] = useState(false);
 
-  useEffect(() => {
-    const fetchCollabData = async () => {
-      setFetchingCollab(true);
-      try {
-        let collabData = null;
-        
-        // 1. Try explicit link first
-        if (activeConversation?.collaboration) {
-          const collabId = activeConversation.collaboration._id || activeConversation.collaboration;
-          const res = await collaborationService.getOne(collabId);
-          collabData = res.data;
-        } 
-        
-        // 2. Fallback: Search by participants if no explicit link exists (for old conversations)
-        if (!collabData && activeConversation) {
-          const otherUser = getOtherParticipant(activeConversation.participants);
-          if (otherUser) {
-            const res = await collaborationService.getLatestWithUser(otherUser._id);
-            collabData = res.data;
-          }
-        }
-        
-        setActiveCollaborationData(collabData);
-      } catch (error) {
-        console.error("Error fetching collab details:", error);
-        setActiveCollaborationData(null);
-      } finally {
-        setFetchingCollab(false);
-      }
-    };
-
-    if (activeConversation) {
-      fetchCollabData();
-    } else {
+  const fetchCollabData = useCallback(async () => {
+    if (!activeConversation) {
       setActiveCollaborationData(null);
+      return;
+    }
+
+    setFetchingCollab(true);
+    try {
+      let collabData = null;
+      
+      // 1. Try explicit link first
+      if (activeConversation?.collaboration) {
+        const collabId = activeConversation.collaboration._id || activeConversation.collaboration;
+        const res = await collaborationService.getOne(collabId);
+        collabData = res.data;
+      } 
+      
+      // 2. Fallback: Search by participants if no explicit link exists (for old conversations)
+      if (!collabData && activeConversation) {
+        const otherUser = getOtherParticipant(activeConversation.participants);
+        if (otherUser) {
+          const res = await collaborationService.getLatestWithUser(otherUser._id);
+          collabData = res.data;
+        }
+      }
+      
+      setActiveCollaborationData(collabData);
+    } catch (error) {
+      console.error("Error fetching collab details:", error);
+      setActiveCollaborationData(null);
+    } finally {
+      setFetchingCollab(false);
     }
   }, [activeConversation]);
+
+  useEffect(() => {
+    fetchCollabData();
+  }, [fetchCollabData]);
+
+  // Real-time Collaboration Updates
+  useEffect(() => {
+    if (socket) {
+      const handleActivity = (data) => {
+        // Refresh collaboration data when a relevant activity is created
+        if (data.category === 'collaboration' || data.category === 'application') {
+          fetchCollabData();
+        }
+      };
+
+      socket.on("activity_created", handleActivity);
+      
+      return () => {
+        socket.off("activity_created", handleActivity);
+      };
+    }
+  }, [socket, fetchCollabData]);
 
   useEffect(() => {
     // Scroll to bottom when messages change without shifting the whole page
@@ -740,8 +719,8 @@ const ChatLayout = () => {
              const stats = activeCollaboration?.influencerStats || { followersCount: '1.2M', engagementRate: '4.8%' };
              const currentCampaign = activeCollaboration?.campaign || activeConversation.campaign;
              const deliverables = activeCollaboration?.deliverables || [];
-             const completedCount = deliverables.filter(d => d.status === 'approved').length;
-             const totalCount = deliverables.length || 4;
+             const completedCount = deliverables.filter(d => ['APPROVED', 'DELIVERED'].includes(d.status)).length;
+             const totalCount = deliverables.length;
              const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
              
              return (
@@ -775,21 +754,8 @@ const ChatLayout = () => {
                       View {chatOtherUser?.role === 'brand' ? 'Brand' : 'Influencer'} Profile
                     </button>
                     
-                    <div className="flex items-center gap-6 mt-6 w-full justify-center">
-                       <div className="text-center">
-                          <p className="text-lg font-bold text-gray-900">
-                            {typeof stats.followersCount === 'number' ? 
-                              (stats.followersCount >= 1000000 ? (stats.followersCount/1000000).toFixed(1) + 'M' : 
-                               (stats.followersCount >= 1000 ? (stats.followersCount/1000).toFixed(1) + 'K' : stats.followersCount)) 
-                              : stats.followersCount}
-                          </p>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Followers</p>
-                       </div>
-                       <div className="w-px h-8 bg-gray-100"></div>
-                       <div className="text-center">
-                          <p className="text-lg font-bold text-gray-900">{stats.engagementRate}</p>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Eng. Rate</p>
-                       </div>
+                    <div className="mt-4 w-full">
+                       {/* Space reserved for profile button or other links */}
                     </div>
                  </div>
 

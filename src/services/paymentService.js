@@ -14,6 +14,15 @@ const paymentService = {
     }
   },
 
+  syncEscrowStatus: async (collaborationId) => {
+    try {
+      const response = await api.post('/payment/escrow/sync', { collaborationId });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
   /**
    * Start a deliverable (Influencer)
    * @param {string} deliverableId 

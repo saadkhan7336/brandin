@@ -215,19 +215,18 @@ function BrandDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8 mb-8">
             <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Funds in Escrow</p>
-               <h4 className="text-2xl font-black text-gray-900">${(analytics.totalSpending * 0.3).toLocaleString()}</h4>
+               <h4 className="text-2xl font-black text-gray-900">${analytics.fundsInEscrow?.toLocaleString() || '0'}</h4>
                <p className="text-[10px] text-gray-500 mt-2 font-medium">Secured for ongoing collaborations</p>
             </div>
             <div className="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-100">
                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Total Released</p>
-               <h4 className="text-2xl font-black text-gray-900">${(analytics.totalSpending * 0.7).toLocaleString()}</h4>
+               <h4 className="text-2xl font-black text-gray-900">${analytics.totalReleased?.toLocaleString() || '0'}</h4>
                <p className="text-[10px] text-gray-500 mt-2 font-medium">Successfully paid to influencers</p>
             </div>
           </div>
 
           <div className="space-y-4">
-             <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Recent Transactions</h4>
-             {analytics.campaignPerformance?.slice(0, 3).map((item, idx) => (
+             {analytics.recentTransactions?.length > 0 ? analytics.recentTransactions.map((item, idx) => (
                <div key={idx} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-all border-b border-gray-50 last:border-0">
                   <div className="flex items-center gap-3">
                      <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
@@ -239,11 +238,13 @@ function BrandDashboard() {
                      </div>
                   </div>
                   <div className="text-right">
-                     <p className="text-sm font-black text-gray-900">-${item.budget?.toLocaleString()}</p>
-                     <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-tighter">Completed</p>
+                     <p className="text-sm font-black text-gray-900">${item.amount?.toLocaleString()}</p>
+                     <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-tighter">{item.status}</p>
                   </div>
                </div>
-             ))}
+             )) : (
+               <p className="text-xs text-gray-500">No recent transactions.</p>
+             )}
           </div>
         </div>
 
@@ -261,11 +262,11 @@ function BrandDashboard() {
                   <img src={performer.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(performer.name)}`} alt="" className="w-10 h-10 rounded-lg object-cover shadow-sm" />
                   <div>
                     <p className="text-sm font-bold text-gray-900">{performer.name}</p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{performer.reach} Earned</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">${performer.earnings?.toLocaleString()} Earned</p>
                   </div>
                 </div>
                 <div className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
-                  {performer.engagement}
+                  {performer.rating ? `${performer.rating} Stars` : "No rating"}
                 </div>
               </div>
             ))}
@@ -321,49 +322,6 @@ function BrandDashboard() {
               ))}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Platform Statistics */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-bold text-gray-900 ml-1">Channel Analytics</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { name: "Instagram", color: "text-pink-600", bg: "bg-pink-50/30", data: analytics.platformStats.instagram },
-            { name: "YouTube", color: "text-red-600", bg: "bg-red-50/30", data: analytics.platformStats.youtube },
-            { name: "TikTok", color: "text-black", bg: "bg-gray-50/50", data: analytics.platformStats.tiktok }
-          ].map((platform, idx) => (
-            <div key={idx} className={`p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all`}>
-              <div className="flex items-center justify-between mb-6">
-                <h4 className={`text-sm font-bold uppercase tracking-wider ${platform.color}`}>{platform.name}</h4>
-                <Share2 size={16} className="text-gray-300" />
-              </div>
-              
-              <div className="space-y-4">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400 font-bold uppercase tracking-wider">Posts</span>
-                  <span className="font-bold text-gray-900">{platform.data.posts}</span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400 font-bold uppercase tracking-wider">Reach</span>
-                  <span className="font-bold text-gray-900">{(platform.data.reach / 1000).toFixed(1)}K</span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400 font-bold uppercase tracking-wider">Engagement</span>
-                  <span className="font-bold text-emerald-600">%{platform.data.engagement}</span>
-                </div>
-                <div className="pt-2 border-t border-gray-50 mt-2">
-                  <div className="flex justify-between items-end mb-1">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Follower Gain</span>
-                    <span className="text-xs font-bold text-blue-600">+{platform.data.followers?.toLocaleString()}</span>
-                  </div>
-                  <div className="w-full bg-gray-50 h-1 rounded-full overflow-hidden">
-                    <div className="bg-blue-600 h-full w-[60%]" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 

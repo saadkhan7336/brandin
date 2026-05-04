@@ -25,7 +25,8 @@ const DeliverableListTab = () => {
     handleOpenModal,
     handleDelete, 
     handleOpenSubmitModal,
-    handleStartDeliverable 
+    handleStartDeliverable,
+    setRevisionModal
   } = useOutletContext();
 
   const getStatusBadge = (status) => {
@@ -88,6 +89,21 @@ const DeliverableListTab = () => {
                       </a>
                     )}
                   </div>
+
+                  {/* Revision Notes for everyone */}
+                  {deliv.status === 'REVISION_REQUESTED' && deliv.revisionNotes && (
+                    <div className="mt-4 p-4 bg-amber-50/50 border border-amber-100 rounded-2xl flex items-start gap-3 animate-in slide-in-from-top-2 duration-300">
+                      <div className="bg-amber-100 text-amber-600 p-1.5 rounded-lg shrink-0">
+                        <RefreshCw size={14} className="animate-spin-slow" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Brand Feedback</p>
+                        <p className="text-xs font-bold text-amber-700/80 leading-relaxed italic">
+                          "{deliv.revisionNotes}"
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -101,14 +117,22 @@ const DeliverableListTab = () => {
                 ) : userRole === 'brand' ? (
                   <>
                     {deliv.status === 'SUBMITTED' && (
-                      <div className="flex items-center gap-2 mr-4 pr-4 border-r border-gray-100">
-                         <button onClick={() => handleReview(deliv._id, 'APPROVED')} className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all">
-                            <Check size={18} />
-                         </button>
-                         <button onClick={() => handleReview(deliv._id, 'REVISION_REQUESTED')} className="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all">
-                            <X size={18} />
-                         </button>
-                      </div>
+                        <div className="flex items-center gap-2 mr-4 pr-4 border-r border-gray-100">
+                           <button 
+                             onClick={() => handleReview(deliv._id, 'APPROVED')} 
+                             className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+                           >
+                              <Check size={14} />
+                              Approve & Pay
+                           </button>
+                           <button 
+                             onClick={() => setRevisionModal({ isOpen: true, deliverableId: deliv._id, notes: '' })} 
+                             className="px-4 py-2 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+                           >
+                              <RefreshCw size={14} />
+                              Revise
+                           </button>
+                        </div>
                     )}
                     {deliv.status === 'APPROVED' && deliv.paymentStatus === 'unpaid' && (
                        <button 

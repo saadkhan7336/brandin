@@ -49,7 +49,7 @@ export default function ProfileDropdown({ user, roleProfile, isOpen, onClose, on
   return (
     <div
       ref={panelRef}
-      className="absolute right-4 top-[80px] w-[300px] bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+      className="absolute right-4 top-[80px] w-[300px] bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] overflow-hidden"
       style={{ animation: 'fadeSlideDown 0.2s ease-out' }}
     >
       {/* Blue gradient header / Cover image */}

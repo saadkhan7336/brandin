@@ -167,29 +167,7 @@ const collaborationService = {
     }
   },
 
-  /**
-   * Pause collaboration (Brand only)
-   */
-  pause: async (id) => {
-    try {
-      const response = await api.patch(ENDPOINTS.collaborations.pause(id));
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
 
-  /**
-   * Resume collaboration (Brand only)
-   */
-  resume: async (id) => {
-    try {
-      const response = await api.patch(ENDPOINTS.collaborations.resume(id));
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
 
   /**
    * Suspend collaboration (Brand only)

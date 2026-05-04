@@ -8,7 +8,9 @@ import NotificationPanel from './NotificationPanel';
 import ProfileDropdown from './ProfileDropdown';
 import { fetchNotifications } from '../../redux/slices/notificationSlice';
 import { fetchConversations } from '../../redux/slices/chatSlice';
+import { setNotifCounts, fetchSidebarCounts } from '../../redux/slices/collaborationSlice';
 import profileService from '../../services/profileService';
+import collaborationService from '../../services/collaborationService';
 import { setProfileData } from '../../redux/slices/Profileslice';
 import { updateUserFields } from '../../redux/slices/authSlice';
 import CompletionBanner from '../common/CompletionBanner';
@@ -46,7 +48,9 @@ export default function DashboardLayout() {
       }
     };
     fetchProfileData();
-  }, [dispatch]);
+
+    dispatch(fetchSidebarCounts());
+  }, [dispatch, user?._id]);
 
   const handleLogout = async () => {
     await logout();
@@ -66,7 +70,7 @@ export default function DashboardLayout() {
   return (
     <div className="min-h-screen bg-[#f8f9fb]">
       {/* Navbar — fixed top */}
-      <div className="relative">
+      <div className="relative z-[60]">
         <Navbar
           userRole={userRole}
           user={user}

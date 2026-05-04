@@ -21,7 +21,7 @@ const StripeProvider = ({ children, clientSecret }) => {
 
   if (!clientSecret) return null;
 
-  const options = {
+  const options = useMemo(() => ({
     clientSecret,
     appearance: {
       theme: "stripe",
@@ -29,7 +29,7 @@ const StripeProvider = ({ children, clientSecret }) => {
         colorPrimary: "#6366f1", // Indigo 500
       },
     },
-  };
+  }), [clientSecret]);
 
   return (
     <Elements stripe={stripePromise} options={options}>

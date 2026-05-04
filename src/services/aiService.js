@@ -1,5 +1,4 @@
 import api from "./api"; // Assuming default axios/api instance
-import { ENDPOINTS } from "./endpoints";
 
 export const getFilteredInfluencers = async (campaignId, signal) => {
   try {

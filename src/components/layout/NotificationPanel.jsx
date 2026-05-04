@@ -65,7 +65,7 @@ export default function NotificationPanel({ isOpen, onClose }) {
   return (
     <div
       ref={panelRef}
-      className="absolute right-16 top-[80px] w-[380px] bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in"
+      className="absolute right-16 top-[80px] w-[380px] bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] overflow-hidden animate-in"
       style={{ animation: 'fadeSlideDown 0.2s ease-out' }}
     >
       {/* Header */}

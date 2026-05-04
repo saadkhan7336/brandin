@@ -6,7 +6,10 @@ export const fetchNotifications = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await notificationService.getNotifications();
-      return response.data; // Array of notifications
+      // Backend wraps data in ApiResponse: { statusCode, data: [...], message }
+      // axios gives us response.data = that wrapper, so we need .data.data
+      const notifications = response.data?.data ?? response.data;
+      return Array.isArray(notifications) ? notifications : [];
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
@@ -18,7 +21,7 @@ export const markAsRead = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await notificationService.markAsRead(id);
-      return response.data;
+      return response.data?.data ?? response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
