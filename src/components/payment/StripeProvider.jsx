@@ -19,17 +19,20 @@ const StripeProvider = ({ children, clientSecret }) => {
     return loadStripe(key);
   }, []);
 
-  if (!clientSecret) return null;
-
-  const options = useMemo(() => ({
-    clientSecret,
-    appearance: {
-      theme: "stripe",
-      variables: {
-        colorPrimary: "#6366f1", // Indigo 500
+  const options = useMemo(() => {
+    if (!clientSecret) return null;
+    return {
+      clientSecret,
+      appearance: {
+        theme: "stripe",
+        variables: {
+          colorPrimary: "#6366f1", // Indigo 500
+        },
       },
-    },
-  }), [clientSecret]);
+    };
+  }, [clientSecret]);
+
+  if (!clientSecret) return null;
 
   return (
     <Elements stripe={stripePromise} options={options}>
