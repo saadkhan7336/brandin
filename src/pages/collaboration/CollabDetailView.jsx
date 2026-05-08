@@ -8,13 +8,14 @@ import {
   Loader2,
   Calendar,
   DollarSign,
-  TrendingUp,
   AlertCircle,
   XCircle,
   CheckCircle2,
   Star,
   RefreshCw,
-  Clock
+  Clock,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import collaborationService from '../../services/collaborationService';
@@ -26,8 +27,10 @@ import { useSocket } from '../../context/SocketContext';
 import paymentService from '../../services/paymentService';
 import PaymentModal from '../../components/payment/PaymentModal';
 import { toast } from 'sonner';
+import AgreementModal from './components/AgreementModal';
+import CancellationSummaryModal from './components/CancellationSummaryModal';
 
-const ENDPOINT = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 
 const CollabDetailView = () => {
   const { id } = useParams();
@@ -39,6 +42,7 @@ const CollabDetailView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const isBrand = user.role === 'brand';
 
   // Modal States
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -51,18 +55,23 @@ const CollabDetailView = () => {
   const [influencerComment, setInfluencerComment] = useState("");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [clientSecret, setClientSecret] = useState("");
+  const [isAgreementModalOpen, setIsAgreementModalOpen] = useState(false);
+  const [cancellationSummary, setCancellationSummary] = useState(null);
+  const [isCancellationSummaryOpen, setIsCancellationSummaryOpen] = useState(false);
+  const closeAgreementModal = useCallback(() => setIsAgreementModalOpen(false), []);
+  const closePaymentModal = useCallback(() => setIsPaymentModalOpen(false), []);
 
-  const fetchCollaboration = useCallback(async () => {
+  const fetchCollaboration = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
       const response = await collaborationService.getOne(id);
       setCollaboration(response?.data || response);
     } catch (err) {
       console.error('Error fetching collaboration details:', err);
-      setError('Failed to load collaboration details.');
+      if (!silent) setError('Failed to load collaboration details.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [id]);
 
@@ -70,23 +79,59 @@ const CollabDetailView = () => {
     fetchCollaboration();
   }, [fetchCollaboration]);
 
+  // Auto-show agreement modal if required
+  useEffect(() => {
+    if (collaboration && collaboration.status !== 'requested' && collaboration.status !== 'rejected') {
+      const hasAgreed = isBrand ? collaboration.brandAgreed : collaboration.influencerAgreed;
+      if (!hasAgreed && !isAgreementModalOpen) {
+        setIsAgreementModalOpen(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collaboration, user.role, isAgreementModalOpen]);
+
   const socket = useSocket();
 
   useEffect(() => {
-    if (socket && user) {
-      socket.on('activity_created', (data) => {
-        // Refresh if the activity is related to this specific collaboration
-        if (data.relatedId === id || (['collaboration', 'system'].includes(data.category))) {
-          fetchCollaboration();
-        }
-      });
-    }
+    if (socket && user && id) {
+      console.log('Joining collaboration room:', id);
+      socket.emit('join chat', id);
 
-    return () => {
-      if (socket) {
-        socket.off('activity_created');
-      }
-    };
+      const handleActivity = (data) => {
+        console.log('Activity received in CollabDetailView:', data.type, data.relatedId);
+        const isRelated = String(data.relatedId) === String(id);
+        const isSystemEvent = ['collaboration', 'system'].includes(data.category);
+        const isDeliverableEvent = data.type?.startsWith('deliverable_');
+
+        if (isRelated || isSystemEvent || isDeliverableEvent) {
+          fetchCollaboration(true);
+        }
+      };
+
+      const handleDeliverableUpdate = (data) => {
+        if (String(data.collaborationId) === String(id)) {
+          console.log('Real-time deliverable update received');
+          fetchCollaboration(true);
+        }
+      };
+
+      const handleCollaborationUpdate = (data) => {
+        if (String(data.collaborationId) === String(id)) {
+          console.log('Real-time collaboration status update received');
+          fetchCollaboration(true);
+        }
+      };
+
+      socket.on('activity_created', handleActivity);
+      socket.on('deliverable_updated', handleDeliverableUpdate);
+      socket.on('collaboration_updated', handleCollaborationUpdate);
+
+      return () => {
+        socket.off('activity_created', handleActivity);
+        socket.off('deliverable_updated', handleDeliverableUpdate);
+        socket.off('collaboration_updated', handleCollaborationUpdate);
+      };
+    }
   }, [user, id, fetchCollaboration, socket]);
 
   const handleAction = async (actionType, payload = {}) => {
@@ -107,11 +152,11 @@ const CollabDetailView = () => {
           res = await collaborationService.requestAction(id, { type: 'COMPLETE', reason: "Work finished, ready for completion." });
           break;
         case 'APPROVE_REQUEST':
-          res = await collaborationService.handleAction(id, { decision: 'APPROVED', reviewData: payload.reviewData });
+          res = await collaborationService.handleAction(id, { action: 'APPROVE', reviewData: payload.reviewData });
           setIsCompleteModalOpen(false);
           break;
         case 'REJECT_REQUEST':
-          res = await collaborationService.handleAction(id, { decision: 'REJECTED' });
+          res = await collaborationService.handleAction(id, { action: 'REJECT' });
           break;
         case 'COMPLETE':
           res = await collaborationService.complete(id, payload.reviewData);
@@ -121,6 +166,10 @@ const CollabDetailView = () => {
           res = await collaborationService.requestAction(id, { type: 'CANCEL', reason: cancelReason }); // Direct cancel for brand is also a request for consistency or use updateStatus
           // Let's use requestAction with approval if influencer, or direct cancel for brand
           if (user.role === 'brand') {
+          }
+          if (res.data?.cancellationSummary) {
+            setCancellationSummary(res.data.cancellationSummary);
+            setIsCancellationSummaryOpen(true);
           }
           break;
         case 'INFLUENCER_REVIEW':
@@ -136,11 +185,26 @@ const CollabDetailView = () => {
       await fetchCollaboration();
     } catch (err) {
       console.error(`Action ${actionType} failed:`, err);
-      alert(err.message || "Action failed. Please try again.");
+      toast.error(err.response?.data?.message || err.message || "Action failed. Please try again.");
     } finally {
       setActionLoading(false);
     }
   };
+
+  const handleConfirmAgreement = useCallback(async () => {
+    try {
+      setActionLoading(true);
+      await collaborationService.confirmAgreement(id);
+      toast.success("Agreement signed successfully!");
+      setIsAgreementModalOpen(false);
+      fetchCollaboration();
+    } catch (err) {
+      console.error('Agreement confirmation failed:', err);
+      toast.error(err.message || "Failed to confirm agreement.");
+    } finally {
+      setActionLoading(false);
+    }
+  }, [id, fetchCollaboration]);
 
   const handleFundEscrow = async () => {
     try {
@@ -232,14 +296,9 @@ const CollabDetailView = () => {
   // Progress logic
   const delivTotal = deliverables.length;
   const delivCompleted = deliverables.filter(d => ['APPROVED', 'DELIVERED'].includes(d.status)).length;
-  const progress = delivTotal > 0 ? Math.round((delivCompleted / delivTotal) * 100) : 0;
   const canComplete = delivTotal > 0 && delivCompleted === delivTotal;
 
   // Timeline & Advanced Status Logic
-  const endDate = new Date(collaboration.endDate || Date.now());
-  const now = new Date();
-  const diffTime = endDate - now;
-  const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
   const hasRevisionRequested = deliverables.some(d => d.status === 'REVISION_REQUESTED');
   const hasSubmitted = deliverables.some(d => d.status === 'SUBMITTED');
@@ -269,6 +328,12 @@ const CollabDetailView = () => {
         </button>
         <div className="flex items-center gap-3">
            <button 
+             onClick={() => setIsAgreementModalOpen(true)}
+             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
+             <ShieldCheck size={14} className="text-emerald-500" />
+             View Agreement
+           </button>
+           <button 
              onClick={handleChatClick}
              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
              <MessageCircle size={14} className="text-blue-500" />
@@ -288,13 +353,15 @@ const CollabDetailView = () => {
                </span>
                 <span className={cn(
                   "px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border flex items-center gap-2",
-                  (status === 'active' || status === 'in_progress' || (status === 'awaiting_funds' && collaboration.escrowFunded)) ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                  (status === 'active' || status === 'in_progress') && collaboration.escrowFunded ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                  (status === 'active' || status === 'in_progress') && !collaboration.escrowFunded ? "bg-amber-50 text-amber-600 border-amber-100" :
                   status === 'awaiting_funds' ? "bg-blue-50 text-blue-600 border-blue-100" :
                   status === 'suspended' ? "bg-red-50 text-red-600 border-red-100" :
                   status === 'completed' ? "bg-blue-50 text-blue-600 border-blue-100" :
                   "bg-gray-50 text-gray-600 border-gray-100"
                 )}>
                   { (status === 'awaiting_funds' && collaboration.escrowFunded) ? 'ACTIVE' : 
+                    ((status === 'active' || status === 'in_progress') && !collaboration.escrowFunded) ? 'AWAITING ADDITIONAL FUNDS' :
                     (hasRevisionRequested && status === 'active') ? 'REVISION IN PROGRESS' :
                     (hasSubmitted && status === 'active') ? (isInfluencer ? 'IN REVIEW' : 'PENDING YOUR REVIEW') :
                     (status?.replace(/_/g, ' ') || 'ONGOING') 
@@ -337,7 +404,7 @@ const CollabDetailView = () => {
                 </div>
                 <div>
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Funded</p>
-                  <p className="text-base font-black text-gray-900">${collaboration.escrowFunded ? collaboration.agreedBudget?.toLocaleString() : '0'}</p>
+                  <p className="text-base font-black text-gray-900">${(collaboration.totalFundedAmount || 0).toLocaleString()}</p>
                 </div>
               </div>
 
@@ -494,6 +561,34 @@ const CollabDetailView = () => {
         </div>
       )}
 
+      {/* Agreement Awaiting Banner */}
+      {(!collaboration.brandAgreed || !collaboration.influencerAgreed) && status !== 'completed' && status !== 'cancelled' && (
+        <div className="mb-8 bg-amber-500 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 animate-in slide-in-from-top-4 duration-500">
+           <div className="flex items-center gap-5">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                 <Lock size={24} />
+              </div>
+              <div>
+                 <h2 className="text-lg font-bold">Agreement Signature Required</h2>
+                 <p className="text-amber-50 text-sm font-medium opacity-90">
+                   {!collaboration.brandAgreed && !collaboration.influencerAgreed 
+                     ? "Both you and your partner must sign the agreement before work can begin."
+                     : !collaboration.brandAgreed 
+                       ? "Awaiting Brand's signature on the agreement."
+                       : "Awaiting Influencer's signature on the agreement."
+                   }
+                 </p>
+              </div>
+           </div>
+           <button 
+             onClick={() => setIsAgreementModalOpen(true)}
+             className="px-6 py-3 bg-white text-amber-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-amber-50 transition-all shadow-lg active:scale-95 shrink-0"
+           >
+             {(!isBrand && collaboration.influencerAgreed) || (isBrand && collaboration.brandAgreed) ? "View Agreement" : "Review & Sign Agreement"}
+           </button>
+        </div>
+      )}
+
       {/* ── ACTION GUIDANCE BANNERS ──────────────────────────────── */}
       {status === 'awaiting_funds' && user.role === 'brand' && !collaboration.escrowFunded && (
         <div className="mb-8 bg-blue-600 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 animate-in slide-in-from-top-4 duration-500">
@@ -508,12 +603,35 @@ const CollabDetailView = () => {
                 </p>
               </div>
            </div>
-           <button 
-             disabled={actionLoading}
+            <button 
+             disabled={actionLoading || !collaboration.brandAgreed || !collaboration.influencerAgreed}
              onClick={handleFundEscrow}
              className="bg-white text-blue-600 px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-blue-50 transition-all shadow-lg active:scale-95 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
            >
-             {actionLoading ? "Initializing..." : "Fund Escrow Now"}
+             {!collaboration.brandAgreed || !collaboration.influencerAgreed ? "Sign Agreement First" : actionLoading ? "Initializing..." : "Fund Escrow Now"}
+           </button>
+        </div>
+      )}
+
+      {status === 'active' && user.role === 'brand' && !collaboration.escrowFunded && (
+        <div className="mb-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 animate-in slide-in-from-top-4 duration-500">
+           <div className="flex items-center gap-5">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shrink-0">
+                 <DollarSign size={28} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold tracking-tight">Additional Escrow Funding Required</h2>
+                <p className="text-purple-100 text-sm font-medium opacity-90 max-w-md">
+                  New tasks have been added. Fund an additional <b>${((collaboration.agreedBudget || 0) - (collaboration.totalFundedAmount || 0)).toLocaleString()}</b> to enable the influencer to start working on them.
+                </p>
+              </div>
+           </div>
+           <button 
+             disabled={actionLoading}
+             onClick={handleFundEscrow}
+             className="bg-white text-purple-600 px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-purple-50 transition-all shadow-lg active:scale-95 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+           >
+             {actionLoading ? "Initializing..." : "Fund Additional Escrow"}
            </button>
         </div>
       )}
@@ -524,8 +642,8 @@ const CollabDetailView = () => {
               <AlertCircle size={24} />
            </div>
            <div>
-              <h2 className="text-lg font-bold">Waiting for Escrow</h2>
-              <p className="text-amber-50 text-sm font-medium opacity-90">The brand has accepted your request, but tasks cannot be started until the escrow is funded.</p>
+              <h2 className="text-lg font-bold">Waiting for Additional Escrow</h2>
+              <p className="text-amber-50 text-sm font-medium opacity-90">The brand needs to fund <b>${((collaboration.agreedBudget || 0) - (collaboration.totalFundedAmount || 0)).toLocaleString()}</b> additional escrow before you can start the new tasks.</p>
            </div>
         </div>
       )}
@@ -560,11 +678,20 @@ const CollabDetailView = () => {
              <>
                {status === 'awaiting_funds' && !collaboration.escrowFunded && (
                  <button 
-                   disabled={actionLoading}
+                   disabled={actionLoading || !collaboration.brandAgreed || !collaboration.influencerAgreed}
                    onClick={handleFundEscrow}
-                   className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 hover:scale-105 transition-all shadow-lg shadow-blue-200"
+                   className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 hover:scale-105 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
                  >
                    <DollarSign size={14} /> Fund Escrow
+                 </button>
+               )}
+               {status === 'active' && !collaboration.escrowFunded && (
+                 <button 
+                   disabled={actionLoading || !collaboration.brandAgreed || !collaboration.influencerAgreed}
+                   onClick={handleFundEscrow}
+                   className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-purple-700 hover:scale-105 transition-all shadow-lg shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                 >
+                   <DollarSign size={14} /> Fund Additional Escrow
                  </button>
                )}
                
@@ -641,9 +768,17 @@ const CollabDetailView = () => {
               <AlertCircle size={16} />
             </div>
             <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
-              <h4 className="text-[11px] font-black uppercase tracking-tight whitespace-nowrap">{actionRequest.type} REQUEST</h4>
-              <p className="text-[10px] font-bold text-indigo-50/80 leading-tight line-clamp-1">
-                The partner requested to {actionRequest.type.toLowerCase()} this project. 
+              <h4 className="text-[11px] font-black uppercase tracking-tight whitespace-nowrap">
+                {actionRequest.type === 'ADD_TASKS' ? 'ADDITIONAL TASKS' : actionRequest.type} REQUEST
+              </h4>
+              <p className="text-[10px] font-bold text-indigo-50/80 leading-tight line-clamp-2">
+                {actionRequest.type === 'ADD_TASKS' ? (
+                  <>
+                    The brand proposed <b>{actionRequest.proposedTasks?.length || 0} additional tasks</b> worth <b>${actionRequest.proposedTasks?.reduce((sum, t) => sum + (t.allocatedBudget || 0), 0).toLocaleString()}</b>.
+                  </>
+                ) : (
+                  `The partner requested to ${actionRequest.type.toLowerCase()} this project.`
+                )}
                 <span className="ml-2 italic opacity-60 font-medium">Reason: "{actionRequest.reason}"</span>
               </p>
             </div>
@@ -723,10 +858,10 @@ const CollabDetailView = () => {
                <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
                <div>
                  <p className="text-xs font-bold text-amber-900 mb-1 uppercase tracking-tight">Escrow & Refund Policy</p>
-                 <p className="text-[11px] font-medium text-amber-800 leading-relaxed">
-                   Tasks in progress for over 24 hours will incur a <b>50% deduction</b> to compensate the influencer. 
-                   All remaining unallocated funds will be <b>automatically refunded</b> to your original payment method.
-                 </p>
+                  <p className="text-[11px] font-medium text-amber-800 leading-relaxed">
+                    Tasks in progress for over 12 hours will incur a <b>50% deduction</b> to compensate the influencer. 
+                    All remaining unallocated funds will be <b>automatically refunded</b> to your original payment method.
+                  </p>
                </div>
              </div>
           )}
@@ -868,6 +1003,31 @@ const CollabDetailView = () => {
           </button>
         </div>
       </Modal>
+
+      <AgreementModal 
+        isOpen={isAgreementModalOpen}
+        onClose={closeAgreementModal}
+        onAgree={handleConfirmAgreement}
+        collaboration={collaboration}
+        userRole={user.role}
+        isLoading={actionLoading}
+      />
+
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={closePaymentModal}
+        clientSecret={clientSecret}
+        collaborationId={id}
+        onPaymentSuccess={handlePaymentSuccess}
+        amount={collaboration?.agreedBudget}
+      />
+
+      <CancellationSummaryModal
+        isOpen={isCancellationSummaryOpen}
+        onClose={() => setIsCancellationSummaryOpen(false)}
+        summary={cancellationSummary}
+        userRole={user.role}
+      />
 
       {isPaymentModalOpen && (
         <PaymentModal

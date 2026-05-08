@@ -251,9 +251,7 @@ export default function ProfileSettings() {
           brandFd.append(`socialMedia[${p}]`, "");
         });
 
-        // Sync logo for brand
-        if (profilePic) brandFd.append("logo", profilePic);
-        
+        // Images are already updated via updateUserInfo, so no need to sync logo here
         const brandRes = await profileService.updateBrandProfile(brandFd);
         dispatch(setProfileData({ roleProfile: brandRes.brand, completion: brandRes.completion }));
         if (brandRes.user) {
@@ -267,9 +265,7 @@ export default function ProfileSettings() {
         infFd.append("category", category);
         infFd.append("socialMediaUpdate", "true");
 
-        // Sync cover for influencer
-        if (coverPic) infFd.append("coverImage", coverPic);
-        
+        // Images are already updated via updateUserInfo, so no need to sync coverImage here
         const socialMedia = {};
         selectedPlatforms.forEach(p => socialMedia[p] = "");
         infFd.append("socialMedia", JSON.stringify(socialMedia));

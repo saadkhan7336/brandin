@@ -14,6 +14,7 @@ import {
 const InfluencerRequestCard = ({
   request,
   type,
+  userId,
   onAccept,
   onReject,
   onResend,
@@ -28,6 +29,7 @@ const InfluencerRequestCard = ({
     previouslyRejected,
     collaborationId,
     initiatedBy,
+    sender,
   } = request;
 
   const isInfluencerInitiated = initiatedBy === "influencer";
@@ -52,7 +54,7 @@ const InfluencerRequestCard = ({
     (request.campaignDetails?.budget?.min
       ? `$${request.campaignDetails.budget.min}+`
       : "0");
-  const showBudget = isInfluencerInitiated;
+  const showBudget = !!budgetValue && budgetValue !== "0";
 
   // Format Date
   const date = new Date(createdAt).toLocaleDateString("en-US", {
@@ -126,6 +128,11 @@ const InfluencerRequestCard = ({
                 {status === "pending" && previouslyRejected && (
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-50 text-rose-500 border border-rose-100 uppercase tracking-tighter">
                     Prev. Rejected
+                  </span>
+                )}
+                {status === "requested" && String(sender) === String(otherParty._id) && (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-tighter">
+                    Counter Offer
                   </span>
                 )}
               </div>
@@ -230,7 +237,7 @@ const InfluencerRequestCard = ({
               </button>
             ) : (
               status === "requested" &&
-              !isInfluencerInitiated && (
+              String(sender) !== String(userId) && (
                 <>
                   <button
                     onClick={() => onAccept(request._id)}

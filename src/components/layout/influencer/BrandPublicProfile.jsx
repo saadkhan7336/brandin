@@ -180,8 +180,6 @@ const BrandPublicProfile = () => {
   const { brand, campaigns } = data;
   const user = brand?.user || data?.user || {};
   const name = brand?.brandname || user?.fullname || "Brand";
-  const logo = brand?.logo || user?.profilePic;
-
   // Real metrics from backend stats object
   const metrics = {
     activeCampaigns: data.stats?.activeCampaignsCount || 0,
@@ -290,9 +288,9 @@ const BrandPublicProfile = () => {
               <div className="flex items-start gap-4">
                 {/* Logo */}
                 <div className="absolute -top-16 left-8">
-                  {logo || user.profilePic ? (
+                  {user.profilePic || brand?.logo ? (
                     <img
-                      src={logo || user.profilePic}
+                      src={user.profilePic || brand?.logo}
                       alt={name}
                       className="w-36 h-36 rounded-2xl object-cover border-4 border-white shadow-xl"
                     />

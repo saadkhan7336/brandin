@@ -2,17 +2,21 @@ import { Bell, Menu, X, Shield, MessageCircle } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import VerifiedTick from '../common/VerifiedTick';
+import { useDashboardContext } from '../../context/DashboardContext';
 
-export default function Navbar({
-  userRole,
-  user,
-  roleProfile,
-  notificationCount,
-  isSidebarOpen,
-  onToggleSidebar,
-  onToggleNotifications,
-  onToggleProfile,
-}) {
+export default function Navbar() {
+  const { user } = useSelector((state) => state.auth);
+  const { roleProfile } = useSelector((state) => state.profile);
+  const { unreadCount: notificationCount } = useSelector((state) => state.notifications);
+  
+  const {
+    isSidebarOpen,
+    toggleSidebar,
+    toggleNotifications,
+    toggleProfile,
+  } = useDashboardContext();
+
+  const userRole = user?.role || 'brand';
   const isBrand = userRole === 'brand';
   const isInfluencer = userRole === 'influencer';
 
@@ -33,9 +37,7 @@ export default function Navbar({
   // removed messages logic from here
 
   // Dynamic avatars
-  const avatarUrl = isBrand 
-    ? (roleProfile?.logo || user?.profilePic) 
-    : (roleProfile?.profilePicture || user?.profilePic);
+  const avatarUrl = user?.profilePic || (isBrand ? roleProfile?.logo : roleProfile?.profilePicture);
   
   const roleLabel = 
     userRole === 'admin' ? 'ADMIN' : 
@@ -58,7 +60,7 @@ export default function Navbar({
         {/* Left: hamburger + logo + title */}
         <div className="flex items-center gap-3">
           <button
-            onClick={onToggleSidebar}
+            onClick={toggleSidebar}
             className="lg:hidden text-gray-500 hover:text-gray-900 p-1 rounded-lg hover:bg-gray-100 transition-colors"
           >
             {isSidebarOpen ? (
@@ -81,7 +83,7 @@ export default function Navbar({
         <div className="flex items-center gap-3">
           {/* Notification bell */}
           <button
-            onClick={onToggleNotifications}
+            onClick={toggleNotifications}
             className="relative p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <Bell className="w-5 h-5" />
@@ -95,7 +97,7 @@ export default function Navbar({
 
           {/* Profile trigger */}
           <button
-            onClick={onToggleProfile}
+            onClick={toggleProfile}
             className="flex items-center gap-2.5 pl-3 border-l border-gray-200 hover:opacity-80 transition-opacity"
           >
             {/* Avatar */}

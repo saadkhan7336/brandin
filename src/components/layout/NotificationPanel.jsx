@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchNotifications, markAsRead, markAllAsRead, deleteNotification } from '../../redux/slices/notificationSlice';
 import { formatDistanceToNow } from 'date-fns';
+import { useDashboardContext } from '../../context/DashboardContext';
 
 const typeConfig = {
   success: { icon: CheckCircle2, bg: 'bg-green-50', color: 'text-green-500' },
@@ -18,11 +19,13 @@ const typeConfig = {
   system: { icon: AlertTriangle, bg: 'bg-gray-50', color: 'text-gray-500' },
 };
 
-export default function NotificationPanel({ isOpen, onClose }) {
+export default function NotificationPanel() {
   const panelRef = useRef(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { items: notifications, unreadCount, loading } = useSelector((state) => state.notifications);
+  
+  const { isNotificationOpen: isOpen, closeAllDropdowns: onClose } = useDashboardContext();
 
   useEffect(() => {
     if (isOpen) {

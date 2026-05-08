@@ -144,6 +144,10 @@ const MyProfileView = () => {
   const { brand, campaigns } = data;
   const name = brand.brandname || "My Brand";
   const userDoc = brand.user || {};
+  const cover =
+    userDoc.coverPic ||
+    brand.coverImage ||
+    "https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=2000";
 
   const metrics = {
     activeCampaigns: data.stats?.activeCampaignsCount || 0,
@@ -173,10 +177,7 @@ const MyProfileView = () => {
       <div className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/40 overflow-hidden group/card relative transition-all">
         <div className="h-80 bg-slate-100 relative group/cover cursor-default">
           <img
-            src={
-              userDoc.coverPic ||
-              "https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=2000"
-            }
+            src={cover}
             alt="Cover"
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105"
           />
@@ -188,13 +189,9 @@ const MyProfileView = () => {
             {/* LOGO AREA */}
             <div className="relative group/logo shrink-0">
               <div className="w-44 h-44 rounded-[2.5rem] overflow-hidden border-[10px] border-white shadow-2xl bg-white flex items-center justify-center relative ring-1 ring-gray-100">
-                {brand.logo ||
-                  userDoc.profilePic ? (
+                {userDoc.profilePic ? (
                   <img
-                    src={
-                      brand.logo ||
-                      userDoc.profilePic
-                    }
+                    src={userDoc.profilePic}
                     alt={name}
                     className="w-full h-full object-cover"
                   />

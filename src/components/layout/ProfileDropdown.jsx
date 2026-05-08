@@ -1,13 +1,19 @@
 import React, { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { Settings, LogOut, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import VerifiedTick from '../common/VerifiedTick';
+import { useDashboardContext } from '../../context/DashboardContext';
 
-export default function ProfileDropdown({ user, roleProfile, isOpen, onClose, onLogout }) {
+export default function ProfileDropdown() {
   const panelRef = useRef(null);
   const navigate = useNavigate();
-  const { updateStatus } = useAuth();
+  const { updateStatus, logout } = useAuth();
+  const { user } = useSelector((state) => state.auth);
+  const { roleProfile } = useSelector((state) => state.profile);
+  
+  const { isProfileOpen: isOpen, closeAllDropdowns: onClose } = useDashboardContext();
 
   const userRole = user?.role || 'brand';
   const isBrand = userRole === 'brand';
@@ -27,7 +33,7 @@ export default function ProfileDropdown({ user, roleProfile, isOpen, onClose, on
   const initial = displayName.charAt(0).toUpperCase();
 
   // Dynamic avatars & cover
-  const avatarUrl = isBrand ? (roleProfile?.logo || user?.profilePic) : (user?.profilePic);
+  const avatarUrl = user?.profilePic || (isBrand ? roleProfile?.logo : null);
   const coverUrl = user?.coverPic;
 
   useEffect(() => {
@@ -43,6 +49,11 @@ export default function ProfileDropdown({ user, roleProfile, isOpen, onClose, on
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   const settingsPath = userRole === 'brand' ? '/brand/settings' : '/influencer/settings';
 
@@ -132,7 +143,7 @@ export default function ProfileDropdown({ user, roleProfile, isOpen, onClose, on
         </button>
 
         <button
-          onClick={onLogout}
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors"
         >
           <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">

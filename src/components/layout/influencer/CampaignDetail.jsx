@@ -75,7 +75,7 @@ const CampaignDetail = () => {
   }
  
   const brandName = campaign.brandProfile?.brandname || campaign.brand?.fullname || "Brand";
-  const brandLogo = campaign.brandProfile?.logo || campaign.brand?.profilePic;
+  const brandLogo = campaign.brand?.profilePic || campaign.brandProfile?.logo;
  
   const startDate = campaign.campaignTimeline?.startDate
     ? new Date(campaign.campaignTimeline.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })

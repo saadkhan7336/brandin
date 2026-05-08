@@ -222,7 +222,19 @@ const collaborationService = {
    */
   submitInfluencerReview: async (id, reviewData) => {
     try {
-      const response = await api.post(ENDPOINTS.collaborations.submitInfluencerReview(id), { reviewData });
+      const response = await api.post(ENDPOINTS.collaborations.submitInfluencerReview(id), reviewData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * Confirm agreement/contract terms
+   */
+  confirmAgreement: async (id) => {
+    try {
+      const response = await api.post(ENDPOINTS.collaborations.confirmAgreement(id));
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;

@@ -57,7 +57,7 @@ const CampaignCard = ({
   
   const matchScore = aiData?.matchScore || campaign.matchScore;
   const brandName = campaign.brandProfile?.brandname || campaign.brandUser?.fullname || "Brand";
-  const brandLogo = campaign.brandProfile?.logo || campaign.brandUser?.profilePic;
+  const brandLogo = campaign.brandUser?.profilePic || campaign.brandProfile?.logo;
 
   const startDateStr = campaign.campaignTimeline?.startDate
     ? new Date(campaign.campaignTimeline.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
@@ -90,7 +90,7 @@ const CampaignCard = ({
           {/* Social Icons Overlay */}
           <div className="absolute top-3 right-3 flex flex-col gap-1 z-10">
             {Array.isArray(campaign.platform) ? (
-              campaign.platform.map((p, idx) => (
+              [...new Set(campaign.platform)].map((p, idx) => (
                 <SocialIcon key={idx} platformName={p} className="w-5 h-5 transition-transform duration-300 hover:scale-110" />
               ))
             ) : campaign.platform ? (
@@ -235,8 +235,8 @@ const BrandCard = ({
   collaborationStatus
 }) => {
   const navigate = useNavigate();
-  const name = brand.brandname || (brand.user && brand.user.fullname) || "Brand";
-  const logo = brand.logo || (brand.user && brand.user.profilePic);
+  const name = brand.fullname || brand.brandname || (brand.user && brand.user.fullname) || "Brand";
+  const logo = brand.profilePic || (brand.user && brand.user.profilePic) || brand.logo;
   
   const matchScore = aiData?.matchScore;
   const matchLevel = aiData?.matchLevel;

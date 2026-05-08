@@ -119,8 +119,6 @@ export const useAuth = () => {
 
     } catch (err) {
       // Session expired or not logged in — clear auth state
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
       dispatch(logoutSuccess());
     } finally {
       dispatch(setLoading(false));
@@ -135,9 +133,6 @@ export const useAuth = () => {
       dispatch(setLoading(true));
 
       await api.post(ENDPOINTS.LOGOUT);
-
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
 
       dispatch(logoutSuccess());
       dispatch(clearAuthState());

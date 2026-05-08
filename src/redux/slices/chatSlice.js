@@ -139,6 +139,41 @@ export const reactToMessageItem = createAsyncThunk(
   }
 );
 
+const handleUpdateMessageLocal = (state, action) => {
+  const msg = action.payload; 
+  if (!msg || !state.messages[msg.conversationId]) return;
+  const index = state.messages[msg.conversationId].findIndex(m => m._id === msg._id);
+  if (index !== -1) {
+    state.messages[msg.conversationId][index] = msg;
+  }
+  
+  const convIndex = state.conversations.findIndex((c) => c._id === msg.conversationId);
+  if (convIndex !== -1) {
+    if (state.conversations[convIndex].lastMessage && String(state.conversations[convIndex].lastMessage.createdAt) === String(msg.createdAt)) {
+      state.conversations[convIndex].lastMessage = {
+         text: msg.text,
+         sender: msg.sender._id || msg.sender,
+         createdAt: msg.createdAt,
+         isRead: msg.isRead,
+         attachmentUrl: msg.attachmentUrl,
+         attachmentType: msg.attachmentType,
+      };
+    }
+  }
+};
+
+const handleRemoveMessageLocal = (state, action) => {
+   const { conversationId, messageId } = action.payload;
+   if (!state.messages[conversationId]) return;
+   state.messages[conversationId] = state.messages[conversationId].filter(m => m._id !== messageId);
+};
+
+const handleRemoveMultipleMessagesLocal = (state, action) => {
+  const { conversationId, messageIds } = action.payload;
+  if (!state.messages[conversationId]) return;
+  state.messages[conversationId] = state.messages[conversationId].filter(m => !messageIds.includes(m._id));
+};
+
 const chatSlice = createSlice({
   name: "chat",
   initialState: {
@@ -184,38 +219,9 @@ const chatSlice = createSlice({
         state.conversations[convIndex].lastMessage.isRead = true;
       }
     },
-    updateMessageLocal(state, action) {
-      const msg = action.payload; 
-      if (!msg || !state.messages[msg.conversationId]) return;
-      const index = state.messages[msg.conversationId].findIndex(m => m._id === msg._id);
-      if (index !== -1) {
-        state.messages[msg.conversationId][index] = msg;
-      }
-      
-      const convIndex = state.conversations.findIndex((c) => c._id === msg.conversationId);
-      if (convIndex !== -1) {
-        if (state.conversations[convIndex].lastMessage && String(state.conversations[convIndex].lastMessage.createdAt) === String(msg.createdAt)) {
-          state.conversations[convIndex].lastMessage = {
-             text: msg.text,
-             sender: msg.sender._id || msg.sender,
-             createdAt: msg.createdAt,
-             isRead: msg.isRead,
-             attachmentUrl: msg.attachmentUrl,
-             attachmentType: msg.attachmentType,
-          };
-        }
-      }
-    },
-    removeMessageLocal(state, action) {
-       const { conversationId, messageId } = action.payload;
-       if (!state.messages[conversationId]) return;
-       state.messages[conversationId] = state.messages[conversationId].filter(m => m._id !== messageId);
-    },
-    removeMultipleMessagesLocal(state, action) {
-      const { conversationId, messageIds } = action.payload;
-      if (!state.messages[conversationId]) return;
-      state.messages[conversationId] = state.messages[conversationId].filter(m => !messageIds.includes(m._id));
-    }
+    updateMessageLocal: handleUpdateMessageLocal,
+    removeMessageLocal: handleRemoveMessageLocal,
+    removeMultipleMessagesLocal: handleRemoveMultipleMessagesLocal
   },
   extraReducers: (builder) => {
     builder
@@ -273,21 +279,11 @@ const chatSlice = createSlice({
           state.conversations[convIndex].lastMessage.isRead = true;
         }
       })
-      .addCase(editMessageItem.fulfilled, (state, action) => {
-         chatSlice.caseReducers.updateMessageLocal(state, action);
-      })
-      .addCase(deleteMessageGlobal.fulfilled, (state, action) => {
-         chatSlice.caseReducers.updateMessageLocal(state, action);
-      })
-      .addCase(reactToMessageItem.fulfilled, (state, action) => {
-         chatSlice.caseReducers.updateMessageLocal(state, action);
-      })
-      .addCase(deleteMessageMe.fulfilled, (state, action) => {
-         chatSlice.caseReducers.removeMessageLocal(state, action);
-      })
-      .addCase(bulkDeleteForMe.fulfilled, (state, action) => {
-         chatSlice.caseReducers.removeMultipleMessagesLocal(state, action);
-      });
+      .addCase(editMessageItem.fulfilled, handleUpdateMessageLocal)
+      .addCase(deleteMessageGlobal.fulfilled, handleUpdateMessageLocal)
+      .addCase(reactToMessageItem.fulfilled, handleUpdateMessageLocal)
+      .addCase(deleteMessageMe.fulfilled, handleRemoveMessageLocal)
+      .addCase(bulkDeleteForMe.fulfilled, handleRemoveMultipleMessagesLocal);
   },
 });
 

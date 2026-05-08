@@ -4,14 +4,8 @@ import { useNavigate, useParams, NavLink } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import CollaborationCard from '../../components/common/CollaborationCard';
 import collaborationService from '../../services/collaborationService';
-import {
-  setCollaborations,
-  setCollaborationsLoading,
-  setCollaborationsError,
-} from '../../redux/slices/collaborationSlice';
-import { io } from 'socket.io-client';
-
-const ENDPOINT = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+import { setCollaborations, setCollaborationsLoading, setCollaborationsError } from '../../redux/slices/collaborationSlice';
+import { useSocket } from '../../context/SocketContext';
 
 const CollaborationsPage = () => {
   const navigate = useNavigate();
@@ -44,26 +38,23 @@ const CollaborationsPage = () => {
     fetchCollaborations();
   }, [fetchCollaborations]);
 
-  useEffect(() => {
-    const socket = io(ENDPOINT, {
-      withCredentials: true,
-    });
+  const socket = useSocket();
 
-    if (user) {
-      socket.emit('setup', user);
-      
-      socket.on('activity_created', (data) => {
+  useEffect(() => {
+    if (socket && user) {
+      const handleActivity = (data) => {
         if (data.category === 'collaboration') {
           fetchCollaborations();
         }
-      });
-    }
+      };
 
-    return () => {
-      socket.off('activity_created');
-      socket.disconnect();
-    };
-  }, [user, fetchCollaborations]);
+      socket.on('activity_created', handleActivity);
+      
+      return () => {
+        socket.off('activity_created', handleActivity);
+      };
+    }
+  }, [socket, user, fetchCollaborations]);
 
   const userRole = user?.role;
   const baseUrl = userRole === 'influencer' ? '/influencer/collaborations' : '/brand/collaborations';

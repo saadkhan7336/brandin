@@ -232,12 +232,12 @@ const InfluencerProfile = () => {
 
   const name = user?.fullname || influencer?.username || "Influencer";
   const avatar =
-    influencer?.profilePicture ||
     user?.profilePic ||
+    influencer?.profilePicture ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=200`;
   const cover =
-    influencer?.coverImage ||
     user?.coverPic ||
+    influencer?.coverImage ||
     "https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=2000";
 
   return (

@@ -6,13 +6,20 @@ import { Provider } from 'react-redux';
 import store from './redux/store';
 import { SocketProvider } from './context/SocketContext';
 
+import ErrorBoundary from './components/common/ErrorBoundary';
+import { injectStore } from './services/api';
+
+injectStore(store);
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <Provider store={store}>
-      <SocketProvider>
-        <App />
-      </SocketProvider>
+      <ErrorBoundary>
+        <SocketProvider>
+          <App />
+        </SocketProvider>
+      </ErrorBoundary>
     </Provider>
   </React.StrictMode>
 );

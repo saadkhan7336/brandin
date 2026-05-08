@@ -26,6 +26,7 @@ const MyRequests = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { type, status } = useParams();
+  const { user } = useSelector((state) => state.auth);
   const { requests, loading, error, filters, total, page, pages, counts } = useSelector(
     (state) => state.collaboration
   );
@@ -261,6 +262,8 @@ const MyRequests = () => {
                 <RequestCard 
                   key={request._id} 
                   request={request} 
+                  type={filters.type}
+                  userId={user?._id}
                   onAccept={() => handleAccept(request._id)}
                   onReject={() => handleReject(request._id)}
                   onResend={() => handleResend(request)}

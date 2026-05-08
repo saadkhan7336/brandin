@@ -53,4 +53,4 @@ const PaymentModal = ({ isOpen, onClose, clientSecret, collaborationId, onPaymen
   );
 };
 
-export default PaymentModal;
+export default React.memo(PaymentModal);

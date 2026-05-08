@@ -26,6 +26,7 @@ import CounterOfferModal from '../../components/layout/influencer/CounterOfferMo
 const InfluencerRequests = () => {
   const dispatch = useDispatch();
   const { type, status } = useParams();
+  const { user } = useSelector((state) => state.auth);
   const { requests, loading, error, filters, total, page, pages, counts } = useSelector(
     (state) => state.collaboration
   );
@@ -275,6 +276,7 @@ const InfluencerRequests = () => {
                   key={request._id} 
                   request={request}
                   type={filters.type}
+                  userId={user?._id}
                   onAccept={() => handleAccept(request._id)}
                   onReject={() => handleReject(request._id)}
                   onResend={() => handleResend(request)}

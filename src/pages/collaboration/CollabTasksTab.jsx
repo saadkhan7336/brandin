@@ -5,16 +5,8 @@ import {
   LayoutGrid,
   List,
   DollarSign,
-  Trash2,
-  Edit3,
-  Check,
-  ChevronRight,
-  Calendar,
-  Layout,
-  Clock,
-  AlertCircle,
-  RotateCcw,
-  MessageSquare
+  MessageSquare,
+  Loader2
 } from 'lucide-react';
 import { useOutletContext, NavLink, Outlet } from 'react-router-dom';
 import collaborationService from '../../services/collaborationService';
@@ -32,9 +24,12 @@ const CollabTasksTab = () => {
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
   const [isSmartSetupOpen, setIsSmartSetupOpen] = useState(false);
+  const [isAddOnMode, setIsAddOnMode] = useState(false);
   const [taskCount, setTaskCount] = useState(1);
   const [smartTasks, setSmartTasks] = useState([]);
   const [selectedDeliverable, setSelectedDeliverable] = useState(null);
+  const [selectedTaskIds, setSelectedTaskIds] = useState([]);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   
   // Budget Exhaustion Logic
   const totalAllocated = collaboration.deliverables?.reduce((sum, d) => sum + (d.allocatedBudget || 0), 0) || 0;
@@ -52,17 +47,21 @@ const CollabTasksTab = () => {
   });
   
   // Revision Modal State
-  const [revisionModal, setRevisionModal] = useState({
-    isOpen: false,
-    deliverableId: null,
-    notes: ''
-  });
+  const [revisionModal, setRevisionModal] = useState({ isOpen: false, deliverableIds: [], notes: '' });
 
-  const [submissionLink, setSubmissionLink] = useState('');
+  const [submissionLinks, setSubmissionLinks] = useState({});
+  const [tasksToSubmit, setTasksToSubmit] = useState([]);
 
   const handleOpenModal = (deliv = null) => {
+    if (!collaboration.brandAgreed || !collaboration.influencerAgreed) {
+      toast.error("Agreement must be signed by both parties before adding deliverables.");
+      return;
+    }
     if (!deliv && !collaboration.escrowFunded) {
-      toast.error("You must fund the escrow before adding deliverables");
+      toast.error("Budget must be funded before adding deliverables. Please click 'Fund Escrow Now' first.", {
+        duration: 5000,
+        id: 'escrow-required'
+      });
       return;
     }
     if (deliv) {
@@ -94,6 +93,7 @@ const CollabTasksTab = () => {
   const handleAddOrUpdate = async (e) => {
     e.preventDefault();
     try {
+      setIsActionLoading(true);
       // Basic Budget Check
       const otherTasksBudget = collaboration.deliverables
         ?.filter(d => d._id !== selectedDeliverable?._id)
@@ -114,28 +114,44 @@ const CollabTasksTab = () => {
       toast.success("Task saved successfully");
     } catch (err) {
       toast.error(err.response?.data?.message || 'Error saving deliverable');
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
   const handleDelete = async (delivId) => {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
     try {
+      setIsActionLoading(true);
       await collaborationService.deleteDeliverable(collaboration._id, delivId);
       onRefresh();
+      toast.success("Task deleted");
     } catch (err) {
-      alert('Error deleting task');
+      toast.error('Error deleting task');
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
   const handleOpenSubmitModal = (deliv) => {
-    setSelectedDeliverable(deliv);
-    setSubmissionLink('');
+    const tasks = Array.isArray(deliv) ? deliv : [deliv];
+    setTasksToSubmit(tasks);
+    const initialLinks = {};
+    tasks.forEach(t => {
+      initialLinks[t._id] = '';
+    });
+    setSubmissionLinks(initialLinks);
     setIsSubmitModalOpen(true);
   };
 
   const handleSubmitDeliverable = async (e) => {
     e.preventDefault();
     try {
+      setIsActionLoading(true);
+      if (!collaboration.brandAgreed || !collaboration.influencerAgreed) {
+        toast.error("Agreement must be signed by both parties before work can begin");
+        return;
+      }
       if (!collaboration.escrowFunded) {
         toast.error("Escrow must be funded before submission");
         return;
@@ -144,19 +160,36 @@ const CollabTasksTab = () => {
         toast.error("Please connect your Stripe account in the dashboard before submitting tasks");
         return;
       }
-      await paymentService.submitDeliverable(selectedDeliverable._id, {
-        submissionFiles: [submissionLink]
-      });
-      toast.success("Deliverable submitted for review");
+
+      for (const task of tasksToSubmit) {
+        const link = submissionLinks[task._id];
+        if (!link) {
+          toast.error(`Please provide a link for ${task.title}`);
+          return;
+        }
+        await paymentService.submitDeliverable(task._id, {
+          submissionFiles: [link]
+        });
+      }
+
+      toast.success(`${tasksToSubmit.length} tasks submitted successfully`);
       setIsSubmitModalOpen(false);
+      setSelectedTaskIds([]);
       onRefresh();
     } catch (err) {
-      toast.error(err.message || 'Error submitting task');
+      toast.error(err.message || 'Error submitting tasks');
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
   const handleStartDeliverable = async (delivId) => {
     try {
+      setIsActionLoading(true);
+      if (!collaboration.brandAgreed || !collaboration.influencerAgreed) {
+        toast.error("Agreement must be signed by both parties before starting tasks");
+        return;
+      }
       if (!collaboration.escrowFunded) {
         toast.error("Escrow must be funded before starting task");
         return;
@@ -170,20 +203,31 @@ const CollabTasksTab = () => {
       onRefresh();
     } catch (err) {
       toast.error(err.message || "Failed to start task");
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
   const handleReview = async (deliverableId, status, extra = {}) => {
     try {
-      await collaborationService.reviewDeliverable(collaboration._id, deliverableId, { 
-        status, 
-        ...extra 
-      });
-      toast.success(status === 'APPROVED' ? 'Deliverable approved!' : 'Revision requested');
+      setIsActionLoading(true);
+      const ids = Array.isArray(deliverableId) ? deliverableId : [deliverableId];
+      
+      for (const id of ids) {
+        await collaborationService.reviewDeliverable(collaboration._id, id, { 
+          status, 
+          ...extra 
+        });
+      }
+      
+      toast.success(status === 'APPROVED' ? `Successfully processed ${ids.length} tasks` : `Revision requested for ${ids.length} tasks`);
       onRefresh();
-      setRevisionModal({ isOpen: false, deliverableId: null, notes: '' });
+      setRevisionModal({ isOpen: false, deliverableIds: [], notes: '' });
+      if (ids.length > 1) setSelectedTaskIds([]);
     } catch (error) {
       toast.error(error.message || 'Failed to review deliverable');
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -193,14 +237,23 @@ const CollabTasksTab = () => {
   };
 
   const handleStartSmartSetup = () => {
-    const equalBudget = Math.floor(collaboration.agreedBudget / taskCount);
+    const existingBudget = collaboration.deliverables?.reduce((sum, d) => sum + (d.allocatedBudget || 0), 0) || 0;
+    const remainingBudget = collaboration.agreedBudget - existingBudget;
+
+    if (!isAddOnMode && remainingBudget <= 0) {
+      toast.error("No budget remaining for smart setup.");
+      return;
+    }
+
+    const equalBudget = isAddOnMode ? 0 : Math.floor(remainingBudget / taskCount);
     const tasks = Array.from({ length: taskCount }, (_, i) => ({
       title: `Deliverable ${i + 1}`,
-      allocatedBudget: i === taskCount - 1 ? collaboration.agreedBudget - (equalBudget * (taskCount - 1)) : equalBudget,
+      allocatedBudget: isAddOnMode ? 50 : (i === taskCount - 1 ? remainingBudget - (equalBudget * (taskCount - 1)) : equalBudget),
       platform: 'instagram',
       description: '',
+      priority: 'MEDIUM',
       dueDate: new Date(Date.now() + (7 * (i + 1) * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
-      isFinal: i === taskCount - 1 // Last task is automatically the final one
+      isFinal: !isAddOnMode && (i === taskCount - 1)
     }));
     setSmartTasks(tasks);
   };
@@ -214,34 +267,91 @@ const CollabTasksTab = () => {
   const currentSmartTotal = smartTasks.reduce((sum, t) => sum + Number(t.allocatedBudget || 0), 0);
 
   const handleSaveSmartTasks = async () => {
-    if (currentSmartTotal > collaboration.agreedBudget) {
-      toast.error("Total budget exceeded!");
-      return;
-    }
     try {
-      for (const task of smartTasks) {
-        await collaborationService.addDeliverable(collaboration._id, task);
+      setIsActionLoading(true);
+      
+      if (isAddOnMode) {
+        // Request additional tasks via actionRequest
+        await collaborationService.requestAction(collaboration._id, {
+          type: 'ADD_TASKS',
+          reason: 'Requesting additional deliverables for the project.',
+          proposedTasks: smartTasks.map(t => ({
+            ...t,
+            platform: 'instagram',
+            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+          }))
+        });
+        toast.success("Additional tasks request sent to influencer!");
+        setIsAddOnMode(false);
+      } else {
+        const existingBudget = collaboration.deliverables?.reduce((sum, d) => sum + (d.allocatedBudget || 0), 0) || 0;
+        if (existingBudget + currentSmartTotal > collaboration.agreedBudget) {
+          toast.error(`Total budget exceeded! You only have $${collaboration.agreedBudget - existingBudget} remaining.`);
+          return;
+        }
+        if (!collaboration.escrowFunded) {
+          toast.error("Escrow must be funded before finalize setup.");
+          return;
+        }
+        for (const task of smartTasks) {
+          await collaborationService.addDeliverable(collaboration._id, task);
+        }
+        toast.success(`${smartTasks.length} tasks created successfully`);
       }
+      
       setIsSmartSetupOpen(false);
+      setSmartTasks([]);
       onRefresh();
-      toast.success(`${smartTasks.length} tasks created successfully`);
     } catch (err) {
-      toast.error("Error creating tasks");
+      toast.error(err.response?.data?.message || "Error processing tasks");
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
   const handleOnDragEnd = async (result) => {
-    if (userRole === 'brand') return;
-
     const { destination, source, draggableId } = result;
 
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
     const newStatus = destination.droppableId;
+    
+    // Determine the set of tasks being dragged
+    const isMultiDrag = selectedTaskIds.includes(draggableId);
+    const tasksToMove = isMultiDrag ? selectedTaskIds : [draggableId];
 
+    if (userRole === 'brand') {
+      if (newStatus !== 'APPROVED' && newStatus !== 'REVISION_REQUESTED') {
+        toast.error("Brands can only move tasks to Approved or Revision statuses.");
+        return;
+      }
+      
+      if (newStatus === 'REVISION_REQUESTED') {
+        // Only open revision modal for the first one if doing bulk
+        setRevisionModal({ isOpen: true, deliverableIds: tasksToMove, notes: isMultiDrag ? 'Bulk revision for selected tasks' : '' });
+        return;
+      }
+
+      try {
+        setIsActionLoading(true);
+        for (const id of tasksToMove) {
+          await collaborationService.reviewDeliverable(collaboration._id, id, { status: 'APPROVED' });
+        }
+        toast.success(`Successfully processed ${tasksToMove.length} tasks`);
+        if (isMultiDrag) setSelectedTaskIds([]);
+        onRefresh();
+      } catch (error) {
+        toast.error('Failed to process tasks');
+      } finally {
+        setIsActionLoading(false);
+      }
+      return;
+    }
+
+    // Influencer Logic
     if (newStatus === 'APPROVED' || newStatus === 'REVISION_REQUESTED') {
-      alert("Only the brand can review and approve tasks.");
+      toast.error("Only the brand can review and approve tasks.");
       return;
     }
 
@@ -254,13 +364,103 @@ const CollabTasksTab = () => {
     }
 
     try {
-      await collaborationService.updateDeliverable(collaboration._id, draggableId, { status: newStatus });
+      setIsActionLoading(true);
+      // Bulk update tasks to IN_PROGRESS or PENDING sequentially
+      for (const id of tasksToMove) {
+        await collaborationService.updateDeliverable(collaboration._id, id, { status: newStatus });
+      }
+      toast.success(`Successfully updated ${tasksToMove.length} tasks`);
+      if (isMultiDrag) setSelectedTaskIds([]);
       onRefresh();
     } catch (error) {
       console.error('Error adding/updating deliverable:', error);
       toast.error(error.message || 'Failed to process deliverable');
+    } finally {
+      setIsActionLoading(false);
     }
   };
+
+  // Bulk Selection Handlers
+  const handleToggleTask = (taskId) => {
+    setSelectedTaskIds(prev => 
+      prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedTaskIds.length === collaboration.deliverables?.length) {
+      setSelectedTaskIds([]);
+      return;
+    }
+
+    const statuses = new Set(collaboration.deliverables?.map(d => d.status));
+    if (statuses.size > 1) {
+      toast.error("Bulk selection is only allowed for tasks with the same status. Please select tasks manually.");
+      return;
+    }
+
+    setSelectedTaskIds(collaboration.deliverables?.map(d => d._id) || []);
+  };
+
+
+
+  const handleBulkApprove = async () => {
+    if (!window.confirm(`Approve and Pay for ${selectedTaskIds.length} tasks?`)) return;
+    try {
+      setIsActionLoading(true);
+      for (const id of selectedTaskIds) {
+        await collaborationService.reviewDeliverable(collaboration._id, id, { status: 'APPROVED' });
+      }
+      toast.success(`Successfully processed ${selectedTaskIds.length} tasks`);
+      setSelectedTaskIds([]);
+      onRefresh();
+    } catch (err) {
+      toast.error('Error processing bulk approvals');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedTaskIds.length} tasks?`)) return;
+    try {
+      setIsActionLoading(true);
+      for (const id of selectedTaskIds) {
+        await collaborationService.deleteDeliverable(collaboration._id, id);
+      }
+      toast.success(`Successfully deleted ${selectedTaskIds.length} tasks`);
+      setSelectedTaskIds([]);
+      onRefresh();
+    } catch (err) {
+      toast.error('Error deleting tasks in bulk');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleBulkStart = async () => {
+    try {
+      setIsActionLoading(true);
+      for (const id of selectedTaskIds) {
+        await paymentService.startDeliverable(id);
+      }
+      toast.success(`Successfully started ${selectedTaskIds.length} tasks`);
+      setSelectedTaskIds([]);
+      onRefresh();
+    } catch (err) {
+      toast.error('Error starting tasks in bulk');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const selectedDeliverablesData = (collaboration.deliverables || []).filter(d => selectedTaskIds.includes(d._id));
+  const allSelectedPending = selectedDeliverablesData.length > 0 && selectedDeliverablesData.every(d => d.status === 'PENDING');
+  const allSelectedSubmitted = selectedDeliverablesData.length > 0 && selectedDeliverablesData.every(d => 
+    d.status === 'SUBMITTED' || (d.status === 'APPROVED' && d.paymentStatus === 'unpaid')
+  );
+  const allSelectedInProgressOrRevise = selectedDeliverablesData.length > 0 && selectedDeliverablesData.every(d => d.status === 'IN_PROGRESS' || d.status === 'REVISION_REQUESTED');
+  const noneSelectedApprovedOrSubmitted = selectedDeliverablesData.length > 0 && selectedDeliverablesData.every(d => d.status !== 'APPROVED' && d.status !== 'SUBMITTED');
 
   return (
     <div className="space-y-6">
@@ -294,23 +494,29 @@ const CollabTasksTab = () => {
             {collaboration.deliverables?.length === 0 && (
               <button
                 onClick={() => setIsSmartSetupOpen(true)}
-                className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20"
+                disabled={!collaboration.brandAgreed || !collaboration.influencerAgreed}
+                className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <LayoutGrid size={16} />
                 Smart Setup
               </button>
             )}
-            <button
-              onClick={() => handleOpenModal()}
-              disabled={!collaboration.escrowFunded || (isBudgetExhausted && !selectedDeliverable)}
-              title={
-                !collaboration.escrowFunded ? "Fund escrow to add tasks" : 
-                isBudgetExhausted ? "Budget fully allocated. Edit existing tasks to free up budget." : ""
-              }
+            <button 
+              onClick={() => {
+                if (isBudgetExhausted && !selectedDeliverable) {
+                  setIsAddOnMode(true);
+                  setIsSmartSetupOpen(true);
+                  setSmartTasks([]);
+                } else {
+                  handleOpenModal();
+                }
+              }}
+              disabled={(!collaboration.escrowFunded && !isBudgetExhausted) || !collaboration.brandAgreed || !collaboration.influencerAgreed}
+              title={(!collaboration.escrowFunded && !isBudgetExhausted) || !collaboration.brandAgreed || !collaboration.influencerAgreed ? "Agreements and Escrow must be cleared first" : ""}
               className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/20"
             >
               <Plus size={16} />
-              {isBudgetExhausted && !selectedDeliverable ? "Budget Completed" : "Create New Task"}
+              {isBudgetExhausted && !selectedDeliverable ? "Request Add-on Tasks" : "Create New Task"}
             </button>
           </div>
         )}
@@ -327,9 +533,94 @@ const CollabTasksTab = () => {
           handleOpenSubmitModal,
           handleOnDragEnd,
           handleStartDeliverable,
-          setRevisionModal
+          setRevisionModal,
+          selectedTaskIds,
+          handleToggleTask,
+          handleToggleSelectAll
         }} />
       </div>
+
+      {/* Floating Bulk Action Toolbar */}
+      {selectedTaskIds.length > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-10 fade-in duration-300">
+          <div className="bg-[#0F172A] text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-6 border border-gray-800">
+             <div className="flex items-center gap-3 pr-6 border-r border-gray-700">
+                <span className="flex items-center justify-center bg-blue-600 text-white text-xs font-bold w-6 h-6 rounded-full">
+                  {isActionLoading ? <Loader2 size={12} className="animate-spin" /> : selectedTaskIds.length}
+                </span>
+                <span className="text-sm font-bold uppercase tracking-widest text-gray-300">
+                  {isActionLoading ? 'Processing...' : 'Selected'}
+                </span>
+             </div>
+             
+              <div className="flex items-center gap-3">
+                {userRole === 'brand' && (
+                  <>
+                    {allSelectedSubmitted && (
+                       <button 
+                         onClick={handleBulkApprove} 
+                         disabled={isActionLoading}
+                         className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                       >
+                         {isActionLoading && <Loader2 size={10} className="animate-spin" />}
+                         Approve & Pay All
+                       </button>
+                    )}
+                    {allSelectedSubmitted && (
+                       <button 
+                         onClick={() => setRevisionModal({ isOpen: true, deliverableIds: selectedTaskIds, notes: 'Bulk revision for selected tasks' })} 
+                         disabled={isActionLoading}
+                         className="px-4 py-2 bg-amber-500 hover:bg-amber-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-amber-950 disabled:opacity-50 disabled:cursor-not-allowed"
+                       >
+                         Revise All
+                       </button>
+                    )}
+                    {noneSelectedApprovedOrSubmitted && (
+                       <button 
+                         onClick={handleBulkDelete} 
+                         disabled={isActionLoading}
+                         className="px-4 py-2 hover:bg-red-950/50 text-red-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                       >
+                         Delete All
+                       </button>
+                    )}
+                  </>
+                )}
+                {userRole === 'influencer' && (
+                  <>
+                     {allSelectedPending && (
+                        <button 
+                          onClick={handleBulkStart} 
+                          disabled={isActionLoading}
+                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          {isActionLoading && <Loader2 size={10} className="animate-spin" />}
+                          Start All Tasks
+                        </button>
+                     )}
+                     {allSelectedInProgressOrRevise && (
+                        <button 
+                          onClick={() => handleOpenSubmitModal(selectedDeliverablesData)} 
+                          disabled={isActionLoading}
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          {isActionLoading && <Loader2 size={10} className="animate-spin" />}
+                          Submit All
+                        </button>
+                     )}
+                  </>
+                )}
+                <button 
+                  onClick={() => setSelectedTaskIds([])} 
+                  disabled={isActionLoading}
+                  className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl transition-all ml-2 disabled:opacity-50"
+                >
+                   <X size={16} />
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals Ported from DeliverablesPage */}
       {isModalOpen && (
@@ -452,37 +743,61 @@ const CollabTasksTab = () => {
       )}
 
       {isSubmitModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in duration-300 overflow-hidden">
-            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-lg font-bold text-gray-900 uppercase tracking-tight">Project Submission</h2>
-              <button onClick={() => setIsSubmitModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-400 hover:text-gray-900">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl animate-in zoom-in duration-300 overflow-hidden">
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Project Submission</h2>
+                <p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">Provide asset links for {tasksToSubmit.length} task(s)</p>
+              </div>
+              <button onClick={() => setIsSubmitModalOpen(false)} className="p-3 hover:bg-gray-100 rounded-2xl transition-all text-gray-400 hover:text-gray-900">
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitDeliverable} className="p-6 space-y-6">
-              <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">Active Deliverable</p>
-                <p className="font-bold text-gray-900 uppercase">{selectedDeliverable?.title}</p>
+            <form onSubmit={handleSubmitDeliverable} className="p-8 space-y-6">
+              <div className="max-h-[50vh] overflow-y-auto pr-2 space-y-6 custom-scrollbar">
+                {tasksToSubmit.map((task) => (
+                  <div key={task._id} className="p-5 rounded-3xl bg-gray-50 border-2 border-gray-100 space-y-4 hover:border-blue-500/10 transition-all group">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                        <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Asset Source</p>
+                      </div>
+                      <span className="px-2 py-1 rounded-lg bg-blue-100 text-blue-700 text-[9px] font-black uppercase tracking-widest">Required</span>
+                    </div>
+                    
+                    <p className="font-black text-gray-900 text-sm uppercase tracking-tight">{task.title}</p>
+                    
+                    <div className="relative">
+                      <input
+                        required
+                        type="url"
+                        value={submissionLinks[task._id] || ''}
+                        onChange={(e) => setSubmissionLinks(prev => ({ ...prev, [task._id]: e.target.value }))}
+                        className="w-full px-5 py-4 rounded-2xl bg-white border-2 border-gray-100 focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/10 font-bold transition-all text-sm placeholder:text-gray-300"
+                        placeholder="Paste Google Drive or Content Link..."
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1 mb-1.5 block">Content Asset Link</label>
-                <input
-                  required
-                  type="url"
-                  value={submissionLink}
-                  onChange={(e) => setSubmissionLink(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium transition-all text-sm"
-                  placeholder="https://drive.google.com/..."
-                />
-                <p className="text-[10px] font-bold text-gray-400 mt-2 p-2 border-l-2 border-blue-200 bg-gray-50 rounded-r-lg">Provide a link to your content files, drive, or final live post link here.</p>
+              <div className="pt-2 flex gap-4">
+                <button 
+                  type="button" 
+                  onClick={() => setIsSubmitModalOpen(false)}
+                  className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-500/30 hover:bg-blue-700 active:scale-95 transition-all"
+                >
+                  Confirm & Finalize Submissions
+                </button>
               </div>
-
-              <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm hover:bg-blue-700 active:scale-95 transition-all">
-                Finalize Submission
-              </button>
             </form>
           </div>
         </div>
@@ -504,10 +819,16 @@ const CollabTasksTab = () => {
           <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl animate-in zoom-in duration-300 overflow-hidden">
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <div>
-                <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Campaign Smart Setup</h2>
-                <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">Auto-divide budget across multiple tasks</p>
+                <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">{isAddOnMode ? 'Request Additional Tasks' : 'Campaign Smart Setup'}</h2>
+                <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">
+                  {isAddOnMode ? 'Define new tasks and their budget for influencer approval' : 'Auto-divide budget across multiple tasks'}
+                </p>
               </div>
-              <button onClick={() => setIsSmartSetupOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-400 hover:text-gray-900">
+              <button onClick={() => {
+                setIsSmartSetupOpen(false);
+                setIsAddOnMode(false);
+                setSmartTasks([]);
+              }} className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-400 hover:text-gray-900">
                 <X size={20} />
               </button>
             </div>
@@ -574,9 +895,9 @@ const CollabTasksTab = () => {
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Allocated</p>
                   <p className={cn(
                     "text-xl font-black",
-                    currentSmartTotal > collaboration.agreedBudget ? "text-red-600" : "text-emerald-600"
+                    !isAddOnMode && currentSmartTotal > collaboration.agreedBudget ? "text-red-600" : "text-emerald-600"
                   )}>
-                    ${currentSmartTotal.toLocaleString()} / ${collaboration.agreedBudget.toLocaleString()}
+                    ${currentSmartTotal.toLocaleString()} {!isAddOnMode && `/ ${collaboration.agreedBudget.toLocaleString()}`}
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -587,11 +908,11 @@ const CollabTasksTab = () => {
                     Reset
                   </button>
                   <button
-                    disabled={currentSmartTotal > collaboration.agreedBudget}
+                    disabled={!isAddOnMode && currentSmartTotal > collaboration.agreedBudget}
                     onClick={handleSaveSmartTasks}
                     className="px-8 py-3 bg-[#0F172A] text-white rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl disabled:opacity-50"
                   >
-                    Finalize Setup
+                    {isAddOnMode ? 'Send Request' : 'Finalize Setup'}
                   </button>
                 </div>
               </div>
@@ -635,10 +956,11 @@ const CollabTasksTab = () => {
                     Cancel
                   </button>
                   <button
-                    onClick={() => handleReview(revisionModal.deliverableId, 'REVISION_REQUESTED', { revisionNotes: revisionModal.notes })}
-                    disabled={!revisionModal.notes.trim()}
-                    className="flex-[2] px-8 py-4 bg-amber-500 text-white text-xs font-black rounded-2xl hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/30 uppercase tracking-widest disabled:opacity-50 disabled:shadow-none"
+                    onClick={() => handleReview(revisionModal.deliverableIds, 'REVISION_REQUESTED', { revisionNotes: revisionModal.notes })}
+                    disabled={!revisionModal.notes.trim() || isActionLoading}
+                    className="flex-[2] px-8 py-4 bg-amber-500 text-white text-xs font-black rounded-2xl hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/30 uppercase tracking-widest disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
                   >
+                    {isActionLoading && <Loader2 size={12} className="animate-spin" />}
                     Send Feedback
                   </button>
                 </div>

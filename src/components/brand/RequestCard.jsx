@@ -13,7 +13,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 
-const RequestCard = ({ request, onAccept, onReject, onViewProfile, onResend }) => {
+const RequestCard = ({ request, type, userId, onAccept, onReject, onViewProfile, onResend }) => {
   const navigate = useNavigate();
   const { 
     status, 
@@ -22,7 +22,8 @@ const RequestCard = ({ request, onAccept, onReject, onViewProfile, onResend }) =
     proposedBudget,
     previouslyRejected,
     collaborationId,
-    initiatedBy
+    initiatedBy,
+    sender
   } = request;
   
   const isInfluencerInitiated = initiatedBy === 'influencer';
@@ -184,7 +185,7 @@ const RequestCard = ({ request, onAccept, onReject, onViewProfile, onResend }) =
                 View Profile
               </button>
               
-              {status === 'requested' && String(request.sender) !== String(request.brand) && (
+              {status === 'requested' && String(sender) !== String(userId) && (
                 <div className="flex items-center gap-2 ml-1">
                   <button 
                     onClick={() => onAccept(request._id)}

@@ -28,7 +28,7 @@ export const SocketProvider = ({ children }) => {
 
         const newSocket = io(ENDPOINT, {
             withCredentials: true,
-            transports: ['websocket', 'polling'],
+            transports: ['websocket'], // Force WebSocket to bypass polling proxy issues
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
         });

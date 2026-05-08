@@ -47,8 +47,8 @@ const ApplyCampaignModal = ({
 
   const brandLogo =
     targetType === "brand"
-      ? brand?.logo
-      : campaign?.brandProfile?.logo || campaign?.brandUser?.profilePic;
+      ? (brand?.user?.profilePic || brand?.logo)
+      : (campaign?.brandUser?.profilePic || campaign?.brandProfile?.logo);
 
   // If opened from a brand, fetch that brand's active campaigns
   useEffect(() => {

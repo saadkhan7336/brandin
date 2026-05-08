@@ -171,12 +171,12 @@ export default function MyProfileView() {
 
   const name = data.user?.fullname || data.username || "Influencer";
   const avatar =
-    data.profilePicture ||
     data.user?.profilePic ||
+    data.profilePicture ||
     `https://ui-avatars.com/api/?name=${name}`;
   const cover =
-    data.coverImage ||
     data.user?.coverPic ||
+    data.coverImage ||
     "https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=2000";
 
   return (

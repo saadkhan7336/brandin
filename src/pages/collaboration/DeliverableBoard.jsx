@@ -24,7 +24,9 @@ const DeliverableBoard = () => {
     handleDelete, 
     handleOnDragEnd: onDragEnd,
     handleStartDeliverable,
-    setRevisionModal
+    setRevisionModal,
+    selectedTaskIds = [],
+    handleToggleTask
   } = useOutletContext();
 
   if (!collaboration) return null;
@@ -47,7 +49,7 @@ const DeliverableBoard = () => {
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="flex overflow-x-auto pb-6 -mx-4 px-4 h-[calc(100vh-420px)] min-h-[600px]">
+      <div className="flex gap-6 pb-6 min-h-[600px] items-start">
         {columns.map((column, idx) => (
           <div key={column.id} className="flex-1 min-w-[350px] flex flex-col relative px-4 first:pl-0 last:pr-0">
             {/* Minimal Segregation Line */}
@@ -77,25 +79,35 @@ const DeliverableBoard = () => {
                   {...provided.droppableProps}
                   ref={provided.innerRef}
                   className={cn(
-                    "flex-1 bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-4 overflow-y-auto transition-colors",
-                    snapshot.isDraggingOver && "bg-blue-50/50 border-blue-100"
+                    "flex-1 bg-gray-50/50 rounded-3xl p-4 border-2 border-dashed border-gray-100 min-h-[500px] space-y-4 transition-all duration-200",
+                    snapshot.isDraggingOver && "bg-blue-50/50 border-blue-200"
                   )}
                 >
                   {getDeliverablesByStatus(column.id).map((task, index) => (
-                    <Draggable key={task._id} draggableId={task._id} index={index} isDragDisabled={userRole === 'brand' || collaboration.status === 'completed'}>
+                    <Draggable key={task._id} draggableId={task._id} index={index} isDragDisabled={collaboration.status === 'completed'}>
                       {(provided, snapshot) => (
                         <div 
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
                           className={cn(
-                            "bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all group relative",
+                            "bg-white rounded-2xl p-5 shadow-sm border hover:shadow-md hover:-translate-y-0.5 transition-all group relative",
                             snapshot.isDragging && "shadow-lg ring-2 ring-blue-500/20 rotate-1 scale-[1.02] z-50",
-                            task.status === 'APPROVED' && "border-emerald-100 bg-emerald-50/10"
+                            task.status === 'APPROVED' ? "border-emerald-100 bg-emerald-50/10" : "border-gray-100",
+                            selectedTaskIds.includes(task._id) && "ring-2 ring-blue-500 border-blue-500 bg-blue-50/10"
                           )}
                         >
+                          <div className="absolute top-4 left-4 z-10">
+                            <input 
+                              type="checkbox" 
+                              checked={selectedTaskIds.includes(task._id)}
+                              onChange={() => handleToggleTask(task._id)}
+                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            />
+                          </div>
+                          
                           {/* CRUD Actions for Brands */}
-                          {userRole === 'brand' && collaboration.status !== 'completed' && (
+                          {userRole === 'brand' && collaboration.status !== 'completed' && ['PENDING', 'REVISION_REQUESTED'].includes(task.status) && (
                             <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
                               <button 
                                 onClick={(e) => { e.stopPropagation(); handleEdit(task); }}
@@ -112,15 +124,22 @@ const DeliverableBoard = () => {
                             </div>
                           )}
 
-                          <div className="flex items-center justify-between mb-4">
-                            <span className={cn(
-                              "text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border",
-                              task.priority === 'HIGH' ? "bg-red-50 text-red-600 border-red-100" : 
-                              task.priority === 'LOW' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                              "bg-amber-50 text-amber-600 border-amber-100"
-                            )}>
-                              {task.priority || 'MEDIUM'}
-                            </span>
+                          <div className="flex items-center justify-between mb-4 pl-6">
+                            <div className="flex gap-1.5">
+                              <span className={cn(
+                                "text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border",
+                                task.priority === 'HIGH' ? "bg-red-50 text-red-600 border-red-100" : 
+                                task.priority === 'LOW' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                                "bg-amber-50 text-amber-600 border-amber-100"
+                              )}>
+                                {task.priority || 'MEDIUM'}
+                              </span>
+                              {task.isAdditional && (
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border bg-purple-50 text-purple-600 border-purple-100 shadow-sm shadow-purple-100/50">
+                                  Additional
+                                </span>
+                              )}
+                            </div>
                             {task.paymentStatus === 'paid' && (
                               <div className="flex items-center gap-1 text-[9px] font-black text-emerald-600 uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
                                 <CheckCircle size={10} />
@@ -198,7 +217,7 @@ const DeliverableBoard = () => {
                                      Approve & Pay
                                    </button>
                                    <button 
-                                     onClick={(e) => { e.stopPropagation(); setRevisionModal({ isOpen: true, deliverableId: task._id, notes: '' }); }}
+                                     onClick={(e) => { e.stopPropagation(); setRevisionModal({ isOpen: true, deliverableIds: [task._id], notes: '' }); }}
                                      className="flex-1 py-2 bg-white border border-amber-200 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 hover:bg-amber-50"
                                    >
                                      Revise
@@ -209,10 +228,10 @@ const DeliverableBoard = () => {
                                  {task.status === 'PENDING' && (
                                    <button 
                                       onClick={(e) => { e.stopPropagation(); handleStartDeliverable(task._id); }}
-                                      disabled={!collaboration.escrowFunded}
+                                      disabled={!collaboration.escrowFunded || !collaboration.brandAgreed || !collaboration.influencerAgreed}
                                       className={cn(
                                         "w-full py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2",
-                                        !collaboration.escrowFunded ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-indigo-600 text-white hover:bg-indigo-700"
+                                        !collaboration.escrowFunded || !collaboration.brandAgreed || !collaboration.influencerAgreed ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-indigo-600 text-white hover:bg-indigo-700"
                                       )}
                                    >
                                      <Calendar size={14} /> Start Task

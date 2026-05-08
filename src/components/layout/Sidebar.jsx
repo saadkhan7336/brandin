@@ -98,14 +98,15 @@
 
 // src/components/layout/Sidebar.jsx
 import React from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
   LayoutDashboard, Search, FileText, Settings, User,
-  LogOut, Target, Handshake, Building2, AlertCircle, MessageCircle, CreditCard
+  LogOut, Target, Handshake, Building2, MessageCircle, CreditCard
 } from "lucide-react";
 import { clearPendingRequestCount, clearActiveCollabCount } from "../../redux/slices/collaborationSlice";
-import { markMessagesAsRead } from "../../redux/slices/chatSlice";
+import { useDashboardContext } from "../../context/DashboardContext";
+import { useAuth } from "../../hooks/useAuth";
 
 const brandNavItems = [
   { icon: LayoutDashboard, label: "Dashboard",   path: "/brand/dashboard" },
@@ -134,14 +135,18 @@ const adminNavItems = [
   { icon: Settings,        label: "Settings",  path: "/admin/settings" },
 ];
 
-export default function Sidebar({ userRole, isOpen, onClose, onLogout, isCollapsed }) {
+export default function Sidebar({ isCollapsed }) {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const { user } = useSelector((state) => state.auth);
-  const { completion } = useSelector((state) => state.profile);
   const { conversations } = useSelector((state) => state.chat || { conversations: [] });
   const { pendingRequestCount, activeCollabCount } = useSelector(
     (state) => state.collaboration
   );
+  
+  const { isSidebarOpen: isOpen, closeSidebar: onClose } = useDashboardContext();
+  const userRole = user?.role || 'brand';
 
   const unreadMessageCount = conversations.reduce((count, conv) => {
     if (conv.lastMessage && !conv.lastMessage.isRead) {
@@ -166,6 +171,11 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout, isCollaps
     // but we can also clear the global "new message" indicator if needed.
   }, [location.pathname, dispatch]);
 
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
   const navItems =
     userRole === "brand"      ? brandNavItems :
     userRole === "influencer" ? influencerNavItems :
@@ -173,7 +183,6 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout, isCollaps
 
   const showCompletionWarning =
     user && !user.profileComplete && userRole !== "admin" && !isCollapsed;
-  const percent = completion?.percent ?? 0;
 
   return (
     <>
@@ -219,24 +228,36 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout, isCollaps
                 {item.label === "Messages" && unreadMessageCount > 0 && (
                   <span className={`
                     absolute ${isCollapsed ? 'top-1 right-1' : 'right-3 top-1/2 -translate-y-1/2'}
-                    w-2 h-2 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.6)]
-                  `} />
+                    flex items-center justify-center min-w-[18px] h-[18px] px-1
+                    bg-indigo-500 text-white text-[9px] font-black rounded-full
+                    shadow-[0_0_8px_rgba(99,102,241,0.6)]
+                  `}>
+                    {unreadMessageCount}
+                  </span>
                 )}
 
-                {/* Pending Requests dot */}
+                {/* Pending Requests badge */}
                 {(item.label === "My Requests" || item.label === "Collaboration Requests") && pendingRequestCount > 0 && (
                   <span className={`
                     absolute ${isCollapsed ? 'top-1 right-1' : 'right-3 top-1/2 -translate-y-1/2'}
-                    w-2 h-2 bg-orange-500 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.6)]
-                  `} />
+                    flex items-center justify-center min-w-[18px] h-[18px] px-1
+                    bg-orange-500 text-white text-[9px] font-black rounded-full
+                    shadow-[0_0_8px_rgba(249,115,22,0.6)]
+                  `}>
+                    {pendingRequestCount}
+                  </span>
                 )}
 
-                {/* Active Collaborations dot */}
+                {/* Active Collaborations badge */}
                 {item.label === "Collaborations" && activeCollabCount > 0 && (
                   <span className={`
                     absolute ${isCollapsed ? 'top-1 right-1' : 'right-3 top-1/2 -translate-y-1/2'}
-                    w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)]
-                  `} />
+                    flex items-center justify-center min-w-[18px] h-[18px] px-1
+                    bg-emerald-500 text-white text-[9px] font-black rounded-full
+                    shadow-[0_0_8px_rgba(16,185,129,0.6)]
+                  `}>
+                    {activeCollabCount}
+                  </span>
                 )}
               </NavLink>
             );
@@ -246,7 +267,7 @@ export default function Sidebar({ userRole, isOpen, onClose, onLogout, isCollaps
 
           {/* Logout */}
           <button
-            onClick={onLogout}
+            onClick={handleLogout}
             title={isCollapsed ? "Logout" : ""}
             className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-4'} py-2.5 rounded-lg text-sm font-medium
               text-red-500 hover:bg-red-50 transition-colors duration-200 mt-auto`}

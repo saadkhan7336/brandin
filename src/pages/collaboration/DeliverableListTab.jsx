@@ -26,7 +26,10 @@ const DeliverableListTab = () => {
     handleDelete, 
     handleOpenSubmitModal,
     handleStartDeliverable,
-    setRevisionModal
+    setRevisionModal,
+    selectedTaskIds = [],
+    handleToggleTask,
+    handleToggleSelectAll
   } = useOutletContext();
 
   const getStatusBadge = (status) => {
@@ -42,12 +45,40 @@ const DeliverableListTab = () => {
 
   return (
     <div className="space-y-4">
+      {collaboration.deliverables?.length > 0 && (
+        <div className="flex items-center gap-3 px-6 py-3 bg-gray-50/80 rounded-2xl border border-gray-100">
+           <input 
+             type="checkbox" 
+             checked={selectedTaskIds.length === collaboration.deliverables.length && collaboration.deliverables.length > 0}
+             onChange={handleToggleSelectAll}
+             className="w-5 h-5 rounded-lg border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+           />
+           <span className="text-xs font-black uppercase tracking-widest text-gray-500">
+             Select All Tasks
+           </span>
+        </div>
+      )}
+
       {collaboration.deliverables?.length > 0 ? (
         collaboration.deliverables.map((deliv) => (
-          <div key={deliv._id} className="bg-white border border-gray-100 rounded-[32px] p-6 shadow-sm hover:shadow-md transition-all group">
+          <div 
+            key={deliv._id} 
+            className={cn(
+               "bg-white border rounded-[32px] p-6 shadow-sm hover:shadow-md transition-all group",
+               selectedTaskIds.includes(deliv._id) ? "border-blue-500 ring-1 ring-blue-500 bg-blue-50/10" : "border-gray-100"
+            )}
+          >
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               
-              <div className="flex gap-5 items-start flex-1 min-w-0">
+              <div className="flex gap-4 items-start flex-1 min-w-0">
+                <div className="pt-4">
+                   <input 
+                     type="checkbox" 
+                     checked={selectedTaskIds.includes(deliv._id)}
+                     onChange={() => handleToggleTask(deliv._id)}
+                     className="w-5 h-5 rounded-lg border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                   />
+                </div>
                 <div className="p-4 bg-gray-50 rounded-2xl shrink-0 group-hover:bg-blue-50 transition-all">
                    <ClipboardList className="text-gray-400 group-hover:text-blue-600" size={20} />
                 </div>
@@ -61,6 +92,11 @@ const DeliverableListTab = () => {
                     )}>
                       {deliv.status?.replace('_', ' ')}
                     </span>
+                    {deliv.isAdditional && (
+                      <span className="px-2.5 py-0.5 bg-purple-50 text-purple-600 text-[9px] font-black rounded-full border border-purple-100 uppercase tracking-widest shadow-sm shadow-purple-100/30">
+                        Additional
+                      </span>
+                    )}
                     <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[9px] font-black rounded uppercase">
                       {deliv.priority || 'MEDIUM'}
                     </span>
@@ -126,7 +162,7 @@ const DeliverableListTab = () => {
                               Approve & Pay
                            </button>
                            <button 
-                             onClick={() => setRevisionModal({ isOpen: true, deliverableId: deliv._id, notes: '' })} 
+                             onClick={() => setRevisionModal({ isOpen: true, deliverableIds: [deliv._id], notes: '' })} 
                              className="px-4 py-2 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
                            >
                               <RefreshCw size={14} />
@@ -143,12 +179,16 @@ const DeliverableListTab = () => {
                          Retry Payout
                        </button>
                     )}
-                    <button onClick={() => handleOpenModal(deliv)} className="p-2.5 hover:bg-gray-100 text-gray-400 hover:text-gray-900 rounded-xl transition-all">
-                      <Edit3 size={18} />
-                    </button>
-                    <button onClick={() => handleDelete(deliv._id)} className="p-2.5 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-xl transition-all">
-                      <Trash2 size={18} />
-                    </button>
+                     {['PENDING', 'REVISION_REQUESTED'].includes(deliv.status) && (
+                       <>
+                        <button onClick={() => handleOpenModal(deliv)} className="p-2.5 hover:bg-gray-100 text-gray-400 hover:text-gray-900 rounded-xl transition-all">
+                          <Edit3 size={18} />
+                        </button>
+                        <button onClick={() => handleDelete(deliv._id)} className="p-2.5 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-xl transition-all">
+                          <Trash2 size={18} />
+                        </button>
+                       </>
+                     )}
                   </>
                 ) : (
                   deliv.status === 'APPROVED' ? (
@@ -161,10 +201,10 @@ const DeliverableListTab = () => {
                       {deliv.status === 'PENDING' && (
                         <button 
                           onClick={() => handleStartDeliverable(deliv._id)}
-                          disabled={!collaboration.escrowFunded}
+                          disabled={!collaboration.escrowFunded || !collaboration.brandAgreed || !collaboration.influencerAgreed}
                           className={cn(
                             "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95",
-                            !collaboration.escrowFunded ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg"
+                            !collaboration.escrowFunded || !collaboration.brandAgreed || !collaboration.influencerAgreed ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg"
                           )}
                         >
                           Start Task

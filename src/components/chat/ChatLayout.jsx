@@ -6,23 +6,21 @@ import {
   fetchMessages,
   sendMessage,
   setActiveConversation,
-  receiveMessage,
   markMessagesAsRead,
   markConversationReadLocal,
   uploadAttachment,
-  updateMessageLocal,
-  removeMessageLocal,
   editMessageItem,
   reactToMessageItem,
   deleteMessageMe,
   deleteMessageGlobal,
   bulkDeleteForMe
 } from "../../redux/slices/chatSlice";
-import { updateUserPresence } from "../../redux/slices/presenceSlice";
 import MessageBubble from "./MessageBubble";
 import ForwardModal from "./ForwardModal";
+import AgreementModal from "../../pages/collaboration/components/AgreementModal";
+import { toast } from "sonner";
 import { useSocket } from "../../context/SocketContext";
-import { Send, Menu, Phone, Video, MoreVertical, Paperclip, ImageIcon, Check, CheckCheck, Smile, Search, X, Forward, Trash2, MessageCircle, Target, FileText } from "lucide-react";
+import { Send, Phone, Video, MoreVertical, Paperclip, ImageIcon, Smile, Search, X, Forward, Trash2, MessageCircle, Target, FileText } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import EmojiPicker from 'emoji-picker-react';
 import collaborationService from "../../services/collaborationService";
@@ -55,10 +53,10 @@ const ChatLayout = () => {
   const [isForwardModalOpen, setIsForwardModalOpen] = useState(false);
   const allFileInputRef = useRef(null);
   const chatInputRef = useRef(null);
+  const [isAgreementModalOpen, setIsAgreementModalOpen] = useState(false);
   
   // Real-time UI states
   const [isTyping, setIsTyping] = useState(false);
-  const [typingUser, setTypingUser] = useState(null);
   const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -146,11 +144,27 @@ const ChatLayout = () => {
     } finally {
       setFetchingCollab(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConversation]);
 
   useEffect(() => {
     fetchCollabData();
   }, [fetchCollabData]);
+
+  const handleConfirmAgreement = async () => {
+    if (!activeCollaboration) return;
+    try {
+      setFetchingCollab(true);
+      await collaborationService.confirmAgreement(activeCollaboration._id);
+      toast.success("Agreement signed successfully!");
+      fetchCollabData();
+    } catch (err) {
+      console.error('Agreement confirmation failed:', err);
+      toast.error(err.message || "Failed to confirm agreement.");
+    } finally {
+      setFetchingCollab(false);
+    }
+  };
 
   // Real-time Collaboration Updates
   useEffect(() => {
@@ -194,6 +208,7 @@ const ChatLayout = () => {
         dispatch(markConversationReadLocal(activeConversation._id));
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, activeConversation]);
 
   const handleSendMessage = async (e) => {
@@ -728,7 +743,6 @@ const ChatLayout = () => {
         <div className="w-80 bg-white border-l border-gray-100 overflow-y-auto hidden xl:flex flex-col">
           {(() => {
              const chatOtherUser = getOtherParticipant(activeConversation.participants);
-             const stats = activeCollaboration?.influencerStats || { followersCount: '1.2M', engagementRate: '4.8%' };
              const currentCampaign = activeCollaboration?.campaign || activeConversation.campaign;
              const deliverables = activeCollaboration?.deliverables || [];
              const completedCount = deliverables.filter(d => ['APPROVED', 'DELIVERED'].includes(d.status)).length;
@@ -804,14 +818,33 @@ const ChatLayout = () => {
                       )}
                     </div>
 
+                    {activeCollaboration && (
+                      <div>
+                        <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Collaboration Status</h4>
+                        <div className="p-4 bg-white rounded-2xl border border-gray-100 flex items-center justify-between shadow-sm">
+                           <span className="text-xs font-bold text-gray-700 uppercase">{activeCollaboration.status}</span>
+                           <span className={`w-2.5 h-2.5 rounded-full ${
+                             activeCollaboration.status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' :
+                             activeCollaboration.status === 'completed' ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]' :
+                             activeCollaboration.status === 'cancelled' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' :
+                             'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]'
+                           }`}></span>
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Quick Links</h4>
                       <div className="space-y-2">
                         {[
-                          { icon: FileText, label: 'Signed Contract' },
+                          { icon: FileText, label: 'Signed Contract', onClick: () => setIsAgreementModalOpen(true) },
                           { icon: Paperclip, label: 'Performance Stats' }
                         ].map((link, i) => (
-                          <button key={i} className="w-full flex items-center justify-between p-3.5 bg-white border border-gray-100 rounded-xl hover:shadow-md hover:border-indigo-100 transition-all text-left">
+                          <button 
+                            key={i} 
+                            onClick={link.onClick}
+                            className="w-full flex items-center justify-between p-3.5 bg-white border border-gray-100 rounded-xl hover:shadow-md hover:border-indigo-100 transition-all text-left"
+                          >
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center">
                                 <link.icon className="w-4 h-4 text-gray-500" />
@@ -836,6 +869,15 @@ const ChatLayout = () => {
         conversations={conversations}
         onForward={handleForwardMessages}
         user={user}
+      />
+
+      <AgreementModal
+        isOpen={isAgreementModalOpen}
+        onClose={() => setIsAgreementModalOpen(false)}
+        onAgree={handleConfirmAgreement}
+        collaboration={activeCollaboration}
+        userRole={user.role}
+        isLoading={fetchingCollab}
       />
     </div>
   );
