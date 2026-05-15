@@ -49,9 +49,11 @@ const CollaborationsPage = () => {
       };
 
       socket.on('activity_created', handleActivity);
+      socket.on('collaboration_updated', () => fetchCollaborations());
       
       return () => {
         socket.off('activity_created', handleActivity);
+        socket.off('collaboration_updated', () => fetchCollaborations());
       };
     }
   }, [socket, user, fetchCollaborations]);

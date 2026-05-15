@@ -29,6 +29,8 @@ import PaymentModal from '../../components/payment/PaymentModal';
 import { toast } from 'sonner';
 import AgreementModal from './components/AgreementModal';
 import CancellationSummaryModal from './components/CancellationSummaryModal';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
+import { Button } from '../../components/common/Button';
 
 
 
@@ -360,7 +362,8 @@ const CollabDetailView = () => {
                   status === 'completed' ? "bg-blue-50 text-blue-600 border-blue-100" :
                   "bg-gray-50 text-gray-600 border-gray-100"
                 )}>
-                  { (status === 'awaiting_funds' && collaboration.escrowFunded) ? 'ACTIVE' : 
+                  { (status === 'awaiting_funds' && !collaboration.escrowFunded) ? 'AWAITING ADDITIONAL FUNDS' : 
+                    (status === 'awaiting_funds' && collaboration.escrowFunded) ? 'ACTIVE' : 
                     ((status === 'active' || status === 'in_progress') && !collaboration.escrowFunded) ? 'AWAITING ADDITIONAL FUNDS' :
                     (hasRevisionRequested && status === 'active') ? 'REVISION IN PROGRESS' :
                     (hasSubmitted && status === 'active') ? (isInfluencer ? 'IN REVIEW' : 'PENDING YOUR REVIEW') :
@@ -677,32 +680,35 @@ const CollabDetailView = () => {
            {user.role === 'brand' && status !== 'completed' && status !== 'cancelled' && (
              <>
                {status === 'awaiting_funds' && !collaboration.escrowFunded && (
-                 <button 
-                   disabled={actionLoading || !collaboration.brandAgreed || !collaboration.influencerAgreed}
+                 <Button 
+                   isLoading={actionLoading}
+                   disabled={!collaboration.brandAgreed || !collaboration.influencerAgreed}
                    onClick={handleFundEscrow}
-                   className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 hover:scale-105 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                   className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 hover:scale-105 shadow-lg shadow-blue-200"
                  >
                    <DollarSign size={14} /> Fund Escrow
-                 </button>
+                 </Button>
                )}
                {status === 'active' && !collaboration.escrowFunded && (
-                 <button 
-                   disabled={actionLoading || !collaboration.brandAgreed || !collaboration.influencerAgreed}
+                 <Button 
+                   isLoading={actionLoading}
+                   disabled={!collaboration.brandAgreed || !collaboration.influencerAgreed}
                    onClick={handleFundEscrow}
-                   className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-purple-700 hover:scale-105 transition-all shadow-lg shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                   className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-purple-700 hover:scale-105 shadow-lg shadow-purple-200"
                  >
                    <DollarSign size={14} /> Fund Additional Escrow
-                 </button>
+                 </Button>
                )}
                
                {(status === 'active' || status === 'in_progress') && (
-                  <button 
-                    disabled={actionLoading}
+                  <Button 
+                    variant="outline"
+                    isLoading={actionLoading}
                     onClick={() => handleAction('SUSPEND')}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-red-50 text-red-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-100 transition-all"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-red-50 text-red-600 border-red-100 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-100 transition-all"
                   >
                     <AlertCircle size={14} /> Suspend
-                  </button>
+                  </Button>
                 )}
 
                {canComplete && (
@@ -749,13 +755,15 @@ const CollabDetailView = () => {
 
         <div className="flex items-center gap-3">
           {status !== 'completed' && status !== 'cancelled' && user.role === 'brand' && (
-            <button 
-              disabled={actionLoading || (actionRequest?.type === 'CANCEL' && actionRequest.status === 'PENDING')}
+            <Button 
+              variant="outline"
+              isLoading={actionLoading}
+              disabled={(actionRequest?.type === 'CANCEL' && actionRequest.status === 'PENDING')}
               onClick={() => setIsCancelModalOpen(true)}
-              className="flex items-center gap-2 px-6 py-2.5 text-red-500 hover:bg-red-50 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+              className="flex items-center gap-2 px-6 py-2.5 text-red-500 hover:bg-red-50 border-transparent rounded-xl text-xs font-black uppercase tracking-widest transition-all"
             >
               <XCircle size={14} /> Cancel Project
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -784,15 +792,19 @@ const CollabDetailView = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-             <button 
-               disabled={actionLoading}
+             <Button 
+               size="sm"
+               variant="outline"
+               isLoading={actionLoading}
                onClick={() => handleAction('REJECT_REQUEST')}
-               className="px-4 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+               className="px-4 py-1.5 bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-lg text-[10px] font-black uppercase tracking-widest"
              >
                Reject
-             </button>
-             <button 
-               disabled={actionLoading}
+             </Button>
+             <Button 
+               size="sm"
+               variant="primary"
+               isLoading={actionLoading}
                onClick={() => {
                  if (actionRequest.type === 'COMPLETE' && user.role === 'brand') {
                    setIsCompleteModalOpen(true);
@@ -800,10 +812,10 @@ const CollabDetailView = () => {
                    handleAction('APPROVE_REQUEST');
                  }
                }}
-               className="px-5 py-1.5 bg-white text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
+               className="px-5 py-1.5 bg-white text-indigo-600 hover:bg-white/90 rounded-lg text-[10px] font-black uppercase tracking-widest"
              >
                Approve
-             </button>
+             </Button>
           </div>
         </div>
       )}

@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import PayoutConfirmationModal from '../../components/collaboration/PayoutConfirmationModal';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
+import { Button } from '../../components/common/Button';
 
 const cn = (...inputs) => twMerge(clsx(inputs));
 
@@ -30,6 +32,7 @@ const CollabTasksTab = () => {
   const [selectedDeliverable, setSelectedDeliverable] = useState(null);
   const [selectedTaskIds, setSelectedTaskIds] = useState([]);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'primary' });
   
   // Budget Exhaustion Logic
   const totalAllocated = collaboration.deliverables?.reduce((sum, d) => sum + (d.allocatedBudget || 0), 0) || 0;
@@ -119,18 +122,26 @@ const CollabTasksTab = () => {
     }
   };
 
-  const handleDelete = async (delivId) => {
-    if (!window.confirm('Are you sure you want to delete this task?')) return;
-    try {
-      setIsActionLoading(true);
-      await collaborationService.deleteDeliverable(collaboration._id, delivId);
-      onRefresh();
-      toast.success("Task deleted");
-    } catch (err) {
-      toast.error('Error deleting task');
-    } finally {
-      setIsActionLoading(false);
-    }
+  const handleDelete = (delivId) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete Deliverable?",
+      message: "Are you sure you want to delete this task? This action cannot be undone.",
+      variant: "danger",
+      onConfirm: async () => {
+        try {
+          setIsActionLoading(true);
+          await collaborationService.deleteDeliverable(collaboration._id, delivId);
+          onRefresh();
+          toast.success("Task deleted");
+        } catch (err) {
+          toast.error('Error deleting task');
+        } finally {
+          setIsActionLoading(false);
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
   };
 
   const handleOpenSubmitModal = (deliv) => {
@@ -421,21 +432,29 @@ const CollabTasksTab = () => {
     }
   };
 
-  const handleBulkDelete = async () => {
-    if (!window.confirm(`Are you sure you want to delete ${selectedTaskIds.length} tasks?`)) return;
-    try {
-      setIsActionLoading(true);
-      for (const id of selectedTaskIds) {
-        await collaborationService.deleteDeliverable(collaboration._id, id);
+  const handleBulkDelete = () => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete Selected?",
+      message: `Are you sure you want to delete ${selectedTaskIds.length} tasks? This action cannot be undone.`,
+      variant: "danger",
+      onConfirm: async () => {
+        try {
+          setIsActionLoading(true);
+          for (const id of selectedTaskIds) {
+            await collaborationService.deleteDeliverable(collaboration._id, id);
+          }
+          toast.success(`Successfully deleted ${selectedTaskIds.length} tasks`);
+          setSelectedTaskIds([]);
+          onRefresh();
+        } catch (err) {
+          toast.error('Error deleting tasks in bulk');
+        } finally {
+          setIsActionLoading(false);
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        }
       }
-      toast.success(`Successfully deleted ${selectedTaskIds.length} tasks`);
-      setSelectedTaskIds([]);
-      onRefresh();
-    } catch (err) {
-      toast.error('Error deleting tasks in bulk');
-    } finally {
-      setIsActionLoading(false);
-    }
+    });
   };
 
   const handleBulkStart = async () => {
@@ -553,60 +572,75 @@ const CollabTasksTab = () => {
                 </span>
              </div>
              
-              <div className="flex items-center gap-3">
+               <div className="flex items-center gap-3">
+                {selectedTaskIds.length < (collaboration.deliverables?.length || 0) && (
+                  <button 
+                    onClick={() => setSelectedTaskIds(collaboration.deliverables.map(d => d._id))}
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
+                  >
+                    Select All
+                  </button>
+                )}
                 {userRole === 'brand' && (
                   <>
                     {allSelectedSubmitted && (
-                       <button 
+                       <Button 
+                         size="sm"
+                         variant="success"
                          onClick={handleBulkApprove} 
-                         disabled={isActionLoading}
-                         className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                         isLoading={isActionLoading}
+                         className="rounded-xl text-[10px] font-black uppercase tracking-widest"
                        >
-                         {isActionLoading && <Loader2 size={10} className="animate-spin" />}
                          Approve & Pay All
-                       </button>
+                       </Button>
                     )}
                     {allSelectedSubmitted && (
-                       <button 
+                       <Button 
+                         size="sm"
+                         variant="warning"
                          onClick={() => setRevisionModal({ isOpen: true, deliverableIds: selectedTaskIds, notes: 'Bulk revision for selected tasks' })} 
                          disabled={isActionLoading}
-                         className="px-4 py-2 bg-amber-500 hover:bg-amber-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-amber-950 disabled:opacity-50 disabled:cursor-not-allowed"
+                         className="rounded-xl text-[10px] font-black uppercase tracking-widest"
                        >
                          Revise All
-                       </button>
+                       </Button>
                     )}
                     {noneSelectedApprovedOrSubmitted && (
-                       <button 
+                       <Button 
+                         size="sm"
+                         variant="danger"
                          onClick={handleBulkDelete} 
-                         disabled={isActionLoading}
-                         className="px-4 py-2 hover:bg-red-950/50 text-red-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                         isLoading={isActionLoading}
+                         className="rounded-xl text-[10px] font-black uppercase tracking-widest"
                        >
                          Delete All
-                       </button>
+                       </Button>
                     )}
                   </>
                 )}
                 {userRole === 'influencer' && (
                   <>
                      {allSelectedPending && (
-                        <button 
+                        <Button 
+                          size="sm"
+                          variant="primary"
                           onClick={handleBulkStart} 
-                          disabled={isActionLoading}
-                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          isLoading={isActionLoading}
+                          className="rounded-xl text-[10px] font-black uppercase tracking-widest"
                         >
-                          {isActionLoading && <Loader2 size={10} className="animate-spin" />}
                           Start All Tasks
-                        </button>
+                        </Button>
                      )}
                      {allSelectedInProgressOrRevise && (
-                        <button 
+                        <Button 
+                          size="sm"
+                          variant="primary"
                           onClick={() => handleOpenSubmitModal(selectedDeliverablesData)} 
-                          disabled={isActionLoading}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          isLoading={isActionLoading}
+                          className="rounded-xl text-[10px] font-black uppercase tracking-widest"
                         >
-                          {isActionLoading && <Loader2 size={10} className="animate-spin" />}
                           Submit All
-                        </button>
+                        </Button>
                      )}
                   </>
                 )}
@@ -812,6 +846,16 @@ const CollabTasksTab = () => {
           remainingBudget={collaboration.agreedBudget - (collaboration.totalPaidAmount || 0)}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={confirmConfig.isOpen}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmConfig.onConfirm}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        variant={confirmConfig.variant}
+        isLoading={isActionLoading}
+      />
 
       {/* Smart Setup Modal */}
       {isSmartSetupOpen && (
