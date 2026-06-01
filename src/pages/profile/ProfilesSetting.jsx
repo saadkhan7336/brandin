@@ -346,7 +346,7 @@ export default function ProfileSettings() {
       setOtpCooldown(60); // 1 minute cooldown
       showToast("Verification code sent!");
     } catch (err) {
-      showToast("Failed to send code", "error");
+      showToast(err.response?.data?.message || "Failed to send code", "error");
     }
   };
 
