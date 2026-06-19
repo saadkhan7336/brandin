@@ -7,10 +7,14 @@ import { fetchSidebarCounts } from '../redux/slices/collaborationSlice';
 import { updateUserPresence } from '../redux/slices/presenceSlice';
 import { toast } from 'sonner';
 import { playNotificationSound } from '../utils/notificationSound';
+import { NotificationToast } from '../components/common/NotificationToast';
 
 const SocketContext = createContext();
 
-const ENDPOINT = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// Socket.io treats URL paths as namespaces, so we must strip '/api/v1' etc.
+// and connect to just the origin (e.g. http://localhost:8000)
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const ENDPOINT = new URL(API_URL).origin;
 
 export const SocketProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
@@ -35,20 +39,24 @@ export const SocketProvider = ({ children }) => {
 
         newSocket.emit('setup', user);
 
-        newSocket.on('connected', () => console.log('Connected to socket'));
+        newSocket.on('connected', () => console.log('✅ Socket connected to server'));
+
+        newSocket.on('connect_error', (err) => {
+            console.error('❌ Socket connection error:', err.message);
+        });
 
         // 1. Navbar Notifications
         newSocket.on('notification_received', (notification) => {
+            console.log('🔔 notification_received event fired:', notification);
             dispatch(addNotification(notification));
             playNotificationSound();
-            toast(notification.title, {
-                description: notification.message,
-                action: notification.link ? {
-                    label: 'View',
-                    onClick: () => window.location.href = notification.link
-                } : null
+            toast.custom((t) => (
+                <NotificationToast t={t} notification={notification} />
+            ), {
+                duration: 5000,
             });
         });
+        // toast.custom used for custom toast notifications that are not present in the sonner library
 
         // 2. Sidebar Badge Refresh
         newSocket.on('activity_created', () => {
@@ -89,7 +97,23 @@ export const SocketProvider = ({ children }) => {
 
         setSocket(newSocket);
 
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                if (!newSocket.connected) {
+                    newSocket.connect();
+                }
+                // Always emit setup to ensure server knows we are active
+                newSocket.emit('setup', user);
+            } else if (document.visibilityState === 'hidden') {
+                // User explicitly wants the socket to disconnect when leaving the window
+                newSocket.disconnect();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
         return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
             newSocket.disconnect();
         };
     }, [isAuthenticated, user?._id, dispatch]);

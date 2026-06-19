@@ -25,6 +25,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import EmojiPicker from 'emoji-picker-react';
 import collaborationService from "../../services/collaborationService";
 import VerifiedTick from "../common/VerifiedTick";
+import { getOptimizedImage } from "../../utils/imageOptimization";
 
 
 
@@ -62,6 +63,23 @@ const ChatLayout = () => {
   useEffect(() => {
     dispatch(fetchConversations());
   }, [dispatch]);
+
+  // Sync activeConversation with the freshly fetched conversations list
+  // This ensures that if activeConversation was set from a raw Collab CTA (unpopulated),
+  // it gets swapped out for the fully populated version once conversations load.
+  useEffect(() => {
+    if (activeConversation && conversations.length > 0) {
+      const syncedConv = conversations.find(c => c._id === activeConversation._id);
+      if (syncedConv && syncedConv !== activeConversation) {
+        // Only update if we are missing the full object data (like populated participants)
+        // or if campaign/collaboration metadata changed.
+        const activePartnerIsString = typeof activeConversation.participants?.[0] === 'string';
+        if (activePartnerIsString) {
+          dispatch(setActiveConversation(syncedConv));
+        }
+      }
+    }
+  }, [conversations, activeConversation, dispatch]);
 
   useEffect(() => {
     if (socket && user) {
@@ -455,11 +473,13 @@ const ChatLayout = () => {
                 >
                   <div className="relative flex-shrink-0">
                     <div className="h-12 w-12 rounded-2xl overflow-hidden bg-indigo-100 flex items-center justify-center shadow-sm">
-                      {otherUser?.profilePic ? (
-                        <img src={otherUser.profilePic} alt="pic" className="h-full w-full object-cover transition-transform group-hover:scale-110" />
-                      ) : (
-                        <span className="text-indigo-700 font-bold text-lg">{otherUser?.fullname?.charAt(0)}</span>
-                      )}
+                      <div className="relative w-12 h-12 rounded-2xl overflow-hidden shrink-0 group">
+                        {otherUser?.profilePic ? (
+                          <img loading="lazy" decoding="async" src={getOptimizedImage(otherUser.profilePic, 'chat')} alt="pic" className="h-full w-full object-cover transition-transform group-hover:scale-110" width="48" height="48" />
+                        ) : (
+                          <span className="text-indigo-700 font-bold text-lg">{otherUser?.fullname?.charAt(0)}</span>
+                        )}
+                      </div>
                     </div>
                     {isOnline && (
                       <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
@@ -552,9 +572,9 @@ const ChatLayout = () => {
                   </button>
                   <div className="relative">
                     <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-800 font-bold overflow-hidden shadow-sm">
-                      {chatOtherUser?.profilePic ? 
-                          <img className="h-full w-full object-cover" src={chatOtherUser?.profilePic} alt="" /> 
-                          : <span>{chatOtherUser?.fullname?.charAt(0)}</span>}
+                        <div className="h-11 w-11 rounded-2xl overflow-hidden shadow-sm shrink-0">
+                          <img loading="lazy" decoding="async" className="h-full w-full object-cover" src={getOptimizedImage(chatOtherUser?.profilePic, 'chat')} alt="" width="44" height="44" /> 
+                        </div> : <span>{chatOtherUser?.fullname?.charAt(0)}</span>
                     </div>
                     {isOnline && (
                       <span className="absolute -top-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-green-500 border-2 border-white rounded-full ring-2 ring-transparent transition-all"></span>
@@ -753,13 +773,9 @@ const ChatLayout = () => {
                <>
                  <div className="p-8 flex flex-col items-center text-center border-b border-gray-50">
                     <div className="w-24 h-24 rounded-3xl bg-indigo-50 overflow-hidden mb-4 shadow-xl shadow-indigo-100 ring-4 ring-white">
-                      {chatOtherUser?.profilePic ? (
-                        <img src={chatOtherUser.profilePic} alt="avatar" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-indigo-300">
-                          {chatOtherUser?.fullname?.charAt(0)}
-                        </div>
-                      )}
+                      <div className="w-24 h-24 mx-auto rounded-3xl overflow-hidden border-4 border-white shadow-xl relative z-10 bg-white">
+                        <img loading="lazy" decoding="async" src={getOptimizedImage(chatOtherUser.profilePic, 'avatar')} alt="avatar" className="w-full h-full object-cover" width="96" height="96" />
+                      </div>
                     </div>
                     <div className="flex items-center gap-1.5 mb-1 justify-center">
                       <h3 className="text-lg font-bold text-gray-900 leading-tight">{chatOtherUser?.fullname}</h3>
@@ -791,8 +807,8 @@ const ChatLayout = () => {
                       {currentCampaign ? (
                         <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 group hover:border-indigo-100 transition-colors">
                            <div className="flex items-center gap-3 mb-3">
-                              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm overflow-hidden">
-                                {currentCampaign.image ? <img src={currentCampaign.image} alt="c" className="w-full h-full object-cover" /> : <Target className="w-5 h-5 text-indigo-500" />}
+                              <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-500 overflow-hidden">
+                                {currentCampaign.image ? <img loading="lazy" decoding="async" src={getOptimizedImage(currentCampaign.image, 'chat')} alt="c" className="w-full h-full object-cover" width="40" height="40" /> : <Target className="w-5 h-5 text-indigo-500" />}
                               </div>
                               <div className="min-w-0">
                                  <p className="text-sm font-bold text-gray-900 truncate">{currentCampaign.name}</p>

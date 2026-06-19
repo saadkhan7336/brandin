@@ -24,6 +24,7 @@ import { setActiveConversation } from '../../redux/slices/chatSlice';
 import Modal from '../../components/common/Modal';
 import { cn } from '../../utils/helper';
 import { useSocket } from '../../context/SocketContext';
+import { getOptimizedImage } from '../../utils/imageOptimization';
 import paymentService from '../../services/paymentService';
 import PaymentModal from '../../components/payment/PaymentModal';
 import { toast } from 'sonner';
@@ -434,11 +435,11 @@ const CollabDetailView = () => {
           </div>
 
           <div className="shrink-0 flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-            <img 
-              src={partner?.profilePic || fallbackAvatar} 
+            <img loading="lazy" decoding="async" 
+              src={getOptimizedImage(partner?.profilePic || fallbackAvatar, 'avatar')} 
               alt={partner?.fullname}
               className="w-14 h-14 rounded-xl object-cover border border-gray-200"
-            />
+             width="56" height="56" />
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Partner</p>
               <h4 className="font-bold text-gray-900 truncate max-w-[150px] capitalize text-[15px]">{partner?.fullname}</h4>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import clsx from "clsx";
 import { Check, CheckCheck, ChevronDown, Reply, Edit2, Copy, Trash2, Smile, CheckSquare } from "lucide-react";
+import { getOptimizedImage } from "../../utils/imageOptimization";
 
 const MessageBubble = ({ message, isOwnMessage, onReply, onEdit, onDeleteMe, onDeleteEveryone, onReact, onSelect, isSelected, selectMode, showAvatar }) => {
   const [showMenu, setShowMenu] = useState(false);
@@ -59,11 +60,10 @@ const MessageBubble = ({ message, isOwnMessage, onReply, onEdit, onDeleteMe, onD
             {showAvatar ? (
               <div className="h-10 w-10 rounded-xl bg-indigo-100 overflow-hidden flex items-center justify-center font-bold text-indigo-800 shadow-sm border border-white">
                 {message.sender?.profilePic ? (
-                  <img
-                    src={message.sender.profilePic}
+                  <img loading="lazy" decoding="async"                     src={getOptimizedImage(message.sender.profilePic, 'chat')}
                     alt="Profile"
-                    className="h-full w-full object-cover"
-                  />
+                    width="40" height="40"
+                    className="h-full w-full object-cover" />
                 ) : (
                   <span>{message.sender?.fullname?.charAt(0) || "U"}</span>
                 )}
@@ -110,12 +110,15 @@ const MessageBubble = ({ message, isOwnMessage, onReply, onEdit, onDeleteMe, onD
                 {message.attachmentUrl && (
                   <div className="mb-2">
                     {message.attachmentType === "image" ? (
-                      <img
-                        src={message.attachmentUrl}
-                        alt="Attachment"
-                        className="max-w-[240px] max-h-64 rounded-lg object-contain cursor-pointer"
-                        onClick={() => window.open(message.attachmentUrl, "_blank")}
-                      />
+                      <div className="rounded-lg overflow-hidden mb-2 max-w-sm">
+                        <img loading="lazy" decoding="async" 
+                          src={getOptimizedImage(message.attachmentUrl, "chatMessage")}
+                          alt="attachment" 
+                          width="300" height="200"
+                          className="w-full h-auto cursor-pointer"
+                          onClick={() => window.open(message.attachmentUrl, '_blank')}
+                        />
+                      </div>
                     ) : message.attachmentType === "video" ? (
                       <video controls className="max-w-[240px] max-h-64 rounded-lg">
                         <source src={message.attachmentUrl} />

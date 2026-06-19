@@ -6,10 +6,14 @@ export const fetchNotifications = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await notificationService.getNotifications();
-      // Backend wraps data in ApiResponse: { statusCode, data: [...], message }
-      // axios gives us response.data = that wrapper, so we need .data.data
-      const notifications = response.data?.data ?? response.data;
-      return Array.isArray(notifications) ? notifications : [];
+      // Backend wraps data in ApiResponse: { statusCode, data: { notifications, unreadCount }, message }
+      const payload = response.data?.data ?? response.data;
+      
+      // Handle both new format {notifications, unreadCount} and old format (array)
+      if (Array.isArray(payload)) {
+        return { notifications: payload, unreadCount: payload.filter(n => !n.isRead).length };
+      }
+      return payload;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
@@ -75,8 +79,8 @@ const notificationSlice = createSlice({
       })
       .addCase(fetchNotifications.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
-        state.unreadCount = action.payload.filter(n => !n.isRead).length;
+        state.items = action.payload.notifications || [];
+        state.unreadCount = action.payload.unreadCount || 0;
       })
       .addCase(fetchNotifications.rejected, (state, action) => {
         state.loading = false;
@@ -97,8 +101,11 @@ const notificationSlice = createSlice({
       })
       // Delete
       .addCase(deleteNotification.fulfilled, (state, action) => {
+        const deletedItem = state.items.find(n => n._id === action.payload);
+        if (deletedItem && !deletedItem.isRead) {
+          state.unreadCount = Math.max(0, state.unreadCount - 1);
+        }
         state.items = state.items.filter(n => n._id !== action.payload);
-        state.unreadCount = state.items.filter(n => !n.isRead).length;
       });
   }
 });
