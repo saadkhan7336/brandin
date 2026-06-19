@@ -12,6 +12,7 @@ import {
   DollarSign,
   RotateCcw
 } from 'lucide-react';
+import { getOptimizedImage } from '../../utils/imageOptimization';
 
 const RequestCard = ({ request, type, userId, onAccept, onReject, onViewProfile, onResend }) => {
   const navigate = useNavigate();
@@ -78,11 +79,11 @@ const RequestCard = ({ request, type, userId, onAccept, onReject, onViewProfile,
       <div className="flex flex-col md:flex-row md:items-start gap-5">
         {/* Avatar */}
         <div className="relative shrink-0">
-          <img 
-            src={avatar} 
+          <img loading="lazy" decoding="async" 
+            src={getOptimizedImage(avatar, 'avatar')} 
             alt={username} 
             className="w-[60px] h-[60px] rounded-full object-cover ring-4 ring-white shadow-sm"
-          />
+           width="60" height="60" />
         </div>
 
         {/* Content */}

@@ -16,6 +16,7 @@ import {
   Mail,
   MapPin
 } from 'lucide-react';
+import { getOptimizedImage } from '../../utils/imageOptimization';
 
 const getPlatformIcon = (name) => {
   switch (name?.toLowerCase()) {
@@ -176,11 +177,11 @@ const CollabOverviewTab = () => {
             <div className="space-y-6">
               {/* Profile */}
               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <img 
-                  src={partner?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(partner?.fullname || 'User')}&background=random`} 
+                <img loading="lazy" decoding="async" 
+                  src={getOptimizedImage(partner?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(partner?.fullname || 'User')}&background=random`, 'avatar')} 
                   alt={partner?.fullname}
                   className="w-12 h-12 rounded-xl object-cover"
-                />
+                 width="48" height="48" />
                 <div>
                   <h4 className="font-bold text-gray-900 text-sm capitalize">{partner?.fullname}</h4>
                   <p className="text-[10px] font-bold text-gray-400">@{partner?.username || 'user'}</p>

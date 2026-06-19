@@ -16,6 +16,8 @@ import {
 } from "../../redux/slices/Profileslice";
 import profileService from "../../services/profileService";
 import { cn } from "../../utils/helper";
+import { getOptimizedImage } from "../../utils/imageOptimization";
+import { compressImage } from "../../utils/imageCompression";
 
 // ── Avatar upload area (Standardized) ───────────────────────────────────────────
 function AvatarUpload({ label, currentUrl, onChange, shape = "circle", size = "lg" }) {
@@ -24,9 +26,12 @@ function AvatarUpload({ label, currentUrl, onChange, shape = "circle", size = "l
 
   useEffect(() => { setPreview(currentUrl || ""); }, [currentUrl]);
 
-  const handleFile = (e) => {
-    const file = e.target.files?.[0];
+  const handleFile = async (e) => {
+    let file = e.target.files?.[0];
     if (!file) return;
+    
+    file = await compressImage(file, isCircle ? 'avatar' : 'normal');
+    
     setPreview(URL.createObjectURL(file));
     onChange(file);
   };
@@ -48,7 +53,7 @@ function AvatarUpload({ label, currentUrl, onChange, shape = "circle", size = "l
         )}
       >
         {preview ? (
-          <img src={preview} alt={label} className="w-full h-full object-cover" />
+          <img loading="lazy" decoding="async" src={getOptimizedImage(preview, isCircle ? 'avatar' : 'cover')} alt={label} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50">
             <Camera size={20} className="text-gray-300" />
@@ -552,9 +557,12 @@ export default function ProfileSettings() {
                     type="file" 
                     className="hidden" 
                     multiple
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const files = Array.from(e.target.files || []);
-                      setNewPortfolioFiles(prev => [...prev, ...files]);
+                      const compressedFiles = await Promise.all(
+                        files.map(f => compressImage(f, 'normal'))
+                      );
+                      setNewPortfolioFiles(prev => [...prev, ...compressedFiles]);
                     }}
                   />
                 </div>

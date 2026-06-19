@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import VerifiedTick from '../common/VerifiedTick';
 import SocialIcon from '../common/SocialIcon';
+import { getOptimizedImage } from '../../utils/imageOptimization';
 
 const AIInfluencerCard = memo(({ data, onInvite }) => {
   const navigate = useNavigate();
@@ -47,11 +48,10 @@ const AIInfluencerCard = memo(({ data, onInvite }) => {
       <div className="px-6 pb-6 flex-1 flex flex-col -mt-12 relative items-center text-center">
          {/* Profile Image */}
          <div className="relative mb-3 transition-transform duration-500 hover:scale-105 cursor-pointer">
-            <img
-              src={data.profileImage || `https://ui-avatars.com/api/?name=${data.username}&background=random`}
+            <img loading="lazy" decoding="async"               src={getOptimizedImage(data.profileImage || `https://ui-avatars.com/api/?name=${data.username}&background=random`, 'avatar')}
               alt={data.name}
               className="w-[84px] h-[84px] rounded-[24px] object-cover border-[4px] border-white shadow-md bg-white relative z-10"
-            />
+             width="84" height="84" />
          </div>
          
          <div className="flex items-center gap-1.5 justify-center mb-0.5">

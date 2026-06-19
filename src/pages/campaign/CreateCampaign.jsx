@@ -20,6 +20,8 @@ import { Input, Select, Textarea } from '../../components/common/FormComponents'
 import { Button } from '../../components/common/Button';
 import campaignService from '../../services/campaignService';
 import { setLoading, setError, addCampaign } from '../../redux/slices/campaignSlice';
+import { getOptimizedImage } from '../../utils/imageOptimization';
+import { compressImage } from '../../utils/imageCompression';
 
 const CreateCampaign = ({ onCancel, onSuccess, campaign }) => {
   const dispatch = useDispatch();
@@ -52,9 +54,10 @@ const CreateCampaign = ({ onCancel, onSuccess, campaign }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
+  const handleImageChange = async (e) => {
+    let file = e.target.files[0];
     if (file) {
+      file = await compressImage(file, 'normal');
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -228,7 +231,7 @@ const CreateCampaign = ({ onCancel, onSuccess, campaign }) => {
             <div className="flex flex-col md:flex-row items-center gap-6">
               <div className="w-full md:w-48 h-32 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50 group relative">
                 {imagePreview ? (
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={getOptimizedImage(imagePreview, 'avatar')} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
                   <ImageIcon className="w-8 h-8 text-gray-300" />
                 )}

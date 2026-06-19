@@ -13,6 +13,7 @@ import VerifiedTick from '../../components/common/VerifiedTick';
 import SocialIcon from '../../components/common/SocialIcon';
 import { getFilteredInfluencers } from '../../services/aiService.js';
 import SendCollabModal from '../../components/layout/influencer/SendCollabModal';
+import { getOptimizedImage } from '../../utils/imageOptimization';
 
 // Lazy loading AI Feature Components to optimize initial bundle bounds
 const CampaignSelectionModal = lazy(() => import('../../components/ai/CampaignSelectionModal.jsx'));
@@ -309,11 +310,10 @@ function Influencers() {
                   <div className="px-6 pb-6 flex-1 flex flex-col -mt-12 relative items-center text-center">
                      {/* Profile Image */}
                      <div className="relative mb-3 transition-transform duration-500 group-hover:scale-105">
-                        <img
-                          src={inf.profilePicture || `https://ui-avatars.com/api/?name=${inf.username}&background=random`}
+                        <img loading="lazy" decoding="async"                           src={getOptimizedImage(inf.profilePicture || `https://ui-avatars.com/api/?name=${inf.username}&background=random`, 'avatar')}
                           alt={inf.username}
                           className="w-[84px] h-[84px] rounded-[24px] object-cover border-[4px] border-white shadow-md bg-white relative z-10 transition-transform duration-500 group-hover:scale-110"
-                        />
+                         width="84" height="84" />
                      </div>
                      
                      <div className="flex items-center gap-1.5 justify-center mb-0.5">

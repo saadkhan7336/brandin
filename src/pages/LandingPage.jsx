@@ -146,11 +146,9 @@ export default function LandingPage() {
             </div>
             <div className="relative order-first lg:order-last">
               <div className="relative z-10">
-                <img
-                  src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=600&fit=crop"
+                <img loading="lazy" decoding="async"                   src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=600&fit=crop"
                   alt="Team collaboration"
-                  className="rounded-2xl shadow-2xl w-full"
-                />
+                  className="rounded-2xl shadow-2xl w-full" />
               </div>
               <div className="absolute -bottom-4 -right-4 w-32 h-32 sm:w-64 sm:h-64 bg-[#3b82f6] rounded-2xl opacity-20 blur-3xl"></div>
               <div className="absolute -top-4 -left-4 w-32 h-32 sm:w-64 sm:h-64 bg-[#10b981] rounded-2xl opacity-20 blur-3xl"></div>
@@ -266,11 +264,10 @@ export default function LandingPage() {
                 </div>
                 <p className="text-sm sm:text-base text-[#6b7280] mb-4 sm:mb-6 italic">"{testimonial.quote}"</p>
                 <div className="flex items-center gap-3">
-                  <img
-                    src={testimonial.image}
+                  <img loading="lazy" decoding="async"                     src={testimonial.image}
                     alt={testimonial.name}
                     className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
-                  />
+                   width="40" height="40" />
                   <div>
                     <div className="text-sm sm:text-base font-semibold text-[#111827]">{testimonial.name}</div>
                     <div className="text-xs sm:text-sm text-[#6b7280]">{testimonial.role}</div>

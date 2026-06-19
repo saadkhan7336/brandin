@@ -129,11 +129,9 @@ export default function AboutUsPage() {
               </div>
             </div>
             <div className="relative">
-              <img
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop"
+              <img loading="lazy" decoding="async"                 src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop"
                 alt="Team collaboration"
-                className="rounded-2xl shadow-2xl"
-              />
+                className="rounded-2xl shadow-2xl" />
               <div className="absolute -bottom-4 -right-4 w-64 h-64 bg-[#3b82f6] rounded-2xl opacity-20 blur-3xl"></div>
             </div>
           </div>

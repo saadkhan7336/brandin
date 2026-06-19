@@ -119,11 +119,9 @@ export default function BlogPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row gap-12 items-center">
             <div className="w-full lg:w-1/2">
-              <img
-                src={blogPosts[0].image}
+              <img loading="lazy" decoding="async"                 src={blogPosts[0].image}
                 alt={blogPosts[0].title}
-                className="w-full h-[400px] object-cover rounded-2xl shadow-xl"
-              />
+                className="w-full h-[400px] object-cover rounded-2xl shadow-xl" />
             </div>
             <div className="w-full lg:w-1/2">
               <div className="text-sm font-bold text-[#3b82f6] mb-4 uppercase tracking-wider">
@@ -181,11 +179,9 @@ export default function BlogPage() {
             {blogPosts.map((post) => (
               <article key={post.id} className="group cursor-pointer">
                 <div className="relative mb-6 overflow-hidden rounded-2xl aspect-[16/9]">
-                  <img
-                    src={post.image}
+                  <img loading="lazy" decoding="async"                     src={post.image}
                     alt={post.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                   <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg text-sm font-bold text-[#3b82f6]">
                     {post.category}
                   </div>

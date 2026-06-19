@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getFilteredInfluencers } from "../../services/aiService";
 import { Users, CheckCircle, Search, AlertCircle } from "lucide-react";
+import { getOptimizedImage } from "../../utils/imageOptimization";
 
 export default function FilteredInfluencers({ campaignId }) {
   const [data, setData] = useState([]);
@@ -79,7 +80,7 @@ export default function FilteredInfluencers({ campaignId }) {
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 rounded-full overflow-hidden bg-indigo-50 flex items-center justify-center">
               {inf.coverImage ? (
-                <img src={inf.coverImage} alt={inf.username} className="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" src={getOptimizedImage(inf.coverImage, 'avatar')} alt={inf.username} className="w-full h-full object-cover" width="48" height="48" />
               ) : (
                 <span className="text-xl font-bold text-indigo-300">{inf.username.charAt(0).toUpperCase()}</span>
               )}

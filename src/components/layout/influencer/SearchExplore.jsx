@@ -35,6 +35,7 @@ import VerifiedTick from "../../common/VerifiedTick";
 import SocialIcon from "../../common/SocialIcon";
 import { clsx } from "clsx";
 import { twMerge } from 'tailwind-merge';
+import { getOptimizedImage } from "../../../utils/imageOptimization";
 
 const cn = (...inputs) => twMerge(clsx(inputs));
 
@@ -101,11 +102,10 @@ const CampaignCard = ({
           {/* Brand Logo */}
           <div className="relative z-10 transition-transform duration-500 group-hover:scale-110">
              {brandLogo ? (
-               <img
-                 src={brandLogo}
+               <img loading="lazy" decoding="async"                  src={getOptimizedImage(brandLogo, 'avatar')}
                  alt={brandName}
                  className="w-20 h-20 rounded-2xl object-cover border-[3px] border-white/20 shadow-2xl bg-white"
-               />
+                width="80" height="80" />
              ) : (
                <div className="w-20 h-20 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl border-[3px] border-white/20 shadow-2xl">
                  {brandName[0]}
@@ -291,11 +291,10 @@ const BrandCard = ({
          {/* Profile Image */}
          <div className="relative mb-2 transition-transform duration-500 group-hover:scale-105">
             {logo ? (
-              <img
-                src={logo}
+              <img loading="lazy" decoding="async"                 src={getOptimizedImage(logo, 'avatar')}
                 alt={name}
                 className="w-[84px] h-[84px] rounded-[24px] object-cover border-[4px] border-white shadow-md bg-white relative z-10 transition-transform duration-500 group-hover:scale-110"
-              />
+               width="84" height="84" />
             ) : (
               <div className="w-[84px] h-[84px] rounded-[24px] bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl border-[4px] border-white shadow-md relative z-10 transition-transform duration-500 group-hover:scale-110">
                 {name[0]}

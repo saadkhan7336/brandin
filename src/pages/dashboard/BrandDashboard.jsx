@@ -9,6 +9,7 @@ import {
   Calendar
 } from 'lucide-react';
 import api from '../../services/api';
+import { getOptimizedImage } from '../../utils/imageOptimization';
 
 function BrandDashboard() {
   const navigate = useNavigate();
@@ -259,7 +260,7 @@ function BrandDashboard() {
                 className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-xl transition-all cursor-pointer group"
               >
                 <div className="flex items-center gap-3">
-                  <img src={performer.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(performer.name)}`} alt="" className="w-10 h-10 rounded-lg object-cover shadow-sm" />
+                  <img loading="lazy" decoding="async" src={getOptimizedImage(performer.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(performer.name)}`, 'avatar')} alt="" className="w-10 h-10 rounded-lg object-cover shadow-sm"  width="40" height="40" />
                   <div>
                     <p className="text-sm font-bold text-gray-900">{performer.name}</p>
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">${performer.earnings?.toLocaleString()} Earned</p>

@@ -8,6 +8,7 @@ import api from "../../../services/api";
 import collaborationService from "../../../services/collaborationService";
 import ApplyCampaignModal from "./ApplyCampaignModal";
 import VerifiedTick from "../../common/VerifiedTick";
+import { getOptimizedImage } from "../../../utils/imageOptimization";
 
 const CampaignDetail = () => {
   const { campaignId } = useParams();
@@ -99,11 +100,10 @@ const CampaignDetail = () => {
       {/* Hero Header Area - Brand Cover Image with Back Button Overlay */}
       <div className="relative w-full h-48 sm:h-64 overflow-hidden bg-slate-900">
         {campaign.brand?.coverPic ? (
-          <img 
-            src={campaign.brand.coverPic} 
+          <img loading="lazy" decoding="async" 
+            src={getOptimizedImage(campaign.brand.coverPic, 'cover')} 
             alt="Brand Cover" 
-            className="w-full h-full object-cover opacity-70" 
-          />
+            className="w-full h-full object-cover opacity-70" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900" />
         )}
@@ -140,11 +140,10 @@ const CampaignDetail = () => {
               <div className="absolute -top-20 left-8">
                 <div className="w-40 h-40 rounded-3xl bg-white border-4 border-white shadow-xl flex items-center justify-center overflow-hidden transition-transform hover:scale-[1.02] duration-300">
                   {campaign.image || brandLogo ? (
-                    <img 
-                      src={campaign.image || brandLogo} 
+                    <img loading="lazy" decoding="async" 
+                      src={getOptimizedImage(campaign.image || brandLogo, 'avatar')} 
                       alt={campaign.name} 
-                      className="w-full h-full object-cover" 
-                    />
+                      className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-blue-50 flex items-center justify-center">
                       <span className="text-blue-600 font-bold text-5xl">{brandName[0]}</span>

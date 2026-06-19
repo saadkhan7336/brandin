@@ -8,6 +8,7 @@ import { SocketProvider } from './context/SocketContext';
 
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { injectStore } from './services/api';
+import { Toaster } from 'sonner';
 
 injectStore(store);
 
@@ -17,6 +18,7 @@ root.render(
     <Provider store={store}>
       <ErrorBoundary>
         <SocketProvider>
+          <Toaster position="bottom-right" expand={false} richColors />
           <App />
         </SocketProvider>
       </ErrorBoundary>

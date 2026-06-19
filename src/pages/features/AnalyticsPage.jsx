@@ -88,11 +88,9 @@ export default function AnalyticsPage() {
 
           {/* Demo Image */}
           <div className="relative max-w-5xl mx-auto">
-            <img
-              src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop"
+            <img loading="lazy" decoding="async"               src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop"
               alt="Analytics dashboard"
-              className="rounded-2xl shadow-2xl"
-            />
+              className="rounded-2xl shadow-2xl" />
             {/* Metrics Cards */}
             <div className="absolute -bottom-6 left-6 right-6 grid grid-cols-2 md:grid-cols-4 gap-4">
               {metrics.map((metric, index) => (

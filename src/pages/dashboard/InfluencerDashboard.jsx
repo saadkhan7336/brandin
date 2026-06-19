@@ -7,6 +7,7 @@ import {
   Clock, Briefcase, Send, Download
 } from 'lucide-react';
 import api from '../../services/api';
+import { getOptimizedImage } from '../../utils/imageOptimization';
 import collaborationService from '../../services/collaborationService';
 import paymentService from '../../services/paymentService';
 import { useSocket } from '../../context/SocketContext';
@@ -359,8 +360,8 @@ function InfluencerDashboard() {
               {analytics.recentTransactions?.length > 0 ? analytics.recentTransactions.map((transaction, i) => (
                 <div key={i} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-all">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center overflow-hidden">
-                      <img src={transaction.brandPic || `https://ui-avatars.com/api/?name=Brand`} alt="" className="w-full h-full object-cover" />
+                    <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-gray-100 shadow-sm bg-gray-50">
+                      <img loading="lazy" decoding="async" src={getOptimizedImage(transaction.brandPic || `https://ui-avatars.com/api/?name=Brand`, 'avatar')} alt="" className="w-full h-full object-cover" width="40" height="40" />
                     </div>
                     <div>
                       <p className="text-xs font-bold text-gray-900">{transaction.campaignName}</p>
@@ -393,8 +394,8 @@ function InfluencerDashboard() {
                   <div className="w-8 h-8 shrink-0 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold shadow-md shadow-blue-500/20">
                     {index + 1}
                   </div>
-                  <div className="w-10 h-10 shrink-0 rounded-xl overflow-hidden border border-gray-100">
-                    <img src={brand.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(brand.name)}`} alt={brand.name} className="w-full h-full object-cover" />
+                  <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm shrink-0 bg-gray-50 border border-gray-100">
+                    <img loading="lazy" decoding="async" src={getOptimizedImage(brand.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(brand.name)}`, 'avatar')} alt={brand.name} className="w-full h-full object-cover" width="40" height="40" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-bold text-gray-900 truncate">{brand.name}</h4>

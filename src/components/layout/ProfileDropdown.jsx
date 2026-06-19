@@ -5,6 +5,7 @@ import { Settings, LogOut, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import VerifiedTick from '../common/VerifiedTick';
 import { useDashboardContext } from '../../context/DashboardContext';
+import { getOptimizedImage } from '../../utils/imageOptimization';
 
 export default function ProfileDropdown() {
   const panelRef = useRef(null);
@@ -66,7 +67,7 @@ export default function ProfileDropdown() {
       {/* Blue gradient header / Cover image */}
       <div className="relative h-24 bg-gradient-to-r from-blue-500 to-blue-600 overflow-hidden">
         {coverUrl && (
-          <img src={coverUrl} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+          <img loading="lazy" decoding="async" src={getOptimizedImage(coverUrl, 'cover')} alt="Cover" className="absolute inset-0 w-full h-full object-cover" width="320" height="96" />
         )}
         <div className="absolute inset-0 bg-black/20" /> {/* Subtle overlay for contrast */}
       </div>
@@ -76,7 +77,7 @@ export default function ProfileDropdown() {
         <div className="relative">
           <div className="w-16 h-16 rounded-2xl bg-slate-100 border-[3px] border-white flex items-center justify-center shadow-lg overflow-hidden">
             {avatarUrl ? (
-              <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={getOptimizedImage(avatarUrl, 'avatar')} alt={displayName} className="w-full h-full object-cover" width="64" height="64" />
             ) : (
               <span className="text-xl font-bold text-slate-500">{initial}</span>
             )}

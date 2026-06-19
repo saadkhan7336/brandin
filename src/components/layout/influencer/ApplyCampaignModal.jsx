@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { X, UploadCloud, File, CheckCircle, ChevronDown } from "lucide-react";
 import api from "../../../services/api";
+import { getOptimizedImage } from "../../../utils/imageOptimization";
 
 /**
  * Universal Apply / Send Request Modal.
@@ -171,11 +172,10 @@ const ApplyCampaignModal = ({
           {/* Context Box */}
           <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex gap-4 items-center">
             {brandLogo ? (
-              <img
-                src={brandLogo}
+              <img loading="lazy" decoding="async"                 src={getOptimizedImage(brandLogo, 'avatar')}
                 alt={brandName}
                 className="w-12 h-12 rounded-lg object-cover bg-white"
-              />
+               width="48" height="48" />
             ) : (
               <div className="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
                 {brandName[0]}

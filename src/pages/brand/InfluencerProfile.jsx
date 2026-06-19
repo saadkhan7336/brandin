@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { getOptimizedImage } from "../../utils/imageOptimization";
 import {
   ArrowLeft,
   Instagram,
@@ -284,22 +285,20 @@ const InfluencerProfile = () => {
       {/* ── HERO BANNER ── */}
       <div className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/40 overflow-hidden group/card relative">
         <div className="h-56 bg-slate-100 relative group/cover cursor-default">
-          <img
-            src={cover}
+          <img loading="lazy" decoding="async"             src={getOptimizedImage(cover, 'cover')}
             alt="Cover"
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105"
-          />
+            width="1200" height="224" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
         </div>
 
         <div className="px-12 pb-12">
           <div className="flex flex-col md:flex-row items-end gap-12 -mt-16 relative z-10">
             <div className="relative group/logo">
-              <img
-                src={avatar}
+              <img loading="lazy" decoding="async"                 src={getOptimizedImage(avatar, 'avatar')}
                 alt="Avatar"
                 className="w-44 h-44 rounded-[2.5rem] object-cover border-[10px] border-white shadow-2xl bg-white"
-              />
+               width="176" height="176" />
               <VerifiedTick
                 user={user}
                 roleProfile={influencer}
@@ -654,14 +653,13 @@ const InfluencerProfile = () => {
                         key={i}
                         className="p-8 bg-slate-50/50 border border-slate-100 rounded-[2.5rem] flex flex-col md:flex-row gap-6 items-start group hover:bg-white hover:shadow-2xl transition-all duration-500"
                       >
-                        <img
-                          src={
+                        <img loading="lazy" decoding="async"                           src={getOptimizedImage(
                             review.reviewer?.profilePic ||
-                            `https://ui-avatars.com/api/?name=${review.reviewer?.fullname}`
-                          }
+                            `https://ui-avatars.com/api/?name=${review.reviewer?.fullname}`, 'avatar'
+                          )}
                           className="w-14 h-14 rounded-2xl object-cover border-4 border-white shadow-lg"
                           alt="Reviewer"
-                        />
+                         width="56" height="56" />
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center justify-between">
                             <h4 className="font-black text-slate-900 uppercase italic tracking-tight">
@@ -760,11 +758,11 @@ const InfluencerProfile = () => {
               ) : (
                 <div className="w-full h-full flex items-center justify-center p-4" style={{ minHeight: "70vh" }}>
                   {previewItem.url.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) ? (
-                    <img 
-                      src={previewItem.url} 
+                    <img loading="lazy" decoding="async" 
+                      src={getOptimizedImage(previewItem.url, 'portfolioFull')} 
                       alt={previewItem.title} 
-                      className="max-w-full max-h-full object-contain shadow-2xl rounded-lg bg-white" 
-                    />
+                      className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
+                      width="1200" height="800" />
                   ) : (
                     <iframe
                       src={previewItem.url}

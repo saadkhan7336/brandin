@@ -79,11 +79,9 @@ function FindMatchPage() {
           </div>
           {/* Demo Image */}
           <div className="relative max-w-5xl mx-auto">
-            <img
-              src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=600&fit=crop"
+            <img loading="lazy" decoding="async"               src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=600&fit=crop"
               alt="Team searching"
-              className="rounded-2xl shadow-2xl"
-            />
+              className="rounded-2xl shadow-2xl" />
             <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-xl shadow-lg max-w-sm border border-[#e5e7eb]">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-12 h-12 bg-[#10b981] rounded-full flex items-center justify-center">

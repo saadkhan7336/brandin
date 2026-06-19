@@ -118,11 +118,9 @@ export default function CaseStudiesPage() {
             {caseStudies.map((study) => (
               <div key={study.id} className="group cursor-pointer">
                 <div className="relative rounded-3xl overflow-hidden mb-8 lg:aspect-[16/10]">
-                  <img
-                    src={study.image}
+                  <img loading="lazy" decoding="async"                     src={study.image}
                     alt={study.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                   <div className="absolute bottom-8 left-8 right-8">
                     <div className="text-[#3b82f6] font-bold text-sm uppercase tracking-wider mb-2">

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreVertical, Edit2, Trash2, X, Handshake } from 'lucide-react';
 import { formatDate } from '../../utils/campaignHelpers';
+import { getOptimizedImage } from '../../utils/imageOptimization';
 
 const CampaignCard = ({ campaign, onEdit, onDelete, onReactivate }) => {
   const navigate = useNavigate();
@@ -105,7 +106,7 @@ const CampaignCard = ({ campaign, onEdit, onDelete, onReactivate }) => {
       <div className="flex items-start gap-6">
         <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
           {campaign.image ? (
-            <img src={campaign.image} alt={campaign.name} className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={getOptimizedImage(campaign.image, 'avatar')} alt={campaign.name} className="w-full h-full object-cover" width="96" height="96" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300 italic text-[10px] bg-gray-50 uppercase font-bold tracking-widest px-2 text-center">
               No Cover

@@ -212,11 +212,9 @@ export default function HelpCenterPage() {
                   >
                     <div className="flex items-center gap-4">
                       <div className="relative w-40 h-24 flex-shrink-0">
-                        <img
-                          src={video.thumbnail}
+                        <img loading="lazy" decoding="async"                           src={video.thumbnail}
                           alt={video.title}
-                          className="w-full h-full object-cover"
-                        />
+                          className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition-colors">
                           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
                             <div className="w-0 h-0 border-t-6 border-t-transparent border-l-10 border-l-[#3b82f6] border-b-6 border-b-transparent ml-1" />

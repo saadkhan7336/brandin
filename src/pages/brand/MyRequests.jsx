@@ -21,6 +21,7 @@ import {
 import collaborationService from '../../services/collaborationService';
 import RequestCard from '../../components/brand/RequestCard';
 import ApplyCampaignModal from '../../components/layout/influencer/ApplyCampaignModal';
+import { useSocket } from '../../context/SocketContext';
 
 const MyRequests = () => {
   const dispatch = useDispatch();
@@ -66,6 +67,27 @@ const MyRequests = () => {
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
+
+  const socket = useSocket();
+
+  useEffect(() => {
+    if (socket && user) {
+      const handleUpdate = () => fetchRequests();
+      const handleActivity = (data) => {
+        if (data?.category === 'collaboration' || data?.category === 'application') {
+          handleUpdate();
+        }
+      };
+      
+      socket.on('collaboration_updated', handleUpdate);
+      socket.on('activity_created', handleActivity);
+      
+      return () => {
+        socket.off('collaboration_updated', handleUpdate);
+        socket.off('activity_created', handleActivity);
+      };
+    }
+  }, [socket, user, fetchRequests]);
 
   // Handle Search Debounce
   useEffect(() => {

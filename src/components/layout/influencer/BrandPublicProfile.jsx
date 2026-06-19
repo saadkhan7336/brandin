@@ -26,6 +26,7 @@ import collaborationService from "../../../services/collaborationService";
 import SendCollabModal from "./SendCollabModal";
 import { cn } from "../../../utils/helper";
 import VerifiedTick from "../../common/VerifiedTick";
+import { getOptimizedImage } from "../../../utils/imageOptimization";
 
 const SocialIcon = ({ name, size = 16, className }) => {
   const map = {
@@ -271,7 +272,7 @@ const BrandPublicProfile = () => {
       <div className="relative">
         <div className="h-44 sm:h-52 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-500 overflow-hidden relative">
           {user.coverPic ? (
-            <img src={user.coverPic} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={getOptimizedImage(user.coverPic, 'cover')} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-r from-slate-800 to-slate-900" />
           )}
@@ -289,11 +290,10 @@ const BrandPublicProfile = () => {
                 {/* Logo */}
                 <div className="absolute -top-16 left-8">
                   {user.profilePic || brand?.logo ? (
-                    <img
-                      src={user.profilePic || brand?.logo}
+                    <img loading="lazy" decoding="async"                       src={getOptimizedImage(user.profilePic || brand?.logo, 'avatar')}
                       alt={name}
                       className="w-36 h-36 rounded-2xl object-cover border-4 border-white shadow-xl"
-                    />
+                     width="144" height="144" />
                   ) : (
                     <div className="w-36 h-36 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 border-4 border-white shadow-xl flex items-center justify-center text-blue-600 font-bold text-4xl">
                       {name[0]}
@@ -718,14 +718,14 @@ const BrandPublicProfile = () => {
                   key={i}
                   className="p-6 bg-white border border-gray-100 rounded-2xl flex flex-col md:flex-row gap-5 items-start group hover:shadow-lg transition-all duration-500"
                 >
-                  <img
-                    src={
+                  <img loading="lazy" decoding="async"                     src={getOptimizedImage(
                       review.reviewer?.profilePic ||
-                      `https://ui-avatars.com/api/?name=${review.reviewer?.fullname}`
-                    }
+                      `https://ui-avatars.com/api/?name=${review.reviewer?.fullname}`,
+                      'avatar'
+                    )}
                     className="w-12 h-12 rounded-xl object-cover border-2 border-gray-100 shadow"
                     alt="Reviewer"
-                  />
+                   width="48" height="48" />
                   <div className="flex-1 text-left space-y-2">
                     <div className="flex items-center justify-between">
                       <h4 className="font-bold text-gray-900 text-sm">
