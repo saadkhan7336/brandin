@@ -64,7 +64,7 @@ export const SocketProvider = ({ children }) => {
         });
 
         // 3. Real-time Messages (Global)
-        newSocket.on('message recieved', (newMessage) => {
+        newSocket.on('message received', (newMessage) => {
             dispatch(receiveMessage(newMessage));
             // Optional: Show toast for message if not on messages page
             if (window.location.pathname !== '/messages') {

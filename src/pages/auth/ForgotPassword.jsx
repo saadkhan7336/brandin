@@ -8,34 +8,22 @@ import { Button } from '../../components/common/Button';
 
 import api from '../../services/api';
 import { ENDPOINTS } from '../../services/endpoints';
-import {
-  setLoading,
-  setError,
-  setMessage,
-  setResetEmail
-} from '../../redux/slices/authSlice';
+import { setLoading, setError, setResetEmail } from '../../redux/slices/authSlice';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { loading, error, message } = useSelector((state) => state.auth);
+  const { loading, error } = useSelector((state) => state.auth);
   const [email, setEmail] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       dispatch(setLoading(true));
-      const response = await api.post(ENDPOINTS.FORGOT_PASSWORD, { email });
-
-      dispatch(setMessage(response.data.message || "OTP sent to your email"));
+      await api.post(ENDPOINTS.FORGOT_PASSWORD, { email });
       dispatch(setResetEmail(email));
-
-      // Delay navigation a bit to show message
-      setTimeout(() => {
-        navigate('/reset-password');
-      }, 2000);
-
+      navigate('/verify-otp');
     } catch (err) {
       dispatch(setError(err.response?.data?.message || "Something went wrong"));
     } finally {
@@ -66,12 +54,6 @@ export default function ForgotPassword() {
         {error && (
           <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm border border-red-100">
             {error}
-          </div>
-        )}
-
-        {message && (
-          <div className="bg-green-50 text-green-600 p-3 rounded-lg mb-4 text-sm border border-green-100">
-            {message}
           </div>
         )}
 

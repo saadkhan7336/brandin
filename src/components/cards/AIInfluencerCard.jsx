@@ -8,6 +8,11 @@ import VerifiedTick from '../common/VerifiedTick';
 import SocialIcon from '../common/SocialIcon';
 import { getOptimizedImage } from '../../utils/imageOptimization';
 
+const stripHtml = (text) => {
+  if (!text) return '';
+  return text.replace(/<\/?[^>]+(>|$)/g, '');
+};
+
 const AIInfluencerCard = memo(({ data, onInvite }) => {
   const navigate = useNavigate();
 
@@ -28,8 +33,12 @@ const AIInfluencerCard = memo(({ data, onInvite }) => {
   const reviewCount = data.reviewsCount || 0;
   const trustLevel = data.trustLevel || 'MODERATE';
 
+  const cleanName = stripHtml(data.name || data.username);
+  const cleanUsername = stripHtml(data.username);
+  const cleanAbout = stripHtml(data.about) || "Top-tier creator focused on high-quality content and brand storytelling across multiple platforms.";
+
   return (
-    <div className="bg-white rounded-[24px] border border-gray-100 overflow-hidden flex flex-col h-[420px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] w-full max-w-[340px] mx-auto relative group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.12)] hover:border-indigo-100 cursor-pointer">
+    <div className="bg-white rounded-[24px] border border-gray-100 overflow-hidden flex flex-col h-[420px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] w-full max-w-[360px] mx-auto relative group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.12)] hover:border-indigo-100 cursor-pointer">
       {/* Header Profile with Top Background */}
       <div className="relative h-[100px] bg-gradient-to-br from-blue-700 to-indigo-800 p-4 flex justify-between items-start transition-all duration-500 group-hover:from-blue-600 group-hover:to-indigo-700">
          <div className="flex gap-2 z-10">
@@ -48,20 +57,20 @@ const AIInfluencerCard = memo(({ data, onInvite }) => {
       <div className="px-6 pb-6 flex-1 flex flex-col -mt-12 relative items-center text-center">
          {/* Profile Image */}
          <div className="relative mb-3 transition-transform duration-500 hover:scale-105 cursor-pointer">
-            <img loading="lazy" decoding="async"               src={getOptimizedImage(data.profileImage || `https://ui-avatars.com/api/?name=${data.username}&background=random`, 'avatar')}
-              alt={data.name}
+            <img loading="lazy" decoding="async"               src={getOptimizedImage(data.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanUsername)}&background=random`, 'avatar')}
+              alt={cleanName}
               className="w-[84px] h-[84px] rounded-[24px] object-cover border-[4px] border-white shadow-md bg-white relative z-10"
              width="84" height="84" />
          </div>
          
          <div className="flex items-center gap-1.5 justify-center mb-0.5">
-            <h3 className="text-[16px] font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">{data.name || data.username}</h3>
+            <h3 className="text-[16px] font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">{cleanName}</h3>
             <VerifiedTick user={data} roleProfile={data} size="sm" />
          </div>
-         <p className="text-[12px] font-medium text-gray-500 mb-4">@{data.username}</p>
+         <p className="text-[12px] font-medium text-gray-500 mb-4">@{cleanUsername}</p>
 
          <p className="text-[11px] text-gray-500 leading-relaxed mb-6 line-clamp-2 px-2 h-[34px]">
-            {data.about || "Top-tier creator focused on high-quality content and brand storytelling across multiple platforms."}
+            {cleanAbout}
          </p>
 
         {/* Stats Grid */}

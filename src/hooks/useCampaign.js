@@ -38,7 +38,7 @@ export const useCampaign = () => {
     try {
       dispatch(setLoading(true));
 
-      const res = await api.get(`${ENDPOINTS.campaigns.getOne}/${id}`);
+      const res = await api.get(ENDPOINTS.campaigns.getOne(id));
 
       dispatch(setSelectedCampaign(res.data.data));
     } catch (error) {
@@ -75,7 +75,7 @@ export const useCampaign = () => {
       dispatch(setLoading(true));
 
       const res = await api.put(
-        `${ENDPOINTS.campaigns.update}/${id}`,
+        ENDPOINTS.campaigns.update(id),
         data
       );
 
@@ -92,7 +92,7 @@ export const useCampaign = () => {
     try {
       dispatch(setLoading(true));
 
-      await api.delete(`${ENDPOINTS.campaigns.delete}/${id}`);
+      await api.delete(ENDPOINTS.campaigns.delete(id));
 
       dispatch(removeCampaign(id));
     } catch (error) {

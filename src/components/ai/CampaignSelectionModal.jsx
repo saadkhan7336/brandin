@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Target, Loader2, DollarSign, Sparkles } from 'lucide-react';
 import campaignService from '../../services/campaignService';
+import collaborationService from '../../services/collaborationService';
 
 export default function CampaignSelectionModal({ isOpen, onClose, onSelect }) {
   const [campaigns, setCampaigns] = useState([]);
@@ -17,11 +18,28 @@ export default function CampaignSelectionModal({ isOpen, onClose, onSelect }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await campaignService.getCampaigns({ status: 'active', limit: 50 });
-      const list = Array.isArray(data) ? data : (data.campaigns || []);
-      setCampaigns(list);
+      const [campaignData, collabData] = await Promise.all([
+        campaignService.getCampaigns({ status: 'active', limit: 50 }),
+        collaborationService.getAll({ limit: 100 })
+      ]);
+
+      const campaignsList = Array.isArray(campaignData) ? campaignData : (campaignData.campaigns || []);
+      const collabsList = collabData.success && collabData.data ? (collabData.data.collaborations || []) : [];
+
+      // Filter out campaigns that are already in ongoing/active collaborations
+      // NOTE: backend getCollaborations aggregate returns campaign.id (not campaign._id)
+      const activeCollabCampaignIds = collabsList
+        .filter(c => ['active', 'in_progress', 'review', 'accepted', 'awaiting_funds', 'awaiting_onboarding', 'completed', 'suspended'].includes(c.status))
+        .map(c => (c.campaign?.id || c.campaign?._id || c.campaign || c.campaignId?.id || c.campaignId?._id || c.campaignId || '').toString())
+        .filter(Boolean);
+
+      const filteredCampaigns = campaignsList.filter(camp => 
+        !activeCollabCampaignIds.includes(camp._id.toString())
+      );
+
+      setCampaigns(filteredCampaigns);
     } catch (err) {
-      console.error("Error fetching campaigns:", err);
+      console.error("Error fetching campaigns/collaborations:", err);
       setError("Failed to load active campaigns");
     } finally {
       setLoading(false);
@@ -31,7 +49,7 @@ export default function CampaignSelectionModal({ isOpen, onClose, onSelect }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-150">
       <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] border border-gray-100">
         <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-white">
           <div>

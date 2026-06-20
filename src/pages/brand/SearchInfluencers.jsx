@@ -164,10 +164,10 @@ function SearchInfluencers() {
   };
 
   return (
-    <div className="flex flex-col w-full max-w-[1800px] mx-auto pb-10">
+    <div className="flex flex-col w-full max-w-[1800px] mx-auto pb-10 px-4 md:px-8">
 
       {/* Header Section */}
-      <div className="mb-6">
+      <div className="mb-6 pt-8 border-b border-gray-100 pb-8">
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
           Find the Perfect Influencers for Your Brand
         </h1>
@@ -317,8 +317,8 @@ function SearchInfluencers() {
 
       {/* Influencers Grid */}
       {(isLoading && !isAIMode) || aiLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white rounded-xl border border-gray-100 p-6 flex flex-col items-center animate-pulse shadow-sm">
               <div className="w-16 h-16 rounded-full bg-gray-200 mb-4"></div>
               <div className="h-4 bg-gray-200 rounded w-28 mb-3"></div>
@@ -330,40 +330,40 @@ function SearchInfluencers() {
         </div>
       ) : isAIMode ? (
          <>
-           {aiMessage ? (
-              <div className="flex flex-col items-center justify-center py-20 bg-indigo-50/30 rounded-xl border border-dashed border-indigo-200">
-                <div className="w-16 h-16 bg-white shadow-sm text-indigo-400 rounded-full flex items-center justify-center mb-4">
-                  <AlertCircle className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-bold text-indigo-900 mb-1">{aiMessage}</h3>
-                <p className="text-indigo-500 text-center max-w-md">Try relaxing your campaign budget bounds or verifying your campaign requirements.</p>
-              </div>
-           ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 <Suspense fallback={
-                    <div className="col-span-full flex flex-col items-center justify-center p-12">
-                       <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-2" />
-                       <p className="text-gray-500 text-sm font-medium">Rendering Matches...</p>
-                    </div>
-                 }>
-                   {aiResults.map(data => (
-                      <AIInfluencerCard 
-                        key={data.id} 
-                        data={data} 
-                        onInvite={(influencer) => {
-                          setSelectedInfluencer({ _id: influencer.userId || influencer.id, name: influencer.name });
-                          setShowInviteModal(true);
-                        }}
-                      />
-                   ))}
-                 </Suspense>
-              </div>
-           )}
+            {aiMessage ? (
+               <div className="flex flex-col items-center justify-center py-20 bg-indigo-50/30 rounded-xl border border-dashed border-indigo-200">
+                 <div className="w-16 h-16 bg-white shadow-sm text-indigo-400 rounded-full flex items-center justify-center mb-4">
+                   <AlertCircle className="w-8 h-8" />
+                 </div>
+                 <h3 className="text-lg font-bold text-indigo-900 mb-1">{aiMessage}</h3>
+                 <p className="text-indigo-500 text-center max-w-md">Try relaxing your campaign budget bounds or verifying your campaign requirements.</p>
+               </div>
+            ) : (
+               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <Suspense fallback={
+                     <div className="col-span-full flex flex-col items-center justify-center p-12">
+                        <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-2" />
+                        <p className="text-gray-500 text-sm font-medium">Rendering Matches...</p>
+                     </div>
+                  }>
+                    {aiResults.map(data => (
+                       <AIInfluencerCard 
+                         key={data.id} 
+                         data={data} 
+                         onInvite={(influencer) => {
+                           setSelectedInfluencer({ _id: influencer.userId || influencer.id, name: influencer.name });
+                           setShowInviteModal(true);
+                         }}
+                       />
+                    ))}
+                  </Suspense>
+               </div>
+            )}
          </>
       ) : (
         <>
           {influencers.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {influencers.map((influencer) => {
                 const mainPlatform = influencer.platforms && influencer.platforms.length > 0 ? influencer.platforms[0] : null;
                 const followersCount = mainPlatform?.followers || 0;
@@ -372,7 +372,7 @@ function SearchInfluencers() {
                   : `${followersCount} followers`;
 
                 return (
-                  <div key={influencer._id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center transition-all hover:shadow-md">
+                  <div key={influencer._id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center transition-all hover:shadow-xl hover:-translate-y-1.5 w-full max-w-[360px] mx-auto">
                     <img loading="lazy" decoding="async"                       src={getOptimizedImage(influencer.profilePicture || `https://ui-avatars.com/api/?name=${influencer.username}&background=random`, 'avatar')}
                       alt={influencer.username}
                       className="w-[72px] h-[72px] rounded-full object-cover mb-3.5 ring-[3px] ring-gray-50"

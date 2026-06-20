@@ -1,0 +1,63 @@
+{
+  "users": [
+    {
+      "id": "69c8c3f9b71736236f3195ad",
+      "fullname": "Devline",
+      "email": "ranasami0909@gmail.com",
+      "role": "brand"
+    },
+    {
+      "id": "69cbfed5c1ead0c476f121d5",
+      "fullname": "saad",
+      "email": "saadizhar492@gmail.com",
+      "role": "brand"
+    },
+    {
+      "id": "69cbff65c1ead0c476f121f2",
+      "fullname": "rana",
+      "email": "sami.weditr@gmail.com",
+      "role": "influencer"
+    },
+    {
+      "id": "69ceb05d6a4bb36e91e9c0f0",
+      "fullname": "samiafzal",
+      "email": "samiafzal5646@gmail.com",
+      "role": "influencer"
+    },
+    {
+      "id": "69e2a0a372f78f02df68d34a",
+      "fullname": "sandi",
+      "email": "saadikhan1e1@gmail.com",
+      "role": "influencer"
+    },
+    {
+      "id": "6a020c8d03ad5d645e8c958c",
+      "fullname": "Brandy Admin",
+      "email": "admin@brandy.app",
+      "role": "admin"
+    },
+    {
+      "id": "6a1d20e83149309871b4095a",
+      "fullname": "Sami Afzala",
+      "email": "zee@gmail.com",
+      "role": "brand"
+    }
+  ],
+  "influencers": [
+    {
+      "id": "69fa2f7f6b73913fd85e1a8c",
+      "user": "69ceb05d6a4bb36e91e9c0f0",
+      "username": "samiafzal"
+    },
+    {
+      "id": "69fa358424a134d0c60715ae",
+      "user": "69cbff65c1ead0c476f121f2",
+      "username": "rana"
+    },
+    {
+      "id": "6a0371dffa9055e0dbeac41c",
+      "user": "6a0371dffa9055e0dbeac419",
+      "username": "hacker<script>alert(\"xss\")</script>"
+    }
+  ]
+}

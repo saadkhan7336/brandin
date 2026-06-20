@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Lock, Key, ArrowLeft } from 'lucide-react';
+import { Lock, ArrowLeft } from 'lucide-react';
 
 import { Input } from '../../components/common/FormComponents';
 import { Button } from '../../components/common/Button';
@@ -12,10 +12,6 @@ import { setLoading, setMessage, clearAuthState } from '../../redux/slices/authS
 
 const validate = (field, value, formData) => {
   switch (field) {
-    case 'otp':
-      if (!value.trim()) return 'OTP is required';
-      if (value.trim().length !== 6) return 'OTP must be exactly 6 digits';
-      return '';
     case 'password':
       if (!value) return 'Password is required';
       if (value.length < 6) return 'Password must be at least 6 characters';
@@ -32,10 +28,13 @@ const validate = (field, value, formData) => {
 export default function ResetPassword() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
+
+  const otpFromState = location.state?.otp;
 
   const { loading, message, resetEmail } = useSelector((state) => state.auth);
 
-  const [formData, setFormData] = useState({ otp: '', password: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({ password: '', confirmPassword: '' });
   const [fieldErrors, setFieldErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [submitError, setSubmitError] = useState('');
@@ -43,6 +42,10 @@ export default function ResetPassword() {
   useEffect(() => {
     if (!resetEmail) navigate('/forgot-password');
   }, [resetEmail, navigate]);
+
+  useEffect(() => {
+    if (!otpFromState) navigate('/verify-otp');
+  }, [otpFromState, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -66,10 +69,9 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const allTouched = { otp: true, password: true, confirmPassword: true };
+    const allTouched = { password: true, confirmPassword: true };
     setTouched(allTouched);
     const errors = {
-      otp: validate('otp', formData.otp, formData),
       password: validate('password', formData.password, formData),
       confirmPassword: validate('confirmPassword', formData.confirmPassword, formData),
     };
@@ -82,7 +84,7 @@ export default function ResetPassword() {
 
       const response = await api.post(ENDPOINTS.RESET_PASSWORD, {
         email: resetEmail,
-        otp: formData.otp,
+        otp: otpFromState,
         password: formData.password,
       });
 
@@ -93,7 +95,7 @@ export default function ResetPassword() {
         navigate('/login');
       }, 2000);
     } catch (err) {
-      setSubmitError(err.response?.data?.message || 'Reset failed. Check your OTP and try again.');
+      setSubmitError(err.response?.data?.message || 'Reset failed. Please try again.');
     } finally {
       dispatch(setLoading(false));
     }
@@ -103,21 +105,21 @@ export default function ResetPassword() {
     <div className="min-h-screen bg-gradient-to-br from-[#eff6ff] to-[#dbeafe] flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
         <div className="mb-6">
-          <Link to="/forgot-password" className="inline-flex items-center text-sm text-[#3b82f6] hover:underline font-medium">
+          <Link to="/verify-otp" className="inline-flex items-center text-sm text-[#3b82f6] hover:underline font-medium">
             <ArrowLeft className="w-4 h-4 mr-1" />
-            Back to Forgot Password
+            Back to OTP Verification
           </Link>
         </div>
 
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <div className="w-16 h-16 bg-[#3b82f6] rounded-full flex items-center justify-center">
-              <Key className="w-10 h-10 text-white" />
+              <Lock className="w-10 h-10 text-white" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-[#111827]">Reset Password</h1>
+          <h1 className="text-2xl font-bold text-[#111827]">Set New Password</h1>
           <p className="text-[#6b7280] text-sm mt-1">
-            Enter the OTP sent to <b>{resetEmail}</b> and choose a new password
+            OTP verified for <b>{resetEmail}</b>. Choose a new password.
           </p>
         </div>
 
@@ -136,20 +138,6 @@ export default function ResetPassword() {
         )}
 
         <form onSubmit={handleSubmit} noValidate className="space-y-1">
-          <Input
-            label="OTP Code"
-            name="otp"
-            type="text"
-            placeholder="Enter 6-digit OTP"
-            value={formData.otp}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            required
-            maxLength={6}
-            error={touched.otp ? fieldErrors.otp : ''}
-            icon={<Key className="w-4 h-4 text-gray-400" />}
-          />
-
           <Input
             label="New Password"
             name="password"

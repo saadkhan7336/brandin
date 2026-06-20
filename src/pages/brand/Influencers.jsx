@@ -19,6 +19,12 @@ import { getOptimizedImage } from '../../utils/imageOptimization';
 const CampaignSelectionModal = lazy(() => import('../../components/ai/CampaignSelectionModal.jsx'));
 const AIInfluencerCard = lazy(() => import('../../components/cards/AIInfluencerCard.jsx'));
 
+// Helper to strip HTML tags for sanitizing username/about text
+const stripHtml = (text) => {
+  if (!text) return '';
+  return text.replace(/<\/?[^>]+(>|$)/g, '');
+};
+
 function Influencers() {
   const navigate = useNavigate();
 
@@ -188,8 +194,8 @@ function Influencers() {
   ];
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-[1800px] mx-auto pb-10">
-      <div>
+    <div className="flex flex-col gap-8 w-full max-w-[1800px] mx-auto pb-10 px-4 md:px-8">
+      <div className="pt-8 border-b border-gray-100 pb-8">
         <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase">Influencers</h1>
         <p className="text-gray-500 font-medium">Discover and collaborate with the world's top creators.</p>
       </div>
@@ -250,11 +256,11 @@ function Influencers() {
       )}
 
       {aiLoading ? (
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1,2,3].map(i => <div key={i} className="bg-white rounded-3xl border border-gray-100 p-8 animate-pulse h-[400px]" />)}
+         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[1,2,3,4].map(i => <div key={i} className="bg-white rounded-3xl border border-gray-100/60 p-8 animate-pulse h-[400px]" />)}
          </div>
       ) : isAIMode ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
            <Suspense fallback={null}>
               {aiResults.map(data => (
                  <AIInfluencerCard key={data.id} data={data} onInvite={handleAIInvite} />
@@ -262,7 +268,7 @@ function Influencers() {
            </Suspense>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
            {influencers.map(inf => {
               const collab = activeCollaborations.find(ac => ac.influencerId === inf._id || ac.influencerId === inf.user);
               const isRequested = requestedInfluencerIds.includes(inf._id) || requestedInfluencerIds.includes(inf.user);
@@ -284,8 +290,11 @@ function Influencers() {
               const reviewCount = inf.reviewsCount || 0;
               const trustLevel = inf.trustLevel || (inf.isVerified ? 'High' : 'MODERATE');
 
+              const cleanUsername = stripHtml(inf.username);
+              const cleanAbout = stripHtml(inf.about) || "Top-tier creator focused on high-quality content and brand storytelling across multiple platforms.";
+
               return (
-                <div key={inf._id} className="bg-white rounded-[24px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col group h-[420px]">
+                <div key={inf._id} className="bg-white rounded-[24px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col group h-[420px] w-full max-w-[360px] mx-auto hover:-translate-y-1.5">
                   {/* Header Profile with Top Background */}
                   <div className="relative h-[100px] bg-gradient-to-br from-blue-700 to-indigo-800 p-4 flex justify-between items-start transition-all duration-500 group-hover:from-blue-600 group-hover:to-indigo-700">
                      <div className="flex gap-2 z-10 flex-col">
@@ -310,20 +319,20 @@ function Influencers() {
                   <div className="px-6 pb-6 flex-1 flex flex-col -mt-12 relative items-center text-center">
                      {/* Profile Image */}
                      <div className="relative mb-3 transition-transform duration-500 group-hover:scale-105">
-                        <img loading="lazy" decoding="async"                           src={getOptimizedImage(inf.profilePicture || `https://ui-avatars.com/api/?name=${inf.username}&background=random`, 'avatar')}
-                          alt={inf.username}
+                        <img loading="lazy" decoding="async"                           src={getOptimizedImage(inf.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanUsername)}&background=random`, 'avatar')}
+                          alt={cleanUsername}
                           className="w-[84px] h-[84px] rounded-[24px] object-cover border-[4px] border-white shadow-md bg-white relative z-10 transition-transform duration-500 group-hover:scale-110"
                          width="84" height="84" />
                      </div>
                      
                      <div className="flex items-center gap-1.5 justify-center mb-0.5">
-                        <h3 className="text-[16px] font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">{inf.username}</h3>
+                        <h3 className="text-[16px] font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">{cleanUsername}</h3>
                         <VerifiedTick user={inf} roleProfile={inf} size="sm" />
                      </div>
-                     <p className="text-[12px] font-medium text-gray-500 mb-4">@{inf.username}</p>
+                     <p className="text-[12px] font-medium text-gray-500 mb-4">@{cleanUsername}</p>
 
                      <p className="text-[11px] text-gray-500 leading-relaxed mb-6 line-clamp-2 px-2 h-[34px]">
-                        {inf.about || "Top-tier creator focused on high-quality content and brand storytelling across multiple platforms."}
+                        {cleanAbout}
                      </p>
 
                     {/* Stats Grid */}

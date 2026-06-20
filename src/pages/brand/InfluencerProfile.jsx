@@ -242,7 +242,7 @@ const InfluencerProfile = () => {
     "https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=2000";
 
   return (
-    <div className="max-w-6xl mx-auto space-y-10 pb-24 animate-in fade-in duration-700 px-4">
+    <div className="max-w-6xl mx-auto space-y-10 pb-24 animate-in fade-in duration-700 px-4 md:px-8">
       {/* ── HEADER ACTIONS ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>

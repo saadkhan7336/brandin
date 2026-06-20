@@ -144,8 +144,8 @@ const CampaignHub = () => {
   }
 
   return (
-    <div className="w-full max-w-[1800px] mx-auto py-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div className="w-full max-w-[1800px] mx-auto pb-10 px-4 md:px-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pt-8 border-b border-gray-100 pb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2 font-display">Campaign Hub</h1>
             <p className="text-gray-500 font-medium">Manage and track your brand's marketing campaigns.</p>

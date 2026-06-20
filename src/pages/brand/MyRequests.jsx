@@ -146,7 +146,7 @@ const MyRequests = () => {
   return (
     <div className="w-full max-w-[1800px] mx-auto pb-10 px-4 md:px-8">
       {/* Header */}
-      <div className="mb-8 pt-6">
+      <div className="mb-8 pt-8 border-b border-gray-100 pb-8">
         <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">
           Collaboration Requests
         </h1>
