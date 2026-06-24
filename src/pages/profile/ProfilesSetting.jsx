@@ -307,7 +307,7 @@ export default function ProfileSettings() {
   const handleConnect = async (platform) => {
     setConnectingPlatform(platform);
     // All platforms now use central OAuth logic via backend redirect
-    const backendUrl = "http://localhost:8000/api/v1/oauth";
+    const backendUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/v1/oauth`;
     window.location.href = `${backendUrl}/${platform}/connect`;
   };
 
