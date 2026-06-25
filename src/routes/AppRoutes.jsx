@@ -150,6 +150,7 @@ const PrivacyPolicyPage = lazy(() => import("../pages/PrivacyPolicyPage"));
 const AboutPage = lazy(() => import("../pages/AboutUsPage"));
 const ContactPage = lazy(() => import("../pages/ContactPage"));
 const BlogPage = lazy(() => import("../pages/BlogPage"));
+const NotFoundPage = lazy(() => import("../pages/NotFoundPage"));
 
 // Dashboard / brand pages (lazy loaded)
 const BrandDashboard = lazy(() => import("../pages/dashboard/BrandDashboard"));
@@ -309,7 +310,7 @@ export default function AppRoutes() {
           </Route>
 
           {/* ===== Catch-all: unknown routes ===== */}
-          <Route path="*" element={<CatchAll />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
     </Router>
