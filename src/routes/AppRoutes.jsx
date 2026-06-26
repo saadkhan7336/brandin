@@ -213,10 +213,12 @@ export default function AppRoutes() {
           {/* OAuth Callback — must be public, no auth required */}
           <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
+          {/* Register — outside PublicRoute so Step 2 onboarding works after auto-login */}
+          <Route path="/register" element={<Register />} />
+
           {/* ── Auth (redirect if already logged in) ──────────────────── */}
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/verify-otp" element={<VerifyOtp />} />
             <Route path="/reset-password" element={<ResetPassword />} />

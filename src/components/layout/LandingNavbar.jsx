@@ -2,11 +2,14 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { useSelector } from "react-redux";
+import { getDashboardByRole } from "../../routes/ProtectedRoute";
 
 function LandingNavbar() {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const dashboardPath = user ? getDashboardByRole(user.role) : "/login";
 
   const navLinks = [
     { label: "Features", route: "/features" },
@@ -44,7 +47,7 @@ function LandingNavbar() {
           <div className="hidden lg:flex items-center gap-4">
             {isAuthenticated ? (
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate(dashboardPath)}
                 className="bg-[#3b82f6] text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#2563eb] transition-colors"
               >
                 Go to Dashboard
@@ -97,7 +100,7 @@ function LandingNavbar() {
               {isAuthenticated ? (
                 <button
                   onClick={() => {
-                    navigate('/dashboard');
+                    navigate(dashboardPath);
                     setMobileMenuOpen(false);
                   }}
                   className="w-full bg-[#3b82f6] text-white px-5 py-3 rounded-lg font-semibold text-center hover:bg-[#2563eb] transition-colors"
