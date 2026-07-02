@@ -110,7 +110,7 @@ export default function Login() {
         <img 
           src="/images/login/Diverse group of creators collaborating.png" 
           alt="Creators collaborating" 
-          className="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-20" 
+          className="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-50" 
         />
         
         <div className="relative z-20 flex flex-col items-start w-full max-w-xl px-12 xl:px-16">

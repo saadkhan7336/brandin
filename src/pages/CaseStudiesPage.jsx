@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import LandingNavbar from "../components/layout/LandingNavbar";
+import LandingFooter from "../components/layout/LandingFooter";
 import InfluButton from "../components/common/InfluBtn";
 import { Shield, ArrowRight, BarChart3, Users, Zap, Star } from "lucide-react";
 
@@ -262,23 +263,7 @@ export default function CaseStudiesPage() {
         </div>
       </section>
 
-      {/* Footer (Simplified) */}
-      <footer className="py-12 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Shield className="w-6 h-6 text-[#3b82f6]" />
-            <span className="text-xl font-bold text-[#111827]">Brandly</span>
-          </div>
-          <div className="text-[#6b7280] text-sm">
-            &copy; 2024 Brandly. All rights reserved.
-          </div>
-          <div className="flex gap-8 text-sm font-medium text-[#6b7280]">
-            <button className="hover:text-[#3b82f6]">Privacy Policy</button>
-            <button className="hover:text-[#3b82f6]">Terms of Service</button>
-            <button className="hover:text-[#3b82f6]">Status</button>
-          </div>
-        </div>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }

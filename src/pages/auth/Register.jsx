@@ -255,7 +255,7 @@ export default function Register() {
         {/* Top Header */}
         <div className="absolute top-0 left-0 right-0 p-8 flex justify-between items-center z-20">
           <Link to="/" className="text-2xl font-black text-[#2563eb] tracking-tight hover:opacity-80 transition-opacity lg:hidden">Brandly.</Link>
-          <div className="hidden lg:block text-2xl font-black text-[#2563eb] tracking-tight">Brandly.</div>
+          <Link to="/" className="hidden lg:block text-2xl font-black text-[#2563eb] tracking-tight hover:opacity-80 transition-opacity">Brandly.</Link>
           <Link to="/login" className="text-sm font-bold text-[#2563eb] hover:underline">Log In</Link>
         </div>
 
