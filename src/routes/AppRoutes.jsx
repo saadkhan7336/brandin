@@ -144,6 +144,7 @@ const AnalyticsPage = lazy(() => import("../pages/features/AnalyticsPage"));
 const CampaignManagement = lazy(() => import("../pages/features/CampaignManagement"));
 const FindMatchPage = lazy(() => import("../pages/features/FindMatchPage"));
 const VerifiedProfilesPage = lazy(() => import("../pages/features/VerifiedProfilesPage"));
+const SecurePaymentsPage = lazy(() => import("../pages/features/SecurePaymentsPage"));
 const HelpCenterPage = lazy(() => import("../pages/HelpCenterPage"));
 const CaseStudiesPage = lazy(() => import("../pages/CaseStudiesPage"));
 const PrivacyPolicyPage = lazy(() => import("../pages/PrivacyPolicyPage"));
@@ -203,6 +204,7 @@ export default function AppRoutes() {
           <Route path="/features/campaign-management" element={<CampaignManagement />} />
           <Route path="/features/find-matches" element={<FindMatchPage />} />
           <Route path="/features/verified-profiles" element={<VerifiedProfilesPage />} />
+          <Route path="/features/secure-payments" element={<SecurePaymentsPage />} />
           <Route path="/help-center" element={<HelpCenterPage />} />
           <Route path="/case-studies" element={<CaseStudiesPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />

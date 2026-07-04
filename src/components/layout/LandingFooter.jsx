@@ -64,7 +64,7 @@ export default function LandingFooter() {
         </div>
 
         <div className="pt-8 border-t border-[#e2e8f0] flex flex-col md:flex-row justify-between items-center text-xs text-[#94a3b8]">
-          <p>© 2024 Brandly Inc. All rights reserved.</p>
+          <p>© 2026 Brandly Inc. All rights reserved.</p>
           <div className="flex gap-4 mt-4 md:mt-0">
             <span>Secure Payment Processing by Stripe</span>
             <span>A Premium Digital Experience</span>
