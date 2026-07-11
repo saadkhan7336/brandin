@@ -150,6 +150,6 @@ export const ENDPOINTS = {
     simulate: (platform) => `/oauth/${platform}/simulate`,
     revoke: (platform) => `/oauth/${platform}/revoke`,
     // connect is a full-page redirect (not an API call), so we use the backend URL directly
-    connectUrl: (platform) => `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/v1/oauth/${platform}/connect`,
+    connectUrl: (platform) => `${process.env.REACT_APP_API_URL || 'https://brandy-backend.onrender.com'}/api/v1/oauth/${platform}/connect`,
   },
 };

@@ -7,7 +7,7 @@ export const injectStore = _store => {
 };
 
 const api = axios.create({
-    baseURL: `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/v1`,
+    baseURL: `${process.env.REACT_APP_API_URL || 'https://brandy-backend.onrender.com'}/api/v1`,
     withCredentials: true 
 });
 
@@ -44,7 +44,7 @@ api.interceptors.response.use(
 
             try {
                 // Use standard axios to avoid interceptor loop
-                await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/v1/auth/refresh-token`, {}, { withCredentials: true });
+                await axios.post(`${process.env.REACT_APP_API_URL || 'https://brandy-backend.onrender.com'}/api/v1/auth/refresh-token`, {}, { withCredentials: true });
                 
                 isRefreshing = false;
                 processQueue(null);

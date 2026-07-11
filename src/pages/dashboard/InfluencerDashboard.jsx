@@ -14,7 +14,7 @@ import { useSocket } from '../../context/SocketContext';
 import { toast } from 'sonner';
 import './InfluencerDashboard.css';
 
-const ENDPOINT = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const ENDPOINT = process.env.REACT_APP_API_URL || 'https://brandy-backend.onrender.com';
 
 function InfluencerDashboard() {
   const { user } = useSelector((state) => state.auth);

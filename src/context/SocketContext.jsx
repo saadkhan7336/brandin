@@ -12,8 +12,8 @@ import { NotificationToast } from '../components/common/NotificationToast';
 const SocketContext = createContext();
 
 // Socket.io treats URL paths as namespaces, so we must strip '/api/v1' etc.
-// and connect to just the origin (e.g. http://localhost:8000)
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// and connect to just the origin (e.g. https://brandy-backend.onrender.com)
+const API_URL = process.env.REACT_APP_API_URL || 'https://brandy-backend.onrender.com';
 const ENDPOINT = new URL(API_URL).origin;
 
 export const SocketProvider = ({ children }) => {
