@@ -1,8 +1,8 @@
-import React, { memo } from 'react';
+import  { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ShieldCheck, Users, 
-  Sparkles, ArrowRight, Star
+  ShieldCheck, 
+  Sparkles, ArrowRight,
 } from 'lucide-react';
 import VerifiedTick from '../common/VerifiedTick';
 import SocialIcon from '../common/SocialIcon';

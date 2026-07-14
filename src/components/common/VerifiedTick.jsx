@@ -1,5 +1,3 @@
-import React from 'react';
-import { ShieldCheck } from 'lucide-react';
 import { checkVerification } from '../../utils/helper';
 
 /**

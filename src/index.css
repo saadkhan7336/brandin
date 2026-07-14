@@ -22,3 +22,17 @@
     scrollbar-width: none;
   }
 }
+
+/* Global Loader */
+.loader {
+  width: 30px; /* slightly bigger than 15px so it's visible */
+  aspect-ratio: 1;
+  border-radius: 50%;
+  animation: l5 1s infinite linear alternate;
+}
+@keyframes l5 {
+    0%  {box-shadow: 20px 0 #3b82f6, -20px 0 #bfdbfe;background: #3b82f6 }
+    33% {box-shadow: 20px 0 #3b82f6, -20px 0 #bfdbfe;background: #bfdbfe}
+    66% {box-shadow: 20px 0 #bfdbfe,-20px 0 #3b82f6; background: #bfdbfe}
+    100%{box-shadow: 20px 0 #bfdbfe,-20px 0 #3b82f6; background: #3b82f6 }
+}

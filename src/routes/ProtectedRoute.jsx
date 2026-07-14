@@ -75,16 +75,7 @@ export function getDashboardByRole(role) {
   }
 }
 
-function getSettingsByRole(role) {
-  switch (role) {
-    case "brand":
-      return "/brand/settings";
-    case "influencer":
-      return "/influencer/settings";
-    default:
-      return "/login";
-  }
-}
+
 
 /**
  * ProtectedRoute
@@ -92,7 +83,7 @@ function getSettingsByRole(role) {
  * Guards:
  *  1. Must be authenticated
  *  2. Must have the correct role (allowedRoles)
- *  3. If requireComplete=true, profile must be complete — else redirect to settings
+ *  3. (The profile completion gate is now handled by the global ProfileCompletionModal)
  */
 export default function ProtectedRoute({
   allowedRoles,
@@ -101,16 +92,9 @@ export default function ProtectedRoute({
   const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
   const location = useLocation();
 
-  // 1. Show spinner while auth state resolves
+  // 1. Return null while auth state resolves (GlobalLoader handles the UI)
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
-          <p className="text-sm text-gray-500">Verifying session…</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   // 2. Not authenticated
@@ -123,15 +107,6 @@ export default function ProtectedRoute({
     if (!allowedRoles.includes(user?.role)) {
       return <Navigate to={getDashboardByRole(user?.role)} replace />;
     }
-  }
-
-  // 4. Profile completion gate
-  //    Skip the gate if the user is already ON the settings page (prevents loop)
-  const settingsPath = getSettingsByRole(user?.role);
-  const isOnSettings = location.pathname === settingsPath;
-
-  if (requireComplete && !user?.profileComplete && !isOnSettings) {
-    return <Navigate to={settingsPath} state={{ fromGate: true }} replace />;
   }
 
   return <Outlet />;

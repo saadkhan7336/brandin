@@ -1,8 +1,11 @@
+import LandingFooter from '../components/layout/LandingFooter';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import LandingNavbar from '../components/layout/LandingNavbar';
 import InfluButton from '../components/common/InfluBtn';
 import { Shield, Target, Users, Heart, Zap, Globe, TrendingUp, Award, CheckCircle, ArrowRight, Search } from 'lucide-react';
+
+
 
 export default function AboutUsPage() {
   const navigate = useNavigate();
@@ -317,6 +320,7 @@ export default function AboutUsPage() {
           </div>
         </div>
       </section>
+      <LandingFooter />
     </div>
   );
 }

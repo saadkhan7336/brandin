@@ -1,6 +1,9 @@
+import LandingFooter from '../components/layout/LandingFooter';
 import React from "react";
 import { Shield, Lock, Eye, FileText, Bell, HelpCircle } from "lucide-react";
 import LandingNavbar from "../components/layout/LandingNavbar";
+
+
 
 function PrivacyPolicyPage() {
   const lastUpdated = "February 21, 2026";
@@ -146,6 +149,7 @@ function PrivacyPolicyPage() {
           </section>
         </div>
       </div>
+      <LandingFooter />
     </div>
   );
 }

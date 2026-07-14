@@ -1,3 +1,5 @@
+import LandingFooter from '../../components/layout/LandingFooter';
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import InfluButton from "../../components/common/InfluBtn";
@@ -166,6 +168,7 @@ function CampaignManagement() {
           </InfluButton>
         </div>
       </section>
+      <LandingFooter />
     </div>
   )
 }

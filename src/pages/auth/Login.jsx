@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Shield, Lock, Mail } from 'lucide-react';
@@ -77,8 +77,10 @@ export default function Login() {
       dispatch(setLoading(true));
       setSubmitError('');
 
-      const loginRes = await api.post(ENDPOINTS.LOGIN, formData);
-      const res = await api.get(ENDPOINTS.ME);
+      const res = await api.post(ENDPOINTS.LOGIN, {
+        email: formData.email,
+        password: formData.password
+      });
       const { user: authUser } = res.data.data;
 
       dispatch(setAuthUser(authUser));

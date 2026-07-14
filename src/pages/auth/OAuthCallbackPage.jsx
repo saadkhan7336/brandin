@@ -2,7 +2,7 @@
 // This page handles the redirect after OAuth completes.
 // It reads ?platform=youtube&status=success from the URL,
 // refreshes the user profile via API, then redirects to settings.
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
@@ -21,10 +21,6 @@ export default function OAuthCallbackPage() {
 
   const [phase, setPhase] = useState("loading"); // loading | success | error
 
-  const getSettingsPath = () => {
-    if (!user?.role) return "/";
-    return `/${user.role}/settings`;
-  };
 
   useEffect(() => {
     const handleCallback = async () => {

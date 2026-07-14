@@ -10,9 +10,9 @@ import api from '../../services/api.js';
 import { ENDPOINTS } from '../../services/endpoints.js';
 import {
   setLoading,
-  setError,
   setMessage,
   clearAuthState,
+  setAuthUser,
 } from '../../redux/slices/authSlice.js';
 
 // ── Validation matching backend Joi schema ─────────────────────────────────
@@ -112,15 +112,18 @@ export default function Register() {
       dispatch(setLoading(true));
       setSubmitError('');
 
-      await api.post(ENDPOINTS.REGISTER, {
+      const response = await api.post(ENDPOINTS.REGISTER, {
         fullname: formData.name,
         email: formData.email,
         password: formData.password,
         role: formData.role,
       });
 
-      dispatch(setMessage('Registration successful! Please login.'));
-      navigate('/login');
+      // Backend now returns { user, accessToken, refreshToken } on register
+      const { user } = response.data.data;
+      dispatch(setAuthUser(user));
+      dispatch(setMessage('Registration successful!'));
+      navigate('/dashboard');
     } catch (err) {
       // Show error inline — do NOT navigate away
       setSubmitError(err.response?.data?.message || 'Registration failed. Please try again.');

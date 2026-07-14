@@ -1,11 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  FileText, CheckCircle, Clock, Users,
-  Instagram, Youtube, ShieldCheck, Twitter, Linkedin,
-  Search, ChevronLeft, ChevronRight, X,
-  Briefcase, Sparkles, XCircle, AlertCircle, Loader2,
-  ArrowRight, Star
+  FileText, CheckCircle, Clock, ShieldCheck, Search, 
+  Sparkles, XCircle,ArrowRight
 } from 'lucide-react';
 import api from '../../services/api';
 import collaborationService from '../../services/collaborationService';
@@ -42,7 +39,6 @@ function Influencers() {
   const [filters, setFilters] = useState({
     category: '',
     platform: '',
-    minFollowers: '',
     search: ''
   });
   const [influencers, setInfluencers] = useState([]);
@@ -60,8 +56,8 @@ function Influencers() {
   const [currentAICampaignId, setCurrentAICampaignId] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResults, setAiResults] = useState([]);
-  const [aiMessage, setAiMessage] = useState(null);
-  const abortControllerRef = useRef(null);
+  const [aiMessage, setAiMessage] = useState("");
+
 
   // Invitation Modal State
   const [showInviteModal, setShowInviteModal] = useState(false);

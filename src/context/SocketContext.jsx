@@ -116,6 +116,7 @@ export const SocketProvider = ({ children }) => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             newSocket.disconnect();
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated, user?._id, dispatch]);
 
     return (

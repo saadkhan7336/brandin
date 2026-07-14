@@ -1,6 +1,5 @@
-import React from 'react';
-import { ShieldAlert, ShieldCheck, ChevronRight, Mail, Zap } from 'lucide-react';
-import { cn, checkVerification } from '../../utils/helper';
+import { ShieldAlert, ChevronRight, Mail} from 'lucide-react';
+import { checkVerification } from '../../utils/helper';
 
 export default function VerificationBanner({ user, roleProfile, onGoToSettings }) {
   if (!user || !roleProfile) return null;

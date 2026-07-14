@@ -8,6 +8,8 @@ import profileReducer from './slices/Profileslice.js'
 import chatReducer from './slices/chatSlice.js'
 import presenceReducer from './slices/presenceSlice.js'
 
+import uiReducer from './slices/uiSlice.js'
+
 const store = configureStore({
     reducer: {
         auth: authReducer,
@@ -18,6 +20,7 @@ const store = configureStore({
         profile: profileReducer,
         chat: chatReducer,
         presence: presenceReducer,
+        ui: uiReducer,
     }
 })
 

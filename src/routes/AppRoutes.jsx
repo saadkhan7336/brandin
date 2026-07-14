@@ -9,6 +9,7 @@ import ProtectedRoute, { getDashboardByRole } from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
 import LoadingFallback from "../components/common/LoadingFallback";
 import OAuthCallbackPage from "../pages/auth/OAuthCallbackPage";
+import ProfileCompletionModal from "../components/common/ProfileCompletionModal";
 
 // Auth pages (lazy loaded)
 const Login = lazy(() => import("../pages/auth/Login"));
@@ -69,9 +70,11 @@ function CatchAll() {
   return <Navigate to="/login" replace />;
 }
 
+
 export default function AppRoutes() {
   return (
     <Router>
+      <ProfileCompletionModal />
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
 
