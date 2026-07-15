@@ -310,6 +310,7 @@ export default function HelpCenterPage() {
             <InfluButton 
               variant="outline"
               size="lg"
+              onClick={() => navigate('/contact')}
               className="border-white text-white hover:bg-white/10"
             >
               Live Chat

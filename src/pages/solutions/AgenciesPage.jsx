@@ -39,6 +39,7 @@ export default function AgenciesPage() {
 
           <button 
             className="bg-amber-500 text-white font-bold px-8 py-4 rounded-xl hover:bg-amber-600 transition-colors shadow-lg flex items-center justify-center gap-2"
+            onClick={() => navigate('/contact')}
           >
             Join the Waitlist
             <ArrowRight className="w-5 h-5" />

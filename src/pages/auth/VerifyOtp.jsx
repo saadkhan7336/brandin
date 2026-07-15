@@ -245,9 +245,9 @@ export default function VerifyOtp() {
 
       {/* Footer Links */}
       <div className="flex gap-6 mt-8 mb-8 text-[13px] font-medium text-[#4b5563]">
-        <Link to="#" className="hover:text-[#111827] transition-colors">Privacy Policy</Link>
-        <Link to="#" className="hover:text-[#111827] transition-colors">Help Center</Link>
-        <Link to="#" className="hover:text-[#111827] transition-colors">Contact Support</Link>
+        <Link to="/privacy-policy" className="hover:text-[#111827] transition-colors">Privacy Policy</Link>
+        <Link to="/help-center" className="hover:text-[#111827] transition-colors">Help Center</Link>
+        <Link to="/contact" className="hover:text-[#111827] transition-colors">Contact Support</Link>
       </div>
 
       {/* Copyright */}

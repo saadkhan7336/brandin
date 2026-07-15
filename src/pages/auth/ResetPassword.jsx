@@ -328,9 +328,9 @@ export default function ResetPassword() {
           {/* Footer links */}
           <div className="mt-10 pt-6 border-t border-[#f3f4f6]">
             <div className="flex justify-center gap-5 text-[12px] text-[#9ca3af] font-medium mb-2">
-              <Link to="#" className="hover:text-[#6b7280] transition-colors">Privacy Policy</Link>
+              <Link to="/privacy-policy" className="hover:text-[#6b7280] transition-colors">Privacy Policy</Link>
               <Link to="#" className="hover:text-[#6b7280] transition-colors">Terms of Service</Link>
-              <Link to="#" className="hover:text-[#6b7280] transition-colors">Contact Us</Link>
+              <Link to="/contact" className="hover:text-[#6b7280] transition-colors">Contact Us</Link>
             </div>
             <p className="text-center text-[11px] text-[#c9ced6] uppercase tracking-widest font-medium">
               © 2026 Brandly Inc. All rights reserved.

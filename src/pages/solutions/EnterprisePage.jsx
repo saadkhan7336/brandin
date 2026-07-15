@@ -38,6 +38,7 @@ export default function EnterprisePage() {
           </p>
 
           <button 
+            onClick={() => navigate('/contact')}
             className="bg-slate-900 text-white font-bold px-8 py-4 rounded-xl hover:bg-slate-800 transition-colors shadow-lg flex items-center justify-center gap-2"
           >
             Contact Global Sales

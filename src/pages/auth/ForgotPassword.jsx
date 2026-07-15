@@ -97,7 +97,7 @@ export default function ForgotPassword() {
 
         {/* Support Link */}
         <div className="text-sm text-[#475569] font-medium">
-          Having trouble? <a href="#" className="text-[#8b5cf6] hover:underline">Contact our support team</a>
+          Having trouble? <a href="/contact" className="text-[#8b5cf6] hover:underline">Contact our support team</a>
         </div>
       </div>
 
@@ -105,10 +105,10 @@ export default function ForgotPassword() {
       <div className="absolute bottom-6 w-full px-8 flex flex-col sm:flex-row justify-between items-center text-xs text-[#94a3b8] font-medium">
         <div className="mb-4 sm:mb-0">© 2026 Brandly. All rights reserved.</div>
         <div className="flex gap-6">
-          <a href="#" className="hover:text-[#64748b] transition-colors">Privacy Policy</a>
+          <a href="/privacy-policy" className="hover:text-[#64748b] transition-colors">Privacy Policy</a>
           <a href="#" className="hover:text-[#64748b] transition-colors">Terms of Service</a>
-          <a href="#" className="hover:text-[#64748b] transition-colors">Help Center</a>
-          <a href="#" className="hover:text-[#64748b] transition-colors">Contact Us</a>
+          <a href="/help-center" className="hover:text-[#64748b] transition-colors">Help Center</a>
+          <a href="/contact" className="hover:text-[#64748b] transition-colors">Contact Us</a>
         </div>
       </div>
 
