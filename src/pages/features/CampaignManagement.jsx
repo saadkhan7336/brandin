@@ -51,15 +51,17 @@ export default function CampaignManagement() {
               Streamline your 1-on-1 collaboration. Track milestones, manage deliverables, and communicate securely in one central workspace.
             </p>
           </div>
-          <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm text-sm">
+          {/* Action Buttons (Visual Mockup Only) */}
+          <div className="flex gap-3 pointer-events-none select-none opacity-90 relative">
+            <div className="absolute -top-3 -right-3 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-full border border-blue-200 z-10 shadow-sm whitespace-nowrap">Dashboard Preview</div>
+            <div className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-xl font-semibold text-gray-500 shadow-sm text-sm">
               <Settings className="w-4 h-4" />
               Manage
-            </button>
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 rounded-xl font-semibold text-white hover:bg-blue-700 transition-colors shadow-sm text-sm">
+            </div>
+            <div className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 rounded-xl font-semibold text-white shadow-sm text-sm">
               <Plus className="w-4 h-4" />
               New Collaboration
-            </button>
+            </div>
           </div>
         </div>
 

@@ -145,6 +145,13 @@ const CampaignManagement = lazy(() => import("../pages/features/CampaignManageme
 const FindMatchPage = lazy(() => import("../pages/features/FindMatchPage"));
 const VerifiedProfilesPage = lazy(() => import("../pages/features/VerifiedProfilesPage"));
 const SecurePaymentsPage = lazy(() => import("../pages/features/SecurePaymentsPage"));
+const RealTimeChatPage = lazy(() => import("../pages/features/RealTimeChatPage"));
+const IntegrationsPage = lazy(() => import("../pages/features/IntegrationsPage"));
+const ForBrandsPage = lazy(() => import("../pages/solutions/ForBrandsPage"));
+const ForCreatorsPage = lazy(() => import("../pages/solutions/ForCreatorsPage"));
+const AgenciesPage = lazy(() => import("../pages/solutions/AgenciesPage"));
+const EnterprisePage = lazy(() => import("../pages/solutions/EnterprisePage"));
+const SolutionsPage = lazy(() => import("../pages/SolutionsPage"));
 const HelpCenterPage = lazy(() => import("../pages/HelpCenterPage"));
 const CaseStudiesPage = lazy(() => import("../pages/CaseStudiesPage"));
 const PrivacyPolicyPage = lazy(() => import("../pages/PrivacyPolicyPage"));
@@ -200,11 +207,18 @@ export default function AppRoutes() {
           {/* ── Public (no auth needed) ────────────────────────────────── */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/solutions" element={<SolutionsPage />} />
           <Route path="/features/analytics" element={<AnalyticsPage />} />
           <Route path="/features/campaign-management" element={<CampaignManagement />} />
           <Route path="/features/find-matches" element={<FindMatchPage />} />
           <Route path="/features/verified-profiles" element={<VerifiedProfilesPage />} />
           <Route path="/features/secure-payments" element={<SecurePaymentsPage />} />
+          <Route path="/real-time-chat" element={<RealTimeChatPage />} />
+          <Route path="/integrations" element={<IntegrationsPage />} />
+          <Route path="/solutions/for-brands" element={<ForBrandsPage />} />
+          <Route path="/solutions/for-creators" element={<ForCreatorsPage />} />
+          <Route path="/solutions/agencies" element={<AgenciesPage />} />
+          <Route path="/solutions/enterprise" element={<EnterprisePage />} />
           <Route path="/help-center" element={<HelpCenterPage />} />
           <Route path="/case-studies" element={<CaseStudiesPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />

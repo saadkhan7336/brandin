@@ -26,7 +26,7 @@ export default function LandingFooter() {
             <h4 className="font-semibold text-[#1e293b] mb-4">Platform</h4>
             <ul className="space-y-3 text-sm text-[#64748b]">
               <li><button onClick={() => navigate('/features')} className="hover:text-[#2563eb]">Features</button></li>
-              <li><button onClick={() => navigate('/ai-matching')} className="hover:text-[#2563eb]">AI Matching</button></li>
+              <li><button onClick={() => navigate('/features/find-matches')} className="hover:text-[#2563eb]">Smart AI Matching</button></li>
               <li><button onClick={() => navigate('/real-time-chat')} className="hover:text-[#2563eb]">Real-time Chat</button></li>
               <li><button onClick={() => navigate('/integrations')} className="hover:text-[#2563eb]">Integrations</button></li>
             </ul>
@@ -35,10 +35,10 @@ export default function LandingFooter() {
           <div>
             <h4 className="font-semibold text-[#1e293b] mb-4">Solutions</h4>
             <ul className="space-y-3 text-sm text-[#64748b]">
-              <li><button onClick={() => navigate('/for-brands')} className="hover:text-[#2563eb]">For Brands</button></li>
-              <li><button onClick={() => navigate('/for-creators')} className="hover:text-[#2563eb]">For Creators</button></li>
-              <li><button onClick={() => navigate('/agencies')} className="hover:text-[#2563eb]">Agencies</button></li>
-              <li><button onClick={() => navigate('/enterprise')} className="hover:text-[#2563eb]">Enterprise</button></li>
+              <li><button onClick={() => navigate('/solutions/for-brands')} className="hover:text-[#2563eb]">For Brands</button></li>
+              <li><button onClick={() => navigate('/solutions/for-creators')} className="hover:text-[#2563eb]">For Creators</button></li>
+              <li><button onClick={() => navigate('/solutions/agencies')} className="hover:text-[#2563eb]">Agencies</button></li>
+              <li><button onClick={() => navigate('/solutions/enterprise')} className="hover:text-[#2563eb]">Enterprise</button></li>
             </ul>
           </div>
 

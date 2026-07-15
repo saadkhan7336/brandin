@@ -120,15 +120,17 @@ export default function AnalyticsPage() {
               Real-time performance intelligence across your entire creator ecosystem. Watch your data move and analyze every interaction.
             </p>
           </div>
-          <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-all hover:shadow-md text-sm">
+          {/* Action Buttons (Visual Mockup Only) */}
+          <div className="flex gap-3 pointer-events-none select-none opacity-90 relative">
+            <div className="absolute -top-3 -right-3 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-full border border-blue-200 z-10 shadow-sm whitespace-nowrap">Dashboard Preview</div>
+            <div className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-xl font-semibold text-gray-500 text-sm">
               <Calendar className="w-4 h-4 text-gray-400" />
               Last 30 Days
-            </button>
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 rounded-xl font-semibold text-white hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm group">
-              <Download className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            </div>
+            <div className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 rounded-xl font-semibold text-white text-sm">
+              <Download className="w-4 h-4" />
               Export Report
-            </button>
+            </div>
           </div>
         </div>
 

@@ -44,8 +44,12 @@ export default function VerifiedProfilesPage() {
               >
                 Get Verified Now
               </button>
-              <button className="bg-white text-[#0f172a] font-bold py-3.5 px-8 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors hover:shadow-sm">
-                Learn about Vetting
+              <button 
+                onClick={() => {
+                  document.getElementById('verification-process')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="bg-white text-[#0f172a] font-bold py-3.5 px-8 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors hover:shadow-sm">
+                How Verification Works
               </button>
             </div>
           </div>
@@ -97,7 +101,7 @@ export default function VerifiedProfilesPage() {
         </section>
 
         {/* MIDDLE SECTION - The Verification Pillar */}
-        <section className="py-24">
+        <section id="verification-process" className="py-24">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-black text-[#0f172a] mb-6">The Verification Pillar</h2>
             <p className="text-lg text-[#64748b] leading-relaxed">

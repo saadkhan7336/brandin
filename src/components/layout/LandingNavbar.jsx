@@ -12,6 +12,7 @@ function LandingNavbar() {
   const dashboardPath = user ? getDashboardByRole(user.role) : "/login";
 
   const navLinks = [
+    { label: "Home", route: "/" },
     { label: "Features", route: "/features" },
     { label: "Solutions", route: "/solutions" },
     { label: "Case Studies", route: "/case-studies" },

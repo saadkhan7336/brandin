@@ -8,11 +8,11 @@ import {
   BarChart3,
   Lock,
   Layers,
-  ShieldCheck,
-  Building,
+  Zap,
+  Target,
+  TrendingUp,
   Headphones,
   ArrowRight,
-  Shield,
   BadgeCheck
 } from "lucide-react";
 
@@ -172,26 +172,26 @@ export default function FeaturesPage() {
 
         </div>
 
-        {/* TRUST SECTION */}
+        {/* GROWTH SECTION */}
         <div className="flex flex-col md:flex-row items-center justify-between bg-white rounded-3xl p-10 md:p-12 mb-24 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-gray-50">
           <div className="mb-10 md:mb-0 max-w-md">
-            <h2 className="text-3xl font-black text-[#0f172a] mb-4">The Platform of Trust</h2>
+            <h2 className="text-3xl font-black text-[#0f172a] mb-4">Built for Speed and Scale</h2>
             <p className="text-[#64748b] font-medium leading-relaxed">
-              We automate the boring stuff so you can get back to the storytelling. Our compliance-first approach keeps everyone safe.
+              We removed the friction so you can launch campaigns faster and scale your creator partnerships without adding headcount.
             </p>
           </div>
           <div className="flex flex-wrap md:flex-nowrap justify-center gap-8 md:gap-12">
             <div className="flex flex-col items-center gap-3 text-center">
-              <ShieldCheck className="w-8 h-8 text-[#475569]" strokeWidth={1.5} />
-              <span className="text-[10px] font-bold text-[#64748b] tracking-wider uppercase">GDPR Ready</span>
+              <Zap className="w-8 h-8 text-[#475569]" strokeWidth={1.5} />
+              <span className="text-[10px] font-bold text-[#64748b] tracking-wider uppercase">Fast Setup</span>
             </div>
             <div className="flex flex-col items-center gap-3 text-center">
-              <Shield className="w-8 h-8 text-[#475569]" strokeWidth={1.5} />
-              <span className="text-[10px] font-bold text-[#64748b] tracking-wider uppercase">SOC2 Type II</span>
+              <Target className="w-8 h-8 text-[#475569]" strokeWidth={1.5} />
+              <span className="text-[10px] font-bold text-[#64748b] tracking-wider uppercase">Precise Matching</span>
             </div>
             <div className="flex flex-col items-center gap-3 text-center">
-              <Building className="w-8 h-8 text-[#475569]" strokeWidth={1.5} />
-              <span className="text-[10px] font-bold text-[#64748b] tracking-wider uppercase">Verified Bank</span>
+              <TrendingUp className="w-8 h-8 text-[#475569]" strokeWidth={1.5} />
+              <span className="text-[10px] font-bold text-[#64748b] tracking-wider uppercase">Scalable Growth</span>
             </div>
             <div className="flex flex-col items-center gap-3 text-center">
               <Headphones className="w-8 h-8 text-[#475569]" strokeWidth={1.5} />

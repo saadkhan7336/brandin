@@ -50,24 +50,21 @@ export default function FindMatchPage() {
               </p>
             </div>
 
-            {/* Search Bar Area */}
-            <div className="bg-white p-2 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 flex flex-col sm:flex-row gap-2 mb-6">
-              <div className="flex-1 flex items-center bg-[#f8fafc] rounded-xl px-4 py-3">
+            {/* Search Bar Area (Visual Mockup Only) */}
+            <div className="bg-white p-2 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 flex flex-col sm:flex-row gap-2 mb-6 pointer-events-none select-none opacity-90 relative">
+              <div className="absolute -top-3 -right-3 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-full border border-blue-200 z-10 shadow-sm">Dashboard Preview</div>
+              <div className="flex-1 flex items-center bg-[#f8fafc] rounded-xl px-4 py-3 border border-transparent">
                 <Search className="w-5 h-5 text-gray-400 mr-3" />
-                <input 
-                  type="text" 
-                  placeholder="Search by niche, platform, or creator name..." 
-                  className="bg-transparent border-none outline-none w-full text-sm text-gray-700 placeholder-gray-400"
-                />
+                <div className="text-sm text-gray-400">Search by niche, platform, or creator name...</div>
               </div>
-              <button className="flex items-center justify-center gap-2 bg-[#f8fafc] hover:bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-medium text-sm transition-colors border border-gray-50">
+              <div className="flex items-center justify-center gap-2 bg-[#f8fafc] text-gray-500 px-6 py-3 rounded-xl font-medium text-sm border border-gray-50">
                 <SlidersHorizontal className="w-4 h-4" />
                 Filters
-              </button>
-              <button className="flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-medium text-sm shadow-sm transition-colors">
+              </div>
+              <div className="flex items-center justify-center gap-2 bg-blue-100 text-blue-600 px-8 py-3 rounded-xl font-medium text-sm shadow-sm">
                 <Sparkles className="w-4 h-4" />
                 Find Matches
-              </button>
+              </div>
             </div>
 
             {/* Match Cards */}
@@ -253,8 +250,12 @@ export default function FindMatchPage() {
                 </div>
               </div>
 
-              <button className="w-full py-3 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors font-bold rounded-xl flex items-center justify-center gap-2 bg-transparent mb-5 text-sm">
-                Export Match Report (PDF)
+              <button 
+                onClick={() => {
+                  document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="w-full py-3 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors font-bold rounded-xl flex items-center justify-center gap-2 bg-transparent mb-5 text-sm">
+                How Matching Works
               </button>
 
               {/* Testimonial Box */}
@@ -325,7 +326,7 @@ export default function FindMatchPage() {
         </section>
 
         {/* How It Works Section */}
-        <section className="py-16 bg-[#f8fafc] rounded-[3rem] px-8 md:px-16 mb-20 border border-gray-100">
+        <section id="how-it-works" className="py-16 bg-[#f8fafc] rounded-[3rem] px-8 md:px-16 mb-20 border border-gray-100">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-black text-[#0f172a] mb-4">
               From Search to Strategy in Minutes
