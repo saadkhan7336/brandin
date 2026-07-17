@@ -1,268 +1,296 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LandingNavbar from "../components/layout/LandingNavbar";
 import LandingFooter from "../components/layout/LandingFooter";
-import InfluButton from "../components/common/InfluBtn";
-import { Shield, ArrowRight, BarChart3, Users, Zap, Star } from "lucide-react";
+import { 
+  ArrowRight, 
+  BarChart3, 
+  TrendingUp,
+  Target,
+  ShieldCheck,
+  CheckCircle2,
+  Users
+} from "lucide-react";
 
 export default function CaseStudiesPage() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("All Cases");
+
+  const tabs = ["All Cases", "SaaS", "Fashion", "Tech", "Lifestyle"];
 
   const caseStudies = [
     {
       id: 1,
-      brand: "Glow Beauty",
-      title: "Increasing Brand Awareness by 300% with Micro-Influencers",
-      metrics: [
-        { label: "Reach", value: "2.5M+" },
-        { label: "Engagement", value: "8.4%" },
-        { label: "ROI", value: "4.2x" },
-      ],
-      image:
-        "https://images.unsplash.com/photo-1596462502278-27bfdc4033c8?w=800&h=600&fit=crop",
-      category: "Health & Beauty",
+      title: "Velvet & Vine Launch",
+      category: "FASHION",
+      description: "\"We drove quick sales in 72 hours through strategic influencer drops.\"",
+      metricLabel: "+320% Growth",
+      image: "/images/case-studies/Fashion Campaign.png",
+      color: "text-emerald-500",
+      bgBadge: "bg-purple-100 text-purple-700"
     },
     {
       id: 2,
-      brand: "TechGear",
-      title: "Scaling Product Launch to $1M in Revenue in 30 Days",
-      metrics: [
-        { label: "Sales", value: "$1.2M" },
-        { label: "Reach", value: "5.8M+" },
-        { label: "Conversion", value: "3.2%" },
-      ],
-      image:
-        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop",
-      category: "Consumer Electronics",
+      title: "CloudSync Growth",
+      category: "SAAS",
+      description: "\"Strategic B2B influencer partnerships that converted high-value enterprise leads.\"",
+      metricLabel: "12k New Trials",
+      image: "/images/case-studies/SaaS Collaboration.png",
+      color: "text-emerald-500",
+      bgBadge: "bg-blue-100 text-blue-700"
     },
     {
       id: 3,
-      brand: "FitLife",
-      title: "Building a Loyal Community of 100K Fitness Enthusiasts",
-      metrics: [
-        { label: "New Users", value: "100K+" },
-        { label: "Retention", value: "65%" },
-        { label: "Cost/User", value: "$0.45" },
-      ],
-      image:
-        "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&h=600&fit=crop",
-      category: "Fitness & Wellness",
-    },
-    {
-      id: 4,
-      brand: "EcoHome",
-      title: "Driving Sustainable Living with Authentic Storytelling",
-      metrics: [
-        { label: "Reach", value: "1.8M" },
-        { label: "Engagement", value: "9.2%" },
-        { label: "Sentiment", value: "Positive" },
-      ],
-      image:
-        "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&h=600&fit=crop",
-      category: "Home & Lifestyle",
-    },
+      title: "Titan Gear Pro",
+      category: "TECH",
+      description: "\"Scaling a new hardware launch across YouTube & TikTok with live-video assets.\"",
+      metricLabel: "4.5M Views",
+      image: "/images/case-studies/Tech Product.png",
+      color: "text-emerald-500",
+      bgBadge: "bg-orange-100 text-orange-700"
+    }
   ];
 
+  const filteredStudies = activeTab === "All Cases" 
+    ? caseStudies 
+    : caseStudies.filter(study => study.category.toLowerCase() === activeTab.toLowerCase());
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#fafbfc] font-sans selection:bg-blue-100">
       <LandingNavbar />
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6 bg-gradient-to-br from-[#eff6ff] via-white to-[#f0fdf4]">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-[#dbeafe] text-[#3b82f6] px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Shield className="w-4 h-4" />
-            Case Studies
+      <main className="pt-24 lg:pt-32 pb-24">
+        
+        {/* HEADER */}
+        <section className="px-6 max-w-7xl mx-auto mb-16 text-center md:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-full mb-6">
+            <span className="text-[10px] font-bold tracking-wider text-blue-600 uppercase">Case Studies</span>
           </div>
-          <h1 className="text-5xl lg:text-6xl font-bold text-[#111827] mb-6">
-            Real Stories, <br />
-            <span className="text-[#3b82f6]">Unreal Results</span>
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-[#0f172a] leading-[1.05] tracking-tight mb-6 max-w-4xl">
+            Success Stories:<br/> <span className="text-[#2563eb]">Curated Results</span> that Matter.
           </h1>
-          <p className="text-xl text-[#6b7280] max-w-2xl mx-auto">
-            Discover how leading brands are leveraging Brandly to transform
-            their influencer marketing strategy and achieve record-breaking
-            growth.
+          <p className="text-lg text-gray-500 max-w-2xl leading-relaxed">
+            Explore how Brandly empowers global brands to navigate the creator economy with precision, turning digital influence into measurable commercial impact.
           </p>
-        </div>
-      </section>
+        </section>
 
-      {/* Featured Metric */}
-      <section className="py-12 bg-[#111827]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="text-4xl lg:text-5xl font-bold text-white mb-2">
-                4.5x
-              </div>
-              <div className="text-[#9ca3af]">Average ROI Across Campaigns</div>
+        {/* FEATURED CASE STUDY */}
+        <section className="px-6 max-w-7xl mx-auto mb-32">
+          <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-4 md:p-8 border border-gray-100 shadow-xl flex flex-col lg:flex-row items-center gap-12 cursor-pointer hover:shadow-2xl transition-shadow" onClick={() => navigate('/case-studies/featured')}>
+            {/* Image Side */}
+            <div className="w-full lg:w-1/2 bg-[#2d5c4c] rounded-[2rem] p-8 relative overflow-hidden flex justify-center items-center aspect-square lg:aspect-auto h-full min-h-[400px]">
+               <img src="/images/case-studies/Neobank Interface.png" alt="Neobank Interface" className="w-3/4 max-w-sm rounded-xl shadow-2xl relative z-10 hover:-translate-y-2 transition-transform duration-500" />
+               <div className="absolute bottom-6 left-6 bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl flex items-center gap-4 z-20">
+                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                   <ShieldCheck className="w-6 h-6 text-[#2d5c4c]" />
+                 </div>
+                 <div>
+                   <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider">Client Spotlight</p>
+                   <p className="text-sm font-bold text-white">The Neobank Experience</p>
+                 </div>
+               </div>
             </div>
-            <div className="border-x border-white/10 px-8">
-              <div className="text-4xl lg:text-5xl font-bold text-white mb-2">
-                500M+
-              </div>
-              <div className="text-[#9ca3af]">Total Reach Generated</div>
-            </div>
-            <div>
-              <div className="text-4xl lg:text-5xl font-bold text-white mb-2">
-                92%
-              </div>
-              <div className="text-[#9ca3af]">Brand Partnership Retention</div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Case Studies Grid */}
-      <section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {caseStudies.map((study) => (
-              <div key={study.id} className="group cursor-pointer">
-                <div className="relative rounded-3xl overflow-hidden mb-8 lg:aspect-[16/10]">
-                  <img loading="lazy" decoding="async"                     src={study.image}
-                    alt={study.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                  <div className="absolute bottom-8 left-8 right-8">
-                    <div className="text-[#3b82f6] font-bold text-sm uppercase tracking-wider mb-2">
-                      {study.category}
-                    </div>
-                    <h3 className="text-2xl font-bold text-white mb-4">
-                      {study.brand}: {study.title}
-                    </h3>
-                    <div className="grid grid-cols-3 gap-4 border-t border-white/20 pt-6">
-                      {study.metrics.map((metric, idx) => (
-                        <div key={idx}>
-                          <div className="text-xl font-bold text-white">
-                            {metric.value}
-                          </div>
-                          <div className="text-xs text-white/60 uppercase">
-                            {metric.label}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+            {/* Content Side */}
+            <div className="w-full lg:w-1/2 p-4 md:p-8">
+              <h2 className="text-3xl md:text-4xl font-black text-[#0f172a] mb-6 leading-tight">
+                Disrupting Fintech through Lifestyle Storytelling
+              </h2>
+              <p className="text-gray-500 text-lg leading-relaxed mb-10">
+                To scale their user base, we moved beyond typical financial influencers. Our Digital Curator AI identified "lifestyle tech" creators whose audiences were ready for a frictionless banking revolution.
+              </p>
+
+              <div className="flex flex-wrap gap-8 mb-10">
+                 <div>
+                   <p className="text-3xl font-black text-[#2563eb] mb-1">14.2x</p>
+                   <p className="text-xs font-bold text-gray-400 tracking-wider uppercase">Customer ROI</p>
+                 </div>
+                 <div>
+                   <p className="text-3xl font-black text-[#0f172a] mb-1">1.2M</p>
+                   <p className="text-xs font-bold text-gray-400 tracking-wider uppercase">Total Reach</p>
+                 </div>
+                 <div>
+                   <p className="text-3xl font-black text-[#0f172a] mb-1">840k</p>
+                   <p className="text-xs font-bold text-gray-400 tracking-wider uppercase">Engagement</p>
+                 </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center text-orange-600 font-bold text-lg">
+                    E
+                  </div>
+                  <div>
+                    <p className="font-bold text-[#0f172a] text-sm">Elena Thorne</p>
+                    <p className="text-xs text-gray-500">Lead Creator Partner</p>
                   </div>
                 </div>
-                <div className="flex items-center text-[#111827] font-bold gap-2 group-hover:text-[#3b82f6] transition-colors">
-                  Read Full Case Study
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                <button className="w-full sm:w-auto bg-[#2563eb] text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-600 transition-colors shadow-md">
+                  Read Full Study
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* MARKET VERTICALS */}
+        <section className="px-6 max-w-7xl mx-auto mb-32">
+          <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12 border-b border-gray-200 pb-6">
+            <div>
+              <h2 className="text-3xl font-black text-[#0f172a] mb-2">Market Verticals</h2>
+              <p className="text-gray-500">Filtered results across our most successful implementation sectors.</p>
+            </div>
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-5 py-2.5 rounded-full font-bold text-sm whitespace-nowrap transition-colors ${
+                    activeTab === tab
+                      ? "bg-blue-50 text-blue-600 border border-blue-200"
+                      : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredStudies.map((study) => (
+              <div 
+                key={study.id} 
+                className="bg-white rounded-[2rem] border border-gray-200 shadow-sm hover:shadow-xl transition-all group cursor-pointer overflow-hidden flex flex-col"
+                onClick={() => navigate(`/case-studies/${study.id}`)}
+              >
+                <div className="h-64 overflow-hidden relative bg-gray-50">
+                  <div className={`absolute top-4 left-4 z-10 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider ${study.bgBadge}`}>
+                    {study.category}
+                  </div>
+                  <img src={study.image} alt={study.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                </div>
+                <div className="p-8 flex flex-col flex-grow">
+                  <h3 className="text-2xl font-bold text-[#0f172a] mb-3">{study.title}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed mb-8 flex-grow">{study.description}</p>
+                  
+                  <div className="flex justify-between items-center pt-6 border-t border-gray-100">
+                    <span className={`font-bold text-sm flex items-center gap-2 ${study.color}`}>
+                       <TrendingUp className="w-4 h-4" />
+                       {study.metricLabel}
+                    </span>
+                    <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-[#2563eb] group-hover:translate-x-1 transition-all" />
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Testimonial Section */}
-      <section className="py-20 px-6 bg-[#f9fafb]">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="flex justify-center gap-1 mb-8">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Star key={i} className="w-6 h-6 fill-[#f59e0b] text-[#f59e0b]" />
-            ))}
-          </div>
-          <h2 className="text-3xl font-bold text-[#111827] mb-8 leading-relaxed italic">
-            "Brandly has revolutionized how we approach influencer
-            collaborations. The data-driven insights and verified profiles have
-            given us the confidence to scale our campaigns globally."
-          </h2>
-          <div className="flex items-center justify-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-[#3b82f6] flex items-center justify-center text-white text-2xl font-bold">
-              SJ
-            </div>
-            <div className="text-left">
-              <div className="text-xl font-bold text-[#111827]">
-                Sarah Jenkins
-              </div>
-              <div className="text-[#6b7280]">
-                Marketing Director at Glow Beauty
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* THE CURATOR ENGINE */}
+        <section className="px-6 max-w-7xl mx-auto mb-32 py-16 bg-[#f8fafc] rounded-[3rem] border border-gray-100">
+           <div className="flex flex-col lg:flex-row gap-16 items-center px-6 lg:px-16">
+              {/* Cards Grid */}
+              <div className="w-full lg:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-4 relative">
+                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:-translate-y-1 transition-transform">
+                    <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4">
+                      <Target className="w-5 h-5" />
+                    </div>
+                    <h4 className="font-bold text-[#0f172a] text-sm mb-2">Neural Matching</h4>
+                    <p className="text-xs text-gray-500">Analyzing 1,000+ data points per profile.</p>
+                 </div>
 
-      {/* Benefits Grid */}
-      <section className="py-20 px-6 border-b border-[#e5e7eb]">
-        <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-4xl font-bold text-[#111827] mb-16">
-            Why Leading Brands Scale with Brandly
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div className="space-y-4">
-              <div className="w-16 h-16 bg-[#eff6ff] rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Users className="w-8 h-8 text-[#3b82f6]" />
+                 <div className="bg-[#2563eb] p-6 rounded-3xl shadow-lg hover:-translate-y-1 transition-transform sm:translate-y-8">
+                    <div className="w-10 h-10 bg-white/20 text-white rounded-xl flex items-center justify-center mb-4">
+                      <BarChart3 className="w-5 h-5" />
+                    </div>
+                    <h4 className="font-bold text-white text-sm mb-2">Precision ROI</h4>
+                    <p className="text-xs text-blue-100">Predictive modeling for campaign performance.</p>
+                 </div>
+
+                 <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 shadow-sm hover:-translate-y-1 transition-transform">
+                    <div className="w-10 h-10 bg-white text-blue-600 rounded-xl flex items-center justify-center mb-4">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <h4 className="font-bold text-[#0f172a] text-sm mb-2">Sentiment Sync</h4>
+                    <p className="text-xs text-gray-500">Ensuring brand tone aligns with creator voice perfectly.</p>
+                 </div>
+
+                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:-translate-y-1 transition-transform sm:translate-y-8">
+                    <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                    <h4 className="font-bold text-[#0f172a] text-sm mb-2">Vetting Pro</h4>
+                    <p className="text-xs text-gray-500">Automated authenticity check for follower quality.</p>
+                 </div>
               </div>
-              <h3 className="text-xl font-bold text-[#111827]">
-                Deep Influencer Analytics
-              </h3>
-              <p className="text-[#6b7280] leading-relaxed">
-                Access verified audience demographics, engagement rates, and
-                historical performance metrics to ensure the perfect brand
-                match.
+
+              {/* Text Content */}
+              <div className="w-full lg:w-1/2">
+                <p className="text-xs font-bold tracking-wider text-purple-600 uppercase mb-4">The Curator Engine</p>
+                <h2 className="text-4xl md:text-5xl font-black text-[#0f172a] mb-6 leading-tight">
+                  AI That Thinks Like a <br/><span className="text-purple-600 italic">Digital Curator</span>
+                </h2>
+                <p className="text-gray-500 text-lg leading-relaxed mb-8">
+                  Most platforms use generic keyword matching. Brandly uses deep neural networks to understand the editorial nuances of a creator's feed. We don't just find followers; we find the perfect aesthetic match for your brand identity.
+                </p>
+                <ul className="space-y-4">
+                  <li className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <span className="font-bold text-[#0f172a] text-sm">98% Curator-Rated Compatibility Score</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <span className="font-bold text-[#0f172a] text-sm">Automated Content Style Classification</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <span className="font-bold text-[#0f172a] text-sm">Real-time Demographic Alignment Updates</span>
+                  </li>
+                </ul>
+              </div>
+           </div>
+        </section>
+
+        {/* CTA SECTION */}
+        <section className="px-6 max-w-7xl mx-auto mb-12">
+          <div className="bg-[#2563eb] rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden shadow-2xl">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500 mix-blend-multiply"></div>
+            
+            <div className="relative z-10 max-w-3xl mx-auto">
+              <h2 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight leading-tight">
+                Ready to redefine your influence?
+              </h2>
+              <p className="text-blue-100 text-lg font-medium mb-10 max-w-2xl mx-auto">
+                Join the elite circle of brands using Curator AI to dominate their market through human-centric, data-driven creator partnerships.
               </p>
-            </div>
-            <div className="space-y-4">
-              <div className="w-16 h-16 bg-[#f0fdf4] rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <BarChart3 className="w-8 h-8 text-[#10b981]" />
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                <button 
+                  onClick={() => navigate('/register')}
+                  className="w-full sm:w-auto bg-white text-blue-600 font-bold px-8 py-4 rounded-xl hover:bg-gray-50 transition-colors shadow-lg"
+                >
+                  Start a Project
+                </button>
+                <button 
+                  onClick={() => {
+                    document.getElementById('grid-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="w-full sm:w-auto bg-white/10 text-white font-bold px-8 py-4 rounded-xl hover:bg-white/20 transition-colors backdrop-blur-sm border border-white/20"
+                >
+                  See All Success Stories
+                </button>
               </div>
-              <h3 className="text-xl font-bold text-[#111827]">
-                Conversion Tracking
-              </h3>
-              <p className="text-[#6b7280] leading-relaxed">
-                Track every click, conversion, and dollar earned through our
-                advanced attribution modeling and pixel integration.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <div className="w-16 h-16 bg-[#fefce8] rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Zap className="w-8 h-8 text-[#f59e0b]" />
-              </div>
-              <h3 className="text-xl font-bold text-[#111827]">
-                Automated Workflows
-              </h3>
-              <p className="text-[#6b7280] leading-relaxed">
-                Streamline communication, contracts, and payments with
-                automation that saves your team hundreds of hours per month.
-              </p>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-6 bg-gradient-to-br from-[#111827] to-[#1f2937] text-white overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#3b82f6] opacity-10 blur-[128px] -mr-48 -mt-48"></div>
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h2 className="text-4xl lg:text-5xl font-bold mb-8">
-            Ready to write your success story?
-          </h2>
-          <p className="text-xl text-[#9ca3af] mb-10">
-            Join the hundreds of brands that are scaling their growth with
-            data-driven influencer marketing.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <InfluButton
-              variant="primary"
-              size="lg"
-              onClick={() => navigate("/register")}
-            >
-              Request Demo
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </InfluButton>
-            <InfluButton
-              variant="outline"
-              size="lg"
-              className="border-white text-white hover:bg-white/10"
-              onClick={() => navigate("/contact")}
-            >
-              Contact Sales
-            </InfluButton>
-          </div>
-        </div>
-      </section>
-
+      </main>
       <LandingFooter />
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Briefcase, Video, Eye, EyeOff, Globe, Hash, CheckCircle2, Shield, Zap, UploadCloud } from 'lucide-react';
 import api from '../../services/api.js';
@@ -29,6 +29,7 @@ const validate = (field, value) => {
 
 export default function Register() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const { loading, isAuthenticated } = useSelector((state) => state.auth);
 
@@ -51,7 +52,14 @@ export default function Register() {
 
   useEffect(() => {
     dispatch(clearAuthState());
-  }, [dispatch]);
+    // Auto-select role if navigated from About page CTA
+    const defaultRole = location.state?.defaultRole;
+    if (defaultRole === 'creator') {
+      setRole('influencer');
+    } else if (defaultRole === 'brand') {
+      setRole('brand');
+    }
+  }, [dispatch, location.state]);
 
   // Remove the initial useEffect that navigated on isAuthenticated because PublicRoute handles it anyway.
 

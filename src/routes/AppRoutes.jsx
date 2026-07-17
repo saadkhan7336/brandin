@@ -154,6 +154,7 @@ const EnterprisePage = lazy(() => import("../pages/solutions/EnterprisePage"));
 const SolutionsPage = lazy(() => import("../pages/SolutionsPage"));
 const HelpCenterPage = lazy(() => import("../pages/HelpCenterPage"));
 const CaseStudiesPage = lazy(() => import("../pages/CaseStudiesPage"));
+const CaseStudyDetail = lazy(() => import("../pages/CaseStudyDetail"));
 const PrivacyPolicyPage = lazy(() => import("../pages/PrivacyPolicyPage"));
 const AboutPage = lazy(() => import("../pages/AboutUsPage"));
 const ContactPage = lazy(() => import("../pages/ContactPage"));
@@ -221,6 +222,7 @@ export default function AppRoutes() {
           <Route path="/solutions/enterprise" element={<EnterprisePage />} />
           <Route path="/help-center" element={<HelpCenterPage />} />
           <Route path="/case-studies" element={<CaseStudiesPage />} />
+          <Route path="/case-studies/:id" element={<CaseStudyDetail />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
