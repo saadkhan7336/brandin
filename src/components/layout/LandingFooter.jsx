@@ -56,8 +56,8 @@ export default function LandingFooter() {
             <h4 className="font-semibold text-[#1e293b] mb-4">Support</h4>
             <ul className="space-y-3 text-sm text-[#64748b]">
               <li><button onClick={() => navigate('/help-center')} className="hover:text-[#2563eb]">Help Center</button></li>
-              <li><button onClick={() => navigate('/terms')} className="hover:text-[#2563eb]">Terms of Service</button></li>
-              <li><button onClick={() => navigate('/privacy')} className="hover:text-[#2563eb]">Privacy Policy</button></li>
+              <li><button onClick={() => navigate('/terms-of-service')} className="hover:text-[#2563eb]">Terms of Service</button></li>
+              <li><button onClick={() => navigate('/privacy-policy')} className="hover:text-[#2563eb]">Privacy Policy</button></li>
               <li><button onClick={() => navigate('/security')} className="hover:text-[#2563eb]">Security</button></li>
             </ul>
           </div>

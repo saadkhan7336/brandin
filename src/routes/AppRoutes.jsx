@@ -160,6 +160,8 @@ const AboutPage = lazy(() => import("../pages/AboutUsPage"));
 const ContactPage = lazy(() => import("../pages/ContactPage"));
 const BlogPage = lazy(() => import("../pages/BlogPage"));
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage"));
+const TermsOfServicePage = lazy(() => import("../pages/TermsOfServicePage"));
+const SecurityPage = lazy(() => import("../pages/SecurityPage"));
 
 // Dashboard / brand pages (lazy loaded)
 const BrandDashboard = lazy(() => import("../pages/dashboard/BrandDashboard"));
@@ -227,6 +229,8 @@ export default function AppRoutes() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/blog" element={<BlogPage />} />
+          <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+          <Route path="/security" element={<SecurityPage />} />
 
           {/* OAuth Callback — must be public, no auth required */}
           <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
