@@ -1,4 +1,4 @@
-import LandingFooter from '../components/layout/LandingFooter';
+gtimport LandingFooter from '../components/layout/LandingFooter';
 import React from "react";
 import LandingNavbar from "../components/layout/LandingNavbar";
 import InfluButton from "../components/common/InfluBtn";
