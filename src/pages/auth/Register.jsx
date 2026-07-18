@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Briefcase, Video, Eye, EyeOff, Globe, Hash, CheckCircle2, Shield, Zap, UploadCloud } from 'lucide-react';
+import { Briefcase, Video, Eye, EyeOff, Globe, Hash, CheckCircle2, Shield, Zap } from 'lucide-react';
 import api from '../../services/api.js';
 import { ENDPOINTS } from '../../services/endpoints.js';
 import { setLoading, clearAuthState, setAuthUser } from '../../redux/slices/authSlice.js';
@@ -31,7 +31,7 @@ export default function Register() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const { loading, isAuthenticated } = useSelector((state) => state.auth);
+  const { loading } = useSelector((state) => state.auth);
 
   const [step, setStep] = useState(1);
   const [role, setRole] = useState('brand'); // 'brand' or 'influencer'
@@ -47,8 +47,6 @@ export default function Register() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   
-  // Store the login response locally so we don't trigger PublicRoute redirect until Step 2 is done
-  const [authData, setAuthData] = useState(null);
 
   useEffect(() => {
     dispatch(clearAuthState());
@@ -523,7 +521,7 @@ export default function Register() {
 
           <div className="mt-8 text-center pb-8">
             <p className="text-[11px] text-[#94a3b8]">
-              By joining, you agree to our <a href="#" className="underline hover:text-[#64748b]">Terms of Service</a> and <a href="#" className="underline hover:text-[#64748b]">Privacy Policy</a>.
+              By joining, you agree to our <button onClick={(e) => e.preventDefault()} className="underline hover:text-[#64748b]">Terms of Service</button> and <button onClick={(e) => e.preventDefault()} className="underline hover:text-[#64748b]">Privacy Policy</button>.
             </p>
           </div>
         </div>

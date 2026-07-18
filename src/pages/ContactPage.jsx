@@ -1,5 +1,6 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { toast } from "sonner";
+import api from "../services/api";
 import LandingNavbar from "../components/layout/LandingNavbar";
 import LandingFooter from "../components/layout/LandingFooter";
 import {
@@ -15,7 +16,46 @@ import {
 } from "lucide-react";
 
 export default function ContactPage() {
-  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    subject: "General Inquiry",
+    message: ""
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.message) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      // User mentioned backend email service is ready, usually this is under /contact or /email/send
+      // If the backend route is different, it can be easily updated here.
+      await api.post('/support/contact', formData);
+      toast.success("Message sent successfully! We'll get back to you soon.");
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        subject: "General Inquiry",
+        message: ""
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to send message. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const contactMethods = [
     {
@@ -77,13 +117,13 @@ export default function ContactPage() {
             <h3 className="text-xs font-bold text-gray-400 tracking-wider uppercase mb-4">Follow Us</h3>
             <div className="flex gap-3">
               {[Twitter, Linkedin, Instagram, Facebook].map((Icon, i) => (
-                <a
+                <button
                   key={i}
-                  href="#"
+                  onClick={(e) => e.preventDefault()}
                   className="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-600 hover:bg-blue-50 transition-all bg-white"
                 >
                   <Icon className="w-5 h-5" />
-                </a>
+                </button>
               ))}
             </div>
           </div>
@@ -99,12 +139,15 @@ export default function ContactPage() {
               <h2 className="text-2xl font-black text-[#0f172a]">Send us a message</h2>
             </div>
 
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-700">First Name</label>
                   <input
                     type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
                     placeholder="John"
                     className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-gray-50/50"
                   />
@@ -113,6 +156,9 @@ export default function ContactPage() {
                   <label className="text-sm font-bold text-gray-700">Last Name</label>
                   <input
                     type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
                     placeholder="Doe"
                     className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-gray-50/50"
                   />
@@ -123,6 +169,9 @@ export default function ContactPage() {
                 <label className="text-sm font-bold text-gray-700">Email Address</label>
                 <input
                   type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   placeholder="john@example.com"
                   className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-gray-50/50"
                 />
@@ -130,18 +179,26 @@ export default function ContactPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700">How can we help?</label>
-                <select className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-gray-50/50 appearance-none">
-                  <option>General Inquiry</option>
-                  <option>Brand Support</option>
-                  <option>Influencer Support</option>
-                  <option>Partnership Interest</option>
-                  <option>Press & Media</option>
+                <select 
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-gray-50/50 appearance-none"
+                >
+                  <option value="General Inquiry">General Inquiry</option>
+                  <option value="Brand Support">Brand Support</option>
+                  <option value="Influencer Support">Influencer Support</option>
+                  <option value="Partnership Interest">Partnership Interest</option>
+                  <option value="Press & Media">Press & Media</option>
                 </select>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700">Message</label>
                 <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
                   rows={5}
                   placeholder="Tell us more about your inquiry..."
                   className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-gray-50/50 resize-none"
@@ -149,11 +206,12 @@ export default function ContactPage() {
               </div>
 
               <button 
-                type="button" 
-                className="w-full bg-blue-600 text-white font-bold px-8 py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full bg-blue-600 text-white font-bold px-8 py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Send Message
-                <Send className="w-5 h-5" />
+                {isSubmitting ? "Sending..." : "Send Message"}
+                {!isSubmitting && <Send className="w-5 h-5" />}
               </button>
             </form>
           </div>

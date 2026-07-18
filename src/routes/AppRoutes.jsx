@@ -121,11 +121,10 @@
 // src/routes/AppRoutes.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import React, { Suspense, lazy } from "react";
-import { useSelector } from "react-redux";
 
 // Layout & guards (eagerly loaded)
 import DashboardLayout from "../components/layout/DashboardLayout";
-import ProtectedRoute, { getDashboardByRole } from "./ProtectedRoute";
+import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
 import LoadingFallback from "../components/common/LoadingFallback";
 import OAuthCallbackPage from "../pages/auth/OAuthCallbackPage";
@@ -193,13 +192,7 @@ const CampaignDetail = lazy(() => import("../components/layout/influencer/Campai
 const BrandPublicProfile = lazy(() => import("../components/layout/influencer/BrandPublicProfile"));
 const InfluencerRequests = lazy(() => import("../pages/influencer/InfluencerRequests"));
 
-function CatchAll() {
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
-  if (isAuthenticated && user) {
-    return <Navigate to={getDashboardByRole(user.role)} replace />;
-  }
-  return <Navigate to="/login" replace />;
-}
+
 
 export default function AppRoutes() {
   return (
