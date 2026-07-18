@@ -1,11 +1,10 @@
 // src/routes/AppRoutes.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import React, { Suspense, lazy } from "react";
-import { useSelector } from "react-redux";
 
 // Layout & guards (eagerly loaded)
 import DashboardLayout from "../components/layout/DashboardLayout";
-import ProtectedRoute, { getDashboardByRole } from "./ProtectedRoute";
+import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
 import LoadingFallback from "../components/common/LoadingFallback";
 import OAuthCallbackPage from "../pages/auth/OAuthCallbackPage";
@@ -25,12 +24,24 @@ const AnalyticsPage = lazy(() => import("../pages/features/AnalyticsPage"));
 const CampaignManagement = lazy(() => import("../pages/features/CampaignManagement"));
 const FindMatchPage = lazy(() => import("../pages/features/FindMatchPage"));
 const VerifiedProfilesPage = lazy(() => import("../pages/features/VerifiedProfilesPage"));
+const SecurePaymentsPage = lazy(() => import("../pages/features/SecurePaymentsPage"));
+const RealTimeChatPage = lazy(() => import("../pages/features/RealTimeChatPage"));
+const IntegrationsPage = lazy(() => import("../pages/features/IntegrationsPage"));
+const ForBrandsPage = lazy(() => import("../pages/solutions/ForBrandsPage"));
+const ForCreatorsPage = lazy(() => import("../pages/solutions/ForCreatorsPage"));
+const AgenciesPage = lazy(() => import("../pages/solutions/AgenciesPage"));
+const EnterprisePage = lazy(() => import("../pages/solutions/EnterprisePage"));
+const SolutionsPage = lazy(() => import("../pages/SolutionsPage"));
 const HelpCenterPage = lazy(() => import("../pages/HelpCenterPage"));
 const CaseStudiesPage = lazy(() => import("../pages/CaseStudiesPage"));
+const CaseStudyDetail = lazy(() => import("../pages/CaseStudyDetail"));
 const PrivacyPolicyPage = lazy(() => import("../pages/PrivacyPolicyPage"));
 const AboutPage = lazy(() => import("../pages/AboutUsPage"));
 const ContactPage = lazy(() => import("../pages/ContactPage"));
 const BlogPage = lazy(() => import("../pages/BlogPage"));
+const NotFoundPage = lazy(() => import("../pages/NotFoundPage"));
+const TermsOfServicePage = lazy(() => import("../pages/TermsOfServicePage"));
+const SecurityPage = lazy(() => import("../pages/SecurityPage"));
 
 // Dashboard / brand pages (lazy loaded)
 const BrandDashboard = lazy(() => import("../pages/dashboard/BrandDashboard"));
@@ -62,13 +73,7 @@ const CampaignDetail = lazy(() => import("../components/layout/influencer/Campai
 const BrandPublicProfile = lazy(() => import("../components/layout/influencer/BrandPublicProfile"));
 const InfluencerRequests = lazy(() => import("../pages/influencer/InfluencerRequests"));
 
-function CatchAll() {
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
-  if (isAuthenticated && user) {
-    return <Navigate to={getDashboardByRole(user.role)} replace />;
-  }
-  return <Navigate to="/login" replace />;
-}
+
 
 
 export default function AppRoutes() {
@@ -81,24 +86,37 @@ export default function AppRoutes() {
           {/* ── Public (no auth needed) ────────────────────────────────── */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/solutions" element={<SolutionsPage />} />
           <Route path="/features/analytics" element={<AnalyticsPage />} />
           <Route path="/features/campaign-management" element={<CampaignManagement />} />
           <Route path="/features/find-matches" element={<FindMatchPage />} />
           <Route path="/features/verified-profiles" element={<VerifiedProfilesPage />} />
+          <Route path="/features/secure-payments" element={<SecurePaymentsPage />} />
+          <Route path="/real-time-chat" element={<RealTimeChatPage />} />
+          <Route path="/integrations" element={<IntegrationsPage />} />
+          <Route path="/solutions/for-brands" element={<ForBrandsPage />} />
+          <Route path="/solutions/for-creators" element={<ForCreatorsPage />} />
+          <Route path="/solutions/agencies" element={<AgenciesPage />} />
+          <Route path="/solutions/enterprise" element={<EnterprisePage />} />
           <Route path="/help-center" element={<HelpCenterPage />} />
           <Route path="/case-studies" element={<CaseStudiesPage />} />
+          <Route path="/case-studies/:id" element={<CaseStudyDetail />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/blog" element={<BlogPage />} />
+          <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+          <Route path="/security" element={<SecurityPage />} />
 
           {/* OAuth Callback — must be public, no auth required */}
           <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
+          {/* Register — outside PublicRoute so Step 2 onboarding works after auto-login */}
+          <Route path="/register" element={<Register />} />
+
           {/* ── Auth (redirect if already logged in) ──────────────────── */}
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/verify-otp" element={<VerifyOtp />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -192,7 +210,7 @@ export default function AppRoutes() {
           </Route>
 
           {/* ===== Catch-all: unknown routes ===== */}
-          <Route path="*" element={<CatchAll />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
     </Router>

@@ -1,18 +1,14 @@
-import LandingFooter from '../components/layout/LandingFooter';
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { toast } from "sonner";
+import api from "../services/api";
 import LandingNavbar from "../components/layout/LandingNavbar";
-import InfluButton from "../components/common/InfluBtn";
+import LandingFooter from "../components/layout/LandingFooter";
 import {
-
-
   Mail,
   Phone,
   MapPin,
   Send,
   MessageSquare,
-  Shield,
-  ArrowRight,
   Instagram,
   Twitter,
   Linkedin,
@@ -20,7 +16,46 @@ import {
 } from "lucide-react";
 
 export default function ContactPage() {
-  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    subject: "General Inquiry",
+    message: ""
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.message) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      // User mentioned backend email service is ready, usually this is under /contact or /email/send
+      // If the backend route is different, it can be easily updated here.
+      await api.post('/support/contact', formData);
+      toast.success("Message sent successfully! We'll get back to you soon.");
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        subject: "General Inquiry",
+        message: ""
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to send message. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const contactMethods = [
     {
@@ -28,266 +63,160 @@ export default function ContactPage() {
       title: "Email Us",
       description: "Our team is here to help with your inquiries.",
       value: "support@brandly.com",
-      color: "bg-[#eff6ff] text-[#3b82f6]",
     },
     {
       icon: Phone,
       title: "Call Us",
       description: "Available Mon-Fri from 9am to 6pm.",
       value: "+1 (555) 000-0000",
-      color: "bg-[#f0fdf4] text-[#10b981]",
     },
     {
       icon: MapPin,
       title: "Visit Us",
       description: "Come say hello at our global headquarters.",
       value: "123 Innovation Way, San Francisco, CA",
-      color: "bg-[#fff7ed] text-[#f59e0b]",
-    },
-  ];
-
-  const faqs = [
-    {
-      question: "How do I get started as a brand?",
-      answer:
-        "Simply create an account, complete your profile, and you can start searching for influencers or create your first campaign immediately.",
-    },
-    {
-      question: "Is there a cost for influencers to join?",
-      answer:
-        "Joining Brandly as an influencer is completely free. We take a small commission only when you successfully complete a collaboration.",
-    },
-    {
-      question: "How are payments handled?",
-      answer:
-        "We use a secure escrow system. Brands pay when the collaboration starts, and funds are released to influencers once the work is approved.",
-    },
-    {
-      question: "What if I need help with my campaign?",
-      answer:
-        "Our dedicated support team and campaign managers are available to assist you at every step of your influencer marketing journey.",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#f9fafb] flex flex-col font-sans">
       <LandingNavbar />
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6 bg-gradient-to-br from-[#eff6ff] via-white to-[#f0fdf4]">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row gap-12 items-center">
-            <div className="w-full lg:w-1/2">
-              <div className="inline-flex items-center gap-2 bg-[#dbeafe] text-[#3b82f6] px-4 py-2 rounded-full text-sm font-medium mb-6">
-                <Shield className="w-4 h-4" />
-                Contact Us
-              </div>
-              <h1 className="text-5xl lg:text-6xl font-bold text-[#111827] mb-6">
-                Let's Start a <br />
-                <span className="text-[#3b82f6]">Conversation</span>
-              </h1>
-              <p className="text-xl text-[#6b7280] mb-8 leading-relaxed">
-                Have questions about our platform or interested in working with
-                us? Our team is here to help you navigate the world of
-                influencer marketing.
-              </p>
-
-              <div className="space-y-6">
-                {contactMethods.map((method, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start gap-4 p-4 rounded-xl border border-[#e5e7eb] bg-white shadow-sm"
-                  >
-                    <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${method.color}`}
-                    >
-                      <method.icon className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-[#111827]">
-                        {method.title}
-                      </h3>
-                      <p className="text-sm text-[#6b7280] mb-1">
-                        {method.description}
-                      </p>
-                      <p className="text-[#3b82f6] font-semibold">
-                        {method.value}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-10">
-                <h3 className="text-sm font-bold text-[#111827] mb-4 uppercase tracking-wider">
-                  Follow Us
-                </h3>
-                <div className="flex gap-4">
-                  {[Twitter, Linkedin, Instagram, Facebook].map((Icon, i) => (
-                    <button
-                      key={i}
-                      className="w-10 h-10 rounded-lg border border-[#e5e7eb] flex items-center justify-center text-[#6b7280] hover:text-[#3b82f6] hover:border-[#3b82f6] transition-all"
-                    >
-                      <Icon className="w-5 h-5" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="w-full lg:w-1/2">
-              <div className="bg-white p-8 sm:p-10 rounded-3xl border border-[#e5e7eb] shadow-xl">
-                <h2 className="text-2xl font-bold text-[#111827] mb-8">
-                  Send us a message
-                </h2>
-                <form className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-[#374151]">
-                        First Name
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="John"
-                        className="w-full px-4 py-3 rounded-xl border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-[#374151]">
-                        Last Name
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Doe"
-                        className="w-full px-4 py-3 rounded-xl border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-[#374151]">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="john@example.com"
-                      className="w-full px-4 py-3 rounded-xl border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-[#374151]">
-                      How can we help?
-                    </label>
-                    <select className="w-full px-4 py-3 rounded-xl border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent bg-white">
-                      <option>General Inquiry</option>
-                      <option>Brand Support</option>
-                      <option>Influencer Support</option>
-                      <option>Partnership Interest</option>
-                      <option>Press & Media</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-[#374151]">
-                      Message
-                    </label>
-                    <textarea
-                      rows={4}
-                      placeholder="Tell us more about your inquiry..."
-                      className="w-full px-4 py-3 rounded-xl border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent resize-none"
-                    ></textarea>
-                  </div>
-                  <InfluButton variant="primary" size="lg" className="w-full">
-                    Send Message
-                    <Send className="w-5 h-5 ml-2" />
-                  </InfluButton>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-[#111827] mb-6">
-              Frequently Asked Questions
-            </h2>
-            <p className="text-xl text-[#6b7280]">
-              Quick answers to some of the most common questions we receive.
+      <main className="flex-grow pt-32 pb-24 px-6 max-w-[1400px] w-full mx-auto flex flex-col lg:flex-row gap-12 lg:gap-24 relative">
+        {/* Left Sidebar Info */}
+        <aside className="w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-32 h-fit">
+          <header className="mb-12">
+            <h1 className="text-5xl font-black tracking-tight leading-[1.1] mb-6">
+              <span className="text-[#0f172a] block">Let's Start a</span>
+              <span className="text-blue-600 block">Conversation.</span>
+            </h1>
+            <p className="text-gray-500 text-lg leading-relaxed">
+              Have questions about our platform or interested in working with us? We're here to help.
             </p>
-          </div>
+          </header>
 
           <div className="space-y-6">
-            {faqs.map((faq, index) => (
+            {contactMethods.map((method, index) => (
               <div
                 key={index}
-                className="p-6 rounded-2xl border border-[#e5e7eb] hover:border-[#3b82f6] transition-all group"
+                className="flex items-start gap-4 p-5 rounded-2xl bg-white border border-gray-100 shadow-sm"
               >
-                <button className="w-full flex items-center justify-between text-left">
-                  <h3 className="text-lg font-bold text-[#111827] group-hover:text-[#3b82f6] transition-colors">
-                    {faq.question}
-                  </h3>
-                  <MessageSquare className="w-5 h-5 text-[#6b7280] group-hover:text-[#3b82f6]" />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-blue-50 text-blue-600">
+                  <method.icon className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-[#0f172a] mb-1">{method.title}</h3>
+                  <p className="text-sm text-gray-500 mb-2">{method.description}</p>
+                  <p className="text-sm font-semibold text-blue-600">{method.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-12 hidden lg:block">
+            <h3 className="text-xs font-bold text-gray-400 tracking-wider uppercase mb-4">Follow Us</h3>
+            <div className="flex gap-3">
+              {[Twitter, Linkedin, Instagram, Facebook].map((Icon, i) => (
+                <button
+                  key={i}
+                  onClick={(e) => e.preventDefault()}
+                  className="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-600 hover:bg-blue-50 transition-all bg-white"
+                >
+                  <Icon className="w-5 h-5" />
                 </button>
-                <p className="mt-4 text-[#6b7280] leading-relaxed">
-                  {faq.answer}
-                </p>
+              ))}
+            </div>
+          </div>
+        </aside>
+
+        {/* Right Content - Form */}
+        <div className="flex-1 max-w-3xl">
+          <div className="bg-white rounded-[2rem] p-8 md:p-12 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                <MessageSquare className="w-6 h-6" />
               </div>
-            ))}
-          </div>
+              <h2 className="text-2xl font-black text-[#0f172a]">Send us a message</h2>
+            </div>
 
-          <div className="text-center mt-12">
-            <p className="text-[#6b7280] mb-4">Still have questions?</p>
-            <InfluButton
-              variant="outline"
-              onClick={() => navigate("/help-center")}
-            >
-              Visit our Help Center
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </InfluButton>
-          </div>
-        </div>
-      </section>
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700">First Name</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    placeholder="John"
+                    className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-gray-50/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700">Last Name</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    placeholder="Doe"
+                    className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-gray-50/50"
+                  />
+                </div>
+              </div>
 
-      {/* Map or Office Section */}
-      <section className="py-20 bg-[#f9fafb] px-6">
-        <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-[#111827] mb-12">
-            Our Global Offices
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-            {[
-              {
-                city: "San Francisco",
-                address: "123 Innovation Way",
-                state: "CA 94103, USA",
-              },
-              {
-                city: "London",
-                address: "45 Tech Plaza",
-                state: "EC2A 4NE, UK",
-              },
-              {
-                city: "Tokyo",
-                address: "7-1 Digital Street",
-                state: "Minato-ku, Japan",
-              },
-            ].map((office, idx) => (
-              <div
-                key={idx}
-                className="bg-white p-6 rounded-2xl border border-[#e5e7eb]"
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">Email Address</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="john@example.com"
+                  className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-gray-50/50"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">How can we help?</label>
+                <select 
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-gray-50/50 appearance-none"
+                >
+                  <option value="General Inquiry">General Inquiry</option>
+                  <option value="Brand Support">Brand Support</option>
+                  <option value="Influencer Support">Influencer Support</option>
+                  <option value="Partnership Interest">Partnership Interest</option>
+                  <option value="Press & Media">Press & Media</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">Message</label>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  rows={5}
+                  placeholder="Tell us more about your inquiry..."
+                  className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-gray-50/50 resize-none"
+                ></textarea>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full bg-blue-600 text-white font-bold px-8 py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                <h3 className="text-xl font-bold text-[#111827] mb-3">
-                  {office.city}
-                </h3>
-                <p className="text-[#6b7280]">{office.address}</p>
-                <p className="text-[#6b7280]">{office.state}</p>
-              </div>
-            ))}
+                {isSubmitting ? "Sending..." : "Send Message"}
+                {!isSubmitting && <Send className="w-5 h-5" />}
+              </button>
+            </form>
           </div>
         </div>
-      </section>
+      </main>
 
       <LandingFooter />
     </div>
