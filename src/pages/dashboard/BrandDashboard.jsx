@@ -5,7 +5,7 @@ import {
   CheckCircle2, UserPlus, Star, ChevronDown, 
   MoreVertical, ArrowUpRight, TrendingUp, Bell, RefreshCw,
   Megaphone, FileText, Send, XCircle, Handshake, DollarSign,
-  CreditCard, UserCheck, PenTool, Package, BadgeCheck
+  CreditCard, UserCheck, PenTool, Package, BadgeCheck, Calendar, Check
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { getOptimizedImage } from '../../utils/imageOptimization';
@@ -13,7 +13,121 @@ import { fetchNotifications } from '../../redux/slices/notificationSlice';
 
 import StatCard from '../../components/dashboard/StatCard';
 import ChartCard from '../../components/dashboard/ChartCard';
-import { AreaChart, StackedBarChart, SpendingLineChart, StatsDoughnutChart, StatsList, HeatMap, MultiLineChart, AreaFrequencyChart, MixedROIChart, SocialMediaAreaChart } from '../../components/dashboard/Charts';
+import { AreaChart, StackedBarChart, SpendingLineChart, SpendingComboChart, StatsDoughnutChart, StatsList, CollabRadarChart, HeatMap, MultiLineChart, AreaFrequencyChart, MixedROIChart, SocialMediaAreaChart } from '../../components/dashboard/Charts';
+
+// ─── Interactive Date Range Picker Component ─────────────────────────────────
+function DateRangePicker() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedLabel, setSelectedLabel] = useState('Jul 26 - Aug 1');
+  const [startDate, setStartDate] = useState('2026-07-26');
+  const [endDate, setEndDate] = useState('2026-08-01');
+  const pickerRef = React.useRef(null);
+
+  const presets = [
+    { label: 'Last 7 Days', value: 'Jul 26 - Aug 1', start: '2026-07-26', end: '2026-08-01' },
+    { label: 'Last 30 Days', value: 'Jul 3 - Aug 1', start: '2026-07-03', end: '2026-08-01' },
+    { label: 'Last 90 Days', value: 'May 3 - Aug 1', start: '2026-05-03', end: '2026-08-01' },
+    { label: 'This Year', value: 'Jan 1 - Aug 1', start: '2026-01-01', end: '2026-08-01' },
+  ];
+
+  // Close when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (pickerRef.current && !pickerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelectPreset = (preset) => {
+    setSelectedLabel(preset.value);
+    setStartDate(preset.start);
+    setEndDate(preset.end);
+    setIsOpen(false);
+  };
+
+  const handleApplyCustom = () => {
+    if (startDate && endDate) {
+      const s = new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const e = new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      setSelectedLabel(`${s} - ${e}`);
+    }
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative" ref={pickerRef}>
+      {/* Trigger Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-3.5 py-2 hover:bg-slate-50 transition-all shadow-sm cursor-pointer"
+      >
+        <Calendar className="w-3.5 h-3.5 text-[#2563eb]" />
+        <span className="text-xs font-semibold text-[#1e293b]">{selectedLabel}</span>
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Popover Menu */}
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-[#e2e8f0] p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Select Date Range</p>
+
+          {/* Quick Presets */}
+          <div className="flex flex-col gap-1 mb-4">
+            {presets.map((preset) => {
+              const isSelected = selectedLabel === preset.value;
+              return (
+                <button
+                  key={preset.label}
+                  onClick={() => handleSelectPreset(preset)}
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                    isSelected ? 'bg-blue-50 text-[#2563eb] font-semibold' : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>{preset.label}</span>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-[#2563eb]" />}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="border-t border-slate-100 pt-3">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Custom Range</p>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <div>
+                <label className="text-[10px] text-slate-400 font-semibold block mb-1">Start Date</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-[#2563eb]"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 font-semibold block mb-1">End Date</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-[#2563eb]"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleApplyCustom}
+              className="w-full bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors shadow-sm"
+            >
+              Apply Range
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Chart Toggle Button Group ────────────────────────────────────────────────
 function ChartToggle({ options, value, onChange }) {
@@ -115,8 +229,8 @@ export default function BrandDashboard() {
   const { items: notifications, loading: loadingNotifications } = useSelector((state) => state.notifications);
 
   // Chart view toggles
-  const [spendingView, setSpendingView] = useState('line');   // 'bar' | 'line'
-  const [collabView,   setCollabView]   = useState('donut');  // 'donut' | 'list'
+  const [spendingView, setSpendingView] = useState('combo');   // 'bar' | 'line' | 'combo'
+  const [collabView,   setCollabView]   = useState('donut');  // 'donut' | 'list' | 'radar'
   const [flowView,     setFlowView]     = useState('multi');  // 'multi' | 'area'
   const [roiView,      setRoiView]      = useState('roi');    // 'roi' | 'channel' | 'trend'
   const [mapView,      setMapView]      = useState('density'); // 'density' | 'category'
@@ -129,25 +243,22 @@ export default function BrandDashboard() {
   const recentActivity = notifications?.slice(0, 3) || [];
 
   return (
-    <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
+    <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-8 flex flex-col gap-5">
       
-      {/* Page Actions (Top Bar) */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-[#e2e8f0]">
+      {/* Page Actions (Top Header - Unboxed & Sleek) */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-[#1e293b]">Dashboard Overview</h2>
+          <h1 className="text-2xl font-bold text-[#1e293b] tracking-tight">Dashboard Overview</h1>
           <p className="text-xs font-medium text-slate-500 mt-0.5">Track your campaigns, spending, and influencer performance.</p>
         </div>
         
         <div className="flex items-center gap-3 self-end sm:self-auto">
-          {/* Date Picker (Mock) */}
-          <div className="flex items-center bg-slate-50 border border-[#e2e8f0] rounded-xl px-3 py-2 cursor-pointer hover:bg-slate-100 transition-colors">
-            <span className="text-sm font-semibold text-[#1e293b] mr-2">Jul 26 - Aug 1</span>
-            <ChevronDown className="w-4 h-4 text-slate-400" />
-          </div>
+          {/* Interactive Date Range Picker */}
+          <DateRangePicker />
 
           {/* Export Button */}
-          <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+          <button className="flex items-center gap-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-xl px-4 py-2 font-semibold text-xs transition-colors shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
             Export
           </button>
         </div>
@@ -282,11 +393,15 @@ export default function BrandDashboard() {
         <div className="lg:col-span-8">
           <ChartCard 
             title="Brand Spending" 
-            subtitle="Weekly breakdown across channels"
+            subtitle="Weekly breakdown across channels & ROI"
             headerAction={
               <div className="flex items-center gap-3">
                 <ChartToggle
-                  options={[{ label: 'Bar', value: 'bar' }, { label: 'Line', value: 'line' }]}
+                  options={[
+                    { label: 'Bar', value: 'bar' },
+                    { label: 'Line', value: 'line' },
+                    { label: 'Combo', value: 'combo' },
+                  ]}
                   value={spendingView}
                   onChange={setSpendingView}
                 />
@@ -298,19 +413,24 @@ export default function BrandDashboard() {
             className="h-full"
           >
             <div className="w-full h-[300px]">
-              {spendingView === 'bar' ? <StackedBarChart /> : <SpendingLineChart />}
+              {spendingView === 'bar' && <StackedBarChart />}
+              {spendingView === 'line' && <SpendingLineChart />}
+              {spendingView === 'combo' && <SpendingComboChart />}
             </div>
           </ChartCard>
         </div>
 
-        {/* Collab Stats Doughnut Chart */}
         <div className="lg:col-span-4">
           <ChartCard 
             title="Collaboration Stats" 
             subtitle="Current status of all tasks"
             headerAction={
               <ChartToggle
-                options={[{ label: 'Donut', value: 'donut' }, { label: 'List', value: 'list' }]}
+                options={[
+                  { label: 'Donut',  value: 'donut' },
+                  { label: 'List',   value: 'list'  },
+                  { label: 'Radial', value: 'radar' },
+                ]}
                 value={collabView}
                 onChange={setCollabView}
               />
@@ -318,7 +438,9 @@ export default function BrandDashboard() {
             className="h-full"
           >
             <div className="w-full h-[250px] flex items-center justify-center">
-              {collabView === 'donut' ? <StatsDoughnutChart /> : <StatsList />}
+              {collabView === 'donut' && <StatsDoughnutChart />}
+              {collabView === 'list'  && <StatsList />}
+              {collabView === 'radar' && <CollabRadarChart />}
             </div>
           </ChartCard>
         </div>

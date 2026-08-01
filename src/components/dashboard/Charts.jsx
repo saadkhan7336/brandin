@@ -7,12 +7,14 @@ import {
   LineElement, 
   BarElement,
   ArcElement,
+  RadialLinearScale,
+  PolarAreaController,
   Title, 
   Tooltip, 
   Legend,
   Filler
 } from 'chart.js';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import { Line, Bar, Doughnut, Radar, PolarArea } from 'react-chartjs-2';
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 
 ChartJS.register(
@@ -22,6 +24,7 @@ ChartJS.register(
   LineElement,
   BarElement,
   ArcElement,
+  RadialLinearScale,
   Title,
   Tooltip,
   Legend,
@@ -469,6 +472,107 @@ export function SpendingLineChart({ labels, dataset1, dataset2 }) {
   return <Line data={chartData} options={options} />;
 }
 
+// --- 2c. Combo Bar+Line version of Brand Spending (toggle) ---
+export function SpendingComboChart() {
+  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  const chartData = {
+    labels,
+    datasets: [
+      {
+        type: 'bar',
+        label: 'Instagram Spend',
+        data: [4000, 3000, 2000, 2780, 1890, 2390, 3490],
+        backgroundColor: 'rgba(37, 99, 235, 0.75)',   // primary blue
+        borderRadius: { topLeft: 4, topRight: 4 },
+        barPercentage: 0.55,
+        categoryPercentage: 0.8,
+        yAxisID: 'y',
+        order: 2,
+      },
+      {
+        type: 'bar',
+        label: 'Facebook Spend',
+        data: [2400, 1398, 4800, 3908, 3200, 3800, 2900],
+        backgroundColor: 'rgba(139, 92, 246, 0.6)',   // accent purple
+        borderRadius: { topLeft: 4, topRight: 4 },
+        barPercentage: 0.55,
+        categoryPercentage: 0.8,
+        yAxisID: 'y',
+        order: 2,
+      },
+      {
+        type: 'line',
+        label: 'Total ROI %',
+        data: [62, 48, 75, 71, 55, 80, 78],
+        borderColor: '#f97316',                       // orange accent
+        backgroundColor: 'rgba(249, 115, 22, 0.08)',
+        borderWidth: 2.5,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: '#f97316',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointHoverRadius: 6,
+        fill: false,
+        yAxisID: 'y1',
+        order: 1,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          usePointStyle: true,
+          boxWidth: 10,
+          font: { size: 11 },
+          color: '#64748b',
+          padding: 16,
+        }
+      },
+      tooltip: sharedTooltip,
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { color: '#64748b', font: { size: 11 } },
+      },
+      y: {
+        type: 'linear',
+        position: 'left',
+        grid: { color: '#f1f5f9' },
+        border: { display: false },
+        ticks: {
+          color: '#64748b',
+          font: { size: 11 },
+          callback: (v) => v.toLocaleString(),
+        },
+      },
+      y1: {
+        type: 'linear',
+        position: 'right',
+        grid: { drawOnChartArea: false },
+        border: { display: false },
+        ticks: {
+          color: '#f97316',
+          font: { size: 11 },
+          callback: (v) => v + '%',
+        },
+        min: 0,
+        max: 100,
+      },
+    },
+  };
+
+  return <Bar data={chartData} options={options} />;
+}
+
 // --- 3. Doughnut Chart for Stats ---
 export function StatsDoughnutChart({ data, labels, colors }) {
   const chartData = {
@@ -540,6 +644,64 @@ export function StatsList({ data, labels, colors }) {
     </div>
   );
 }
+
+// --- 3c. Radial Gradient / Polar Area Chart for Collab Stats (toggle option) ---
+export function CollabRadialGradientChart() {
+  const chartData = {
+    labels: ['Completed', 'Approved', 'Pending', 'In Progress', 'Revision'],
+    datasets: [
+      {
+        label: 'Tasks',
+        data: [300, 250, 100, 50, 35],
+        backgroundColor: [
+          'rgba(37, 99, 235, 0.75)',   // Primary Blue
+          'rgba(139, 92, 246, 0.75)',  // Accent Purple
+          'rgba(245, 158, 11, 0.75)',  // Amber
+          'rgba(16, 185, 129, 0.75)',  // Emerald
+          'rgba(239, 68, 68, 0.75)',   // Red
+        ],
+        borderColor: [
+          '#2563eb',
+          '#8b5cf6',
+          '#f59e0b',
+          '#10b981',
+          '#ef4444',
+        ],
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: {
+          usePointStyle: true,
+          boxWidth: 8,
+          font: { size: 11, family: 'system-ui' },
+          color: '#475569',
+          padding: 14,
+        }
+      },
+      tooltip: sharedTooltip,
+    },
+    scales: {
+      r: {
+        grid: { color: '#f1f5f9' },
+        angleLines: { color: '#e2e8f0' },
+        ticks: { display: false },
+      }
+    }
+  };
+
+  return <PolarArea data={chartData} options={options} />;
+}
+
+// Alias for backwards compatibility
+export const CollabRadarChart = CollabRadialGradientChart;
 
 // --- 4. Multi-Line Frequency Chart (new) ---
 // Matches the "3 colored lines" screenshot
@@ -761,18 +923,28 @@ export function HeatMap({ markers, viewMode = 'density' }) {
   const [tooltip, setTooltip] = React.useState(null); // { x, y, data }
   const mapMarkers = markers || defaultMarkerData;
 
-  // Bubble size based on count
+  // Bubble size: much larger for visual impact
   const maxCount = Math.max(...mapMarkers.map(m => m.count));
-  const getSize = (count) => 6 + (count / maxCount) * 18;
+  const getSize = (count) => 14 + (count / maxCount) * 28; // range: 14px - 42px
 
   const getColor = (marker) => {
     if (viewMode === 'category') return categoryColors[marker.category] || '#6366f1';
-    // Density: indigo with intensity
+    // Density: red (high) → orange (mid) → yellow (low)
     const intensity = marker.count / maxCount;
-    if (intensity > 0.8) return '#4f46e5';
-    if (intensity > 0.5) return '#6366f1';
-    if (intensity > 0.3) return '#818cf8';
-    return '#a5b4fc';
+    if (intensity > 0.8) return '#dc2626'; // Red — very high
+    if (intensity > 0.6) return '#ea580c'; // Red-Orange — high
+    if (intensity > 0.4) return '#f97316'; // Orange — mid
+    if (intensity > 0.2) return '#fb923c'; // Light Orange — low-mid
+    return '#fbbf24';                       // Yellow-Orange — low
+  };
+
+  const getStrokeColor = (marker) => {
+    if (viewMode === 'category') return 'white';
+    const intensity = marker.count / maxCount;
+    if (intensity > 0.8) return '#991b1b';
+    if (intensity > 0.6) return '#9a3412';
+    if (intensity > 0.4) return '#c2410c';
+    return '#d97706';
   };
 
   return (
@@ -808,43 +980,42 @@ export function HeatMap({ markers, viewMode = 'density' }) {
             <Marker
               key={marker.name}
               coordinates={marker.coordinates}
-              onMouseEnter={(e) => {
-                setTooltip({ marker });
-              }}
+              onMouseEnter={() => setTooltip({ marker })}
               onMouseLeave={() => setTooltip(null)}
             >
-              {/* Outer pulse ring */}
-              <circle r={size + 5} fill={color} opacity={0.15} />
-              {/* Main bubble */}
+              {/* Layer 1: Outermost glow — very transparent, wide spread */}
+              <circle r={size * 2.2} fill={color} opacity={0.07} />
+              {/* Layer 2: Mid halo — moderate transparency */}
+              <circle r={size * 1.5} fill={color} opacity={0.18} />
+              {/* Layer 3: Inner ring — semi-transparent */}
+              <circle r={size * 1.1} fill={color} opacity={0.35} />
+              {/* Layer 4: Core bubble — solid but with slight transparency */}
               <circle
                 r={size}
                 fill={color}
-                opacity={0.85}
-                stroke="white"
-                strokeWidth={1.5}
-                style={{ cursor: 'pointer', transition: 'r 0.2s' }}
+                opacity={0.72}
+                stroke="rgba(255,255,255,0.6)"
+                strokeWidth={1}
+                style={{ cursor: 'pointer', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' }}
               />
-              {/* Count label inside bubble */}
-              {size > 14 && (
-                <text
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  style={{ fontSize: '8px', fontWeight: 'bold', fill: 'white', pointerEvents: 'none' }}
-                >
-                  {marker.count}
-                </text>
-              )}
-              {/* Region name label */}
+              {/* Count label inside core */}
               <text
                 textAnchor="middle"
-                y={marker.markerOffset}
+                dominantBaseline="central"
+                style={{ fontSize: size > 24 ? '10px' : '8px', fontWeight: '800', fill: 'white', pointerEvents: 'none', letterSpacing: '0.02em' }}
+              >
+                {marker.count}
+              </text>
+              {/* Region name label above bubble */}
+              <text
+                textAnchor="middle"
+                y={-(size * 2.2 + 5)}
                 style={{
                   fontFamily: "system-ui",
-                  fill: "#1e293b",
-                  fontSize: "9px",
+                  fill: "#334155",
+                  fontSize: "8.5px",
                   fontWeight: "700",
                   pointerEvents: 'none',
-                  textShadow: '0 0 3px white'
                 }}
               >
                 {marker.name}
@@ -913,15 +1084,15 @@ export function HeatMap({ markers, viewMode = 'density' }) {
           <p className="text-[9px] font-semibold text-slate-400 mb-1">Bubble size = influencer count</p>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-[#a5b4fc]" />
+              <div className="w-2 h-2 rounded-full bg-[#fbbf24]" />
               <span className="text-[9px] text-slate-500">Low</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-[#6366f1]" />
+              <div className="w-3 h-3 rounded-full bg-[#f97316]" />
               <span className="text-[9px] text-slate-500">Mid</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-4 h-4 rounded-full bg-[#4f46e5]" />
+              <div className="w-4 h-4 rounded-full bg-[#dc2626]" />
               <span className="text-[9px] text-slate-500">High</span>
             </div>
           </div>
