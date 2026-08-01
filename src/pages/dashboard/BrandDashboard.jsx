@@ -1,333 +1,461 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { useSocket } from '../../context/SocketContext';
-import {
-  Eye, Heart, Users, Share2, 
-  Download, Handshake, Send,
-  TrendingUp,
-  Calendar
+import { 
+  CheckCircle2, UserPlus, Star, ChevronDown, 
+  MoreVertical, ArrowUpRight, TrendingUp, Bell, RefreshCw,
+  Megaphone, FileText, Send, XCircle, Handshake, DollarSign,
+  CreditCard, UserCheck, PenTool, Package, BadgeCheck
 } from 'lucide-react';
-import api from '../../services/api';
+import { formatDistanceToNow } from 'date-fns';
 import { getOptimizedImage } from '../../utils/imageOptimization';
+import { fetchNotifications } from '../../redux/slices/notificationSlice';
 
-function BrandDashboard() {
+import StatCard from '../../components/dashboard/StatCard';
+import ChartCard from '../../components/dashboard/ChartCard';
+import { AreaChart, StackedBarChart, SpendingLineChart, StatsDoughnutChart, StatsList, HeatMap, MultiLineChart, AreaFrequencyChart, MixedROIChart, SocialMediaAreaChart } from '../../components/dashboard/Charts';
+
+// ─── Chart Toggle Button Group ────────────────────────────────────────────────
+function ChartToggle({ options, value, onChange }) {
+  return (
+    <div className="flex items-center gap-0.5 bg-slate-100 rounded-lg p-1">
+      {options.map(opt => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all duration-200 ${
+            value === opt.value
+              ? 'bg-white text-[#1e293b] shadow-sm'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// --- MOCK DATA FOR STATIC UI ---
+const mockMessages = [
+  { id: 1, name: 'Sarah K.', desc: "I've just uploaded the draft content...", time: '2m ago', initial: 'S', color: 'bg-orange-100 text-orange-600', status: 'online' },
+  { id: 2, name: 'Marcus R.', desc: "The contract looks great! Let's proceed.", time: '1h ago', initial: 'M', color: 'bg-blue-100 text-blue-600', status: 'online' },
+  { id: 3, name: 'Elena V.', desc: "Can we discuss the eco-home brief?", time: '4h ago', initial: 'E', color: 'bg-emerald-100 text-emerald-600', status: 'online' },
+  { id: 4, name: 'Jordan Lee', desc: "Thanks for the update!", time: 'Yesterday', initial: 'J', color: 'bg-gray-100 text-gray-600', status: 'offline' },
+];
+
+const mockCampaigns = [
+  { id: 1, name: 'Summer Glow 2024', status: 'Live', progress: 75, color: 'bg-orange-100 text-orange-600' },
+  { id: 2, name: 'Eco-home Series', status: 'Live', progress: 31, color: 'bg-emerald-100 text-emerald-600' },
+];
+
+// Helper: maps real backend notification `type` to an icon + color
+const getActivityStyle = (type = '', title = '') => {
+  const t = type?.toLowerCase() || '';
+  const lowerTitle = title?.toLowerCase() || '';
+
+  // --- Campaigns ---
+  if (t === 'campaign_created')
+    return { icon: <Megaphone className="w-4 h-4 text-blue-500" />, bg: 'bg-blue-50' };
+  if (t === 'campaign_updated')
+    return { icon: <PenTool className="w-4 h-4 text-amber-500" />, bg: 'bg-amber-50' };
+  if (t === 'campaign_deleted' || t === 'campaign_cancelled')
+    return { icon: <XCircle className="w-4 h-4 text-red-500" />, bg: 'bg-red-50' };
+
+  // --- Collaboration Requests ---
+  if (t === 'collaboration_request_sent' || t === 'collab_request_sent')
+    return { icon: <Send className="w-4 h-4 text-indigo-500" />, bg: 'bg-indigo-50' };
+  if (t === 'collaboration_accepted' || t === 'collab_request_accepted')
+    return { icon: <UserCheck className="w-4 h-4 text-emerald-500" />, bg: 'bg-emerald-50' };
+  if (t === 'collaboration_started')
+    return { icon: <Handshake className="w-4 h-4 text-blue-600" />, bg: 'bg-blue-50' };
+  if (t === 'collaboration_completed')
+    return { icon: <BadgeCheck className="w-4 h-4 text-emerald-600" />, bg: 'bg-emerald-50' };
+  if (t.includes('rejected') || t.includes('cancelled'))
+    return { icon: <XCircle className="w-4 h-4 text-red-500" />, bg: 'bg-red-50' };
+
+  // --- Deliverables ---
+  if (t === 'deliverable_submitted')
+    return { icon: <Package className="w-4 h-4 text-violet-500" />, bg: 'bg-violet-50' };
+  if (t === 'deliverable_approved' || t === 'deliverable_approved_paid')
+    return { icon: <CheckCircle2 className="w-4 h-4 text-emerald-500" />, bg: 'bg-emerald-50' };
+  if (t === 'deliverable_revision_requested' || t === 'deliverable_updated')
+    return { icon: <FileText className="w-4 h-4 text-orange-500" />, bg: 'bg-orange-50' };
+
+  // --- Payments ---
+  if (t === 'payout_released' || t === 'escrow_funded' || t === 'escrow_funding')
+    return { icon: <DollarSign className="w-4 h-4 text-emerald-600" />, bg: 'bg-emerald-50' };
+  if (t === 'waterfall_refund')
+    return { icon: <CreditCard className="w-4 h-4 text-red-500" />, bg: 'bg-red-50' };
+
+  // --- Agreement ---
+  if (t === 'agreement_signed')
+    return { icon: <Handshake className="w-4 h-4 text-teal-500" />, bg: 'bg-teal-50' };
+
+  // --- Profile / System ---
+  if (t === 'profile_updated' || lowerTitle.includes('profile'))
+    return { icon: <UserPlus className="w-4 h-4 text-blue-500" />, bg: 'bg-blue-50' };
+
+  // --- Milestones (title-based fallback) ---
+  if (lowerTitle.includes('milestone') || lowerTitle.includes('achieved'))
+    return { icon: <Star className="w-4 h-4 text-purple-500" />, bg: 'bg-purple-50' };
+
+  // --- Task assignment ---
+  if (t.includes('task') || lowerTitle.includes('task'))
+    return { icon: <CheckCircle2 className="w-4 h-4 text-sky-500" />, bg: 'bg-sky-50' };
+
+  // --- Ultimate fallback ---
+  return { icon: <Bell className="w-4 h-4 text-slate-500" />, bg: 'bg-slate-50' };
+};
+
+export default function BrandDashboard() {
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth);
-
-  // Data State
-  const [analytics, setAnalytics] = useState({
-    totalReach: "0",
-    avgEngagementRate: "0%",
-    activeCampaigns: 0,
-    engagementOverview: {
-      likes: 0,
-      comments: 0,
-      shares: 0,
-      impressions: 0
-    },
-    platformStats: {
-      instagram: { reach: 0, engagement: 0, posts: 0, followers: 0 },
-      youtube: { reach: 0, engagement: 0, posts: 0, followers: 0 },
-      tiktok: { reach: 0, engagement: 0, posts: 0, followers: 0 }
-    },
-    campaignPerformance: [],
-    topPerformers: [],
-    collaborationCount: 0,
-    requestStats: {
-      sent: 0,
-      received: 0,
-      accepted: 0,
-      pending: 0,
-      total: 0
-    },
-    totalSpending: 0
-  });
-
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchAnalytics = async () => {
-    try {
-      setIsLoading(true);
-      const response = await api.get('/brands/analytics');
-      if (response.data?.success) {
-        const data = response.data.data;
-        
-        // Format values for display (e.g. 2.4M)
-        const formatNumber = (num) => {
-          if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-          if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-          return num.toString();
-        };
-
-        setAnalytics({
-          ...data,
-          totalSpending: data.totalSpending || 0,
-          avgEngagementRate: data.avgEngagementRate + "%"
-        });
-      }
-    } catch (err) {
-      console.error("Analytics fetch error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAnalytics();
-  }, []);
-
-  const socket = useSocket();
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const { items: notifications, loading: loadingNotifications } = useSelector((state) => state.notifications);
+
+  // Chart view toggles
+  const [spendingView, setSpendingView] = useState('line');   // 'bar' | 'line'
+  const [collabView,   setCollabView]   = useState('donut');  // 'donut' | 'list'
+  const [flowView,     setFlowView]     = useState('multi');  // 'multi' | 'area'
+  const [roiView,      setRoiView]      = useState('roi');    // 'roi' | 'channel' | 'trend'
+  const [mapView,      setMapView]      = useState('density'); // 'density' | 'category'
+  const [socialView,   setSocialView]   = useState('engagement'); // 'engagement' | 'reach' | 'content'
 
   useEffect(() => {
-    if (!socket) return;
+    dispatch(fetchNotifications());
+  }, [dispatch]);
 
-    const handleRefresh = (data) => {
-      // Refresh analytics for any relevant activity
-      if (['collaboration', 'application', 'system', 'escrow_funded', 'payout_released'].includes(data.category || data.type)) {
-        fetchAnalytics();
-      }
-    };
-
-    socket.on('activity_created', handleRefresh);
-    socket.on('notification_received', handleRefresh);
-
-    return () => {
-      socket.off('activity_created', handleRefresh);
-      socket.off('notification_received', handleRefresh);
-    };
-  }, [socket]);
-
-  // --- CSV Export Logic ---
-  const handleExport = () => {
-    try {
-      if (!analytics) return;
-
-      const headers = ["Metric", "Value"];
-      const rows = [
-        ["Total Reach", analytics.totalReach],
-        ["Engagement Rate", analytics.avgEngagementRate],
-        ["Active Campaigns", analytics.activeCampaigns],
-        ["Collaborations", analytics.collaborationCount],
-        ["Total Requests", analytics.requestStats.total],
-        ["Sent Requests", analytics.requestStats.sent],
-        ["Received Requests", analytics.requestStats.received],
-        ["Accepted Requests", analytics.requestStats.accepted],
-        ["Pending Requests", analytics.requestStats.pending],
-        ["", ""],
-        ["Engagement Breakdown", ""],
-        ["Likes", analytics.engagementOverview.likes],
-        ["Comments", analytics.engagementOverview.comments],
-        ["Shares", analytics.engagementOverview.shares],
-        ["Impressions", analytics.engagementOverview.impressions]
-      ];
-
-      const csvContent = [headers, ...rows]
-        .map(row => row.join(","))
-        .join("\n");
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `dashboard_report_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (err) {
-      console.error("Export error:", err);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center bg-gray-50/30">
-        <div className="relative">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <div className="absolute inset-0 blur-lg bg-blue-600/10 animate-pulse rounded-full" />
-        </div>
-      </div>
-    );
-  }
+  const recentActivity = notifications?.slice(0, 3) || [];
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-[1800px] mx-auto pb-10 px-4 md:px-8">
+    <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
       
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-8 border-b border-gray-100 pb-8">
+      {/* Page Actions (Top Bar) */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-[#e2e8f0]">
         <div>
-          <p className="text-blue-600 font-bold text-[10px] sm:text-xs uppercase tracking-wider mb-1">Welcome back, {user?.name || 'Partner'}!</p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Dashboard Analytics</h1>
-          <p className="text-gray-500 font-medium text-xs sm:text-sm mt-1">Monitor your campaign performance and platform growth.</p>
+          <h2 className="text-xl font-bold text-[#1e293b]">Dashboard Overview</h2>
+          <p className="text-xs font-medium text-slate-500 mt-0.5">Track your campaigns, spending, and influencer performance.</p>
         </div>
         
-        <div className="flex items-center gap-3">
-          <div className="relative group">
-            <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <select className="bg-white border border-gray-200 rounded-xl pl-10 pr-6 py-2.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all cursor-pointer">
-              <option>Last 30 days</option>
-              <option>Last 90 days</option>
-              <option>Last Year</option>
-            </select>
+        <div className="flex items-center gap-3 self-end sm:self-auto">
+          {/* Date Picker (Mock) */}
+          <div className="flex items-center bg-slate-50 border border-[#e2e8f0] rounded-xl px-3 py-2 cursor-pointer hover:bg-slate-100 transition-colors">
+            <span className="text-sm font-semibold text-[#1e293b] mr-2">Jul 26 - Aug 1</span>
+            <ChevronDown className="w-4 h-4 text-slate-400" />
           </div>
-          
-          <button 
-            onClick={handleExport}
-            className="flex items-center gap-2 bg-[#1A1A1A] text-white rounded-xl px-5 py-2.5 text-xs font-bold hover:bg-black transition-all shadow-sm"
-          >
-            <Download size={15} />
-            Export CSV
+
+          {/* Export Button */}
+          <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 font-semibold text-sm transition-colors shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            Export
           </button>
         </div>
       </div>
 
-      {/* Top Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-5">
-        {[
-          { label: "Total Spending", value: `$${analytics.totalSpending?.toLocaleString()}`, sub: "All time", icon: <Eye size={22} />, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "Engagement Rate", value: analytics.avgEngagementRate, sub: "+2%", icon: <Heart size={22} />, color: "text-red-600", bg: "bg-red-50" },
-          { label: "Active Campaigns", value: analytics.activeCampaigns, sub: "Live", icon: <Users size={22} />, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { label: "Collaborations", value: analytics.collaborationCount, sub: "Active", icon: <Handshake size={22} />, color: "text-purple-600", bg: "bg-purple-50" },
-          { label: "Requests", value: analytics.requestStats.total, sub: `${analytics.requestStats.pending} Pending`, icon: <Send size={22} />, color: "text-orange-600", bg: "bg-orange-50" }
-        ].map((stat, idx) => (
-          <div key={idx} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
-            <div className="flex justify-between items-start mb-4">
-              <div className={`p-3.5 ${stat.bg} ${stat.color} rounded-xl`}>
-                {stat.icon}
+      {/* Top Row: Active Campaigns List + Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Social Media Analytics Chart (Replaces Active Campaigns) */}
+        <div className="lg:col-span-8">
+          <ChartCard
+            title="Social Media Performance"
+            subtitle="Track reach, engagement, and tasks from influencer collaborations"
+            headerAction={
+              <div className="flex items-center gap-3">
+                {/* Chart-specific Date Picker */}
+                <div className="hidden sm:flex items-center bg-slate-50 border border-[#e2e8f0] rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-slate-100 transition-colors">
+                  <span className="text-xs font-semibold text-[#475569] mr-2">Last 30 Days</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </div>
+                
+                <ChartToggle
+                  options={[
+                    { label: 'Engagement', value: 'engagement' },
+                    { label: 'Reach',      value: 'reach' },
+                    { label: 'By Task',    value: 'content' },
+                  ]}
+                  value={socialView}
+                  onChange={setSocialView}
+                />
               </div>
-              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">{stat.sub}</span>
+            }
+          >
+            <div className="w-full h-[280px]">
+              <SocialMediaAreaChart mode={socialView} />
             </div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{stat.label}</p>
-            <h2 className="text-2xl font-bold text-gray-900">{stat.value}</h2>
-          </div>
-        ))}
-      </div>
+          </ChartCard>
+        </div>
 
-      {/* Engagement Overview & Top Performers */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Campaign Payments Overview */}
-        <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-lg font-bold text-gray-900">Campaign Payments</h3>
-            <TrendingUp size={18} className="text-gray-400" />
+        {/* Recent Activity */}
+        <div className="lg:col-span-4 bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-[#e2e8f0] flex flex-col">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-sm font-bold text-[#1e293b] uppercase tracking-wider">Recent Activity</h3>
+            <button 
+               onClick={() => dispatch(fetchNotifications())}
+               disabled={loadingNotifications}
+               className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+            >
+               <RefreshCw className={`w-4 h-4 ${loadingNotifications ? 'animate-spin' : ''}`} />
+            </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8 mb-8">
-            <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
-               <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Funds in Escrow</p>
-               <h4 className="text-2xl font-black text-gray-900">${analytics.fundsInEscrow?.toLocaleString() || '0'}</h4>
-               <p className="text-[10px] text-gray-500 mt-2 font-medium">Secured for ongoing collaborations</p>
-            </div>
-            <div className="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-100">
-               <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Total Released</p>
-               <h4 className="text-2xl font-black text-gray-900">${analytics.totalReleased?.toLocaleString() || '0'}</h4>
-               <p className="text-[10px] text-gray-500 mt-2 font-medium">Successfully paid to influencers</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-             {analytics.recentTransactions?.length > 0 ? analytics.recentTransactions.map((item, idx) => (
-               <div key={idx} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-all border-b border-gray-50 last:border-0">
-                  <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
-                        <Calendar size={18} />
-                     </div>
-                     <div>
-                        <p className="text-sm font-bold text-gray-900">{item.name}</p>
-                        <p className="text-[10px] text-gray-500">Service Payment</p>
-                     </div>
+          <div className="flex flex-col gap-5 flex-1 justify-center">
+            {recentActivity.length > 0 ? (
+              recentActivity.map(activity => {
+                const style = getActivityStyle(activity.type);
+                return (
+                  <div key={activity._id || activity.id} className="flex items-start gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${style.bg}`}>
+                      {style.icon}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-[#1e293b]">{activity.title}</p>
+                      <p className="text-xs font-medium text-slate-500 mt-0.5">
+                        {activity.message} • {formatDistanceToNow(new Date(activity.createdAt || Date.now()), { addSuffix: true })}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                     <p className="text-sm font-black text-gray-900">${item.amount?.toLocaleString()}</p>
-                     <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-tighter">{item.status}</p>
+                );
+              })
+            ) : (
+              <div className="text-center text-slate-500 text-sm py-4">No recent activity</div>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Metrics Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-6">
+        <StatCard 
+          title="Total Collabs" 
+          value="1,248" 
+          change="+12.5%" 
+          changeType="positive"
+          sparklineData={[30, 40, 35, 50, 49, 60, 70, 91, 125]}
+          sparklineColor="#3b82f6"
+          sparklineBgColor="rgba(59, 130, 246, 0.1)"
+        />
+        <StatCard 
+          title="Total Spend" 
+          value="$45.2k" 
+          change="+8.2%" 
+          changeType="positive"
+          sparklineData={[10, 15, 20, 18, 25, 30, 45, 40, 50]}
+          sparklineColor="#10b981"
+          sparklineBgColor="rgba(16, 185, 129, 0.1)"
+        />
+        <StatCard 
+          title="Total Tasks" 
+          value="456" 
+          change="-2.1%" 
+          changeType="negative"
+          sparklineData={[100, 90, 85, 95, 80, 75, 70, 60, 55]}
+          sparklineColor="#f43f5e"
+          sparklineBgColor="rgba(244, 63, 94, 0.1)"
+        />
+        <StatCard 
+          title="Completion Rate" 
+          value="94.2%" 
+          change="+1.4%" 
+          changeType="positive"
+          sparklineData={[80, 85, 84, 88, 90, 92, 91, 93, 94]}
+          sparklineColor="#8b5cf6"
+          sparklineBgColor="rgba(139, 92, 246, 0.1)"
+        />
+        <StatCard 
+          title="Avg. ROI" 
+          value="3.2x" 
+          change="+0.4x" 
+          changeType="positive"
+          sparklineData={[2.1, 2.3, 2.5, 2.4, 2.8, 2.9, 3.1, 3.0, 3.2]}
+          sparklineColor="#f59e0b"
+          sparklineBgColor="rgba(245, 158, 11, 0.1)"
+        />
+      </div>
+
+      {/* Middle Row 1: Spending & Stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Brand Spending Bar Chart */}
+        <div className="lg:col-span-8">
+          <ChartCard 
+            title="Brand Spending" 
+            subtitle="Weekly breakdown across channels"
+            headerAction={
+              <div className="flex items-center gap-3">
+                <ChartToggle
+                  options={[{ label: 'Bar', value: 'bar' }, { label: 'Line', value: 'line' }]}
+                  value={spendingView}
+                  onChange={setSpendingView}
+                />
+                <button className="flex items-center gap-2 text-xs font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg transition-colors border border-slate-200">
+                  Last 7 Days <ChevronDown className="w-3 h-3" />
+                </button>
+              </div>
+            }
+            className="h-full"
+          >
+            <div className="w-full h-[300px]">
+              {spendingView === 'bar' ? <StackedBarChart /> : <SpendingLineChart />}
+            </div>
+          </ChartCard>
+        </div>
+
+        {/* Collab Stats Doughnut Chart */}
+        <div className="lg:col-span-4">
+          <ChartCard 
+            title="Collaboration Stats" 
+            subtitle="Current status of all tasks"
+            headerAction={
+              <ChartToggle
+                options={[{ label: 'Donut', value: 'donut' }, { label: 'List', value: 'list' }]}
+                value={collabView}
+                onChange={setCollabView}
+              />
+            }
+            className="h-full"
+          >
+            <div className="w-full h-[250px] flex items-center justify-center">
+              {collabView === 'donut' ? <StatsDoughnutChart /> : <StatsList />}
+            </div>
+          </ChartCard>
+        </div>
+
+      </div>
+
+      {/* Middle Row 2: Map & Flow */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Enhanced Heat Map with toggle */}
+        <div className="lg:col-span-6">
+          <ChartCard 
+            title="Influencer Map" 
+            subtitle="Geographic distribution — hover for region stats"
+            headerAction={
+              <ChartToggle
+                options={[{ label: 'Density', value: 'density' }, { label: 'Category', value: 'category' }]}
+                value={mapView}
+                onChange={setMapView}
+              />
+            }
+            className="h-full"
+          >
+            <div className="w-full h-[300px] bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden">
+              <HeatMap viewMode={mapView} />
+            </div>
+          </ChartCard>
+        </div>
+
+        {/* Campaigns Flow */}
+        <div className="lg:col-span-6">
+          <ChartCard 
+            title="Campaigns Flow" 
+            subtitle="Multi-channel performance over time"
+            headerAction={
+              <ChartToggle
+                options={[{ label: 'Multi-line', value: 'multi' }, { label: 'Area', value: 'area' }]}
+                value={flowView}
+                onChange={setFlowView}
+              />
+            }
+            className="h-full"
+          >
+            <div className="w-full h-[300px]">
+              {flowView === 'multi' ? <MultiLineChart /> : <AreaFrequencyChart />}
+            </div>
+          </ChartCard>
+        </div>
+
+      </div>
+
+      {/* Bottom Row: Messages & Campaigns Table */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Recent Messages */}
+        <div className="lg:col-span-4 bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-[#e2e8f0] flex flex-col">
+           <div className="flex items-center justify-between mb-6">
+              <h3 className="text-sm font-bold text-[#1e293b] uppercase tracking-wider">Recent Messages</h3>
+              <button className="text-xs font-bold text-blue-600 hover:underline">View All</button>
+           </div>
+
+           <div className="flex flex-col gap-5 flex-1">
+             {mockMessages.map(msg => (
+               <div key={msg.id} className="flex items-start gap-4 group cursor-pointer">
+                  <div className="relative">
+                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${msg.color}`}>
+                        {msg.initial}
+                     </div>
+                     <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${msg.status === 'online' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                     <div className="flex items-center justify-between mb-0.5">
+                        <p className="text-sm font-bold text-[#1e293b] truncate">{msg.name}</p>
+                        <span className="text-[10px] font-semibold text-slate-400 whitespace-nowrap ml-2">{msg.time}</span>
+                     </div>
+                     <p className="text-xs font-medium text-slate-500 truncate">{msg.desc}</p>
                   </div>
                </div>
-             )) : (
-               <p className="text-xs text-gray-500">No recent transactions.</p>
-             )}
-          </div>
+             ))}
+           </div>
         </div>
 
-        {/* Top Creators */}
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900 mb-6">Top Performers</h3>
-          <div className="space-y-3">
-            {analytics.topPerformers.map((performer, idx) => (
-              <div 
-                key={idx} 
-                onClick={() => navigate(`/brand/influencer/${performer.id || 'mock'}`)}
-                className="flex items-center justify-between p-3.5 hover:bg-gray-50 rounded-xl transition-all cursor-pointer group"
-              >
-                <div className="flex items-center gap-3">
-                  <img loading="lazy" decoding="async" src={getOptimizedImage(performer.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(performer.name)}`, 'avatar')} alt="" className="w-10 h-10 rounded-lg object-cover shadow-sm"  width="40" height="40" />
-                  <div>
-                    <p className="text-sm font-bold text-gray-900">{performer.name}</p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">${performer.earnings?.toLocaleString()} Earned</p>
-                  </div>
-                </div>
-                <div className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
-                  {performer.rating ? `${performer.rating} Stars` : "No rating"}
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* Active Campaigns Table */}
+        <div className="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-[#e2e8f0] flex flex-col">
+           <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-[#1e293b]">Active Campaigns</h3>
+              <button className="text-xs font-bold text-blue-600 hover:underline">Manage All</button>
+           </div>
+           
+           <div className="overflow-x-auto">
+             <table className="w-full text-left">
+                <thead className="border-b border-[#e2e8f0]">
+                   <tr>
+                      <th className="pb-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Campaign Name</th>
+                      <th className="pb-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                      <th className="pb-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-1/3">Budget</th>
+                      <th className="pb-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Action</th>
+                   </tr>
+                </thead>
+                <tbody className="divide-y divide-[#f1f5f9]">
+                   {mockCampaigns.map(camp => (
+                     <tr key={camp.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-4">
+                           <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${camp.color}`}>
+                                 <TrendingUp className="w-4 h-4" />
+                              </div>
+                              <p className="text-sm font-bold text-[#1e293b]">{camp.name}</p>
+                           </div>
+                        </td>
+                        <td className="py-4">
+                           <span className="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
+                              {camp.status}
+                           </span>
+                        </td>
+                        <td className="py-4">
+                           <div className="flex items-center gap-3">
+                              <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                 <div className="h-full bg-blue-500 rounded-full" style={{ width: `${camp.progress}%` }} />
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-600 w-8">{camp.progress}%</span>
+                           </div>
+                        </td>
+                        <td className="py-4 text-right">
+                           <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
+                              <MoreVertical className="w-4 h-4" />
+                           </button>
+                        </td>
+                     </tr>
+                   ))}
+                </tbody>
+             </table>
+           </div>
         </div>
-      </div>
 
-      {/* Campaign Performance Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-900">Campaign Intelligence</h3>
-          <button 
-            onClick={() => navigate('/brand/collaborations/all')}
-            className="text-xs font-bold text-blue-600 hover:underline"
-          >
-            View All Projects
-          </button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase tracking-wider">
-              <tr>
-                <th className="px-4 sm:px-8 py-4">Campaign</th>
-                <th className="px-3 sm:px-6 py-4">Reach</th>
-                <th className="px-3 sm:px-6 py-4">Engagement</th>
-                <th className="px-3 sm:px-6 py-4">ROI</th>
-                <th className="px-3 sm:px-6 py-4">Budget</th>
-                <th className="px-4 sm:px-8 py-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {analytics.campaignPerformance.map((campaign, idx) => (
-                <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 sm:px-8 py-5">
-                    <p className="font-bold text-gray-900 text-sm truncate max-w-[120px] sm:max-w-none">{campaign.name}</p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Active</p>
-                  </td>
-                  <td className="px-3 sm:px-6 py-5 text-sm font-bold text-gray-600">{campaign.reach?.toLocaleString()}</td>
-                  <td className="px-3 sm:px-6 py-5">
-                    <span className="bg-gray-100 px-2 py-0.5 rounded-lg text-[10px] font-bold text-gray-600">{campaign.engagement}%</span>
-                  </td>
-                  <td className="px-3 sm:px-6 py-5 text-sm font-bold text-emerald-600">{campaign.roi}%</td>
-                  <td className="px-3 sm:px-6 py-5 text-sm font-bold text-gray-600">${campaign.budget?.toLocaleString()}</td>
-                  <td className="px-4 sm:px-8 py-5 text-right">
-                    <button 
-                      onClick={() => navigate(`/brand/campaigns`)}
-                      className="text-[10px] font-bold text-gray-900 border border-gray-200 rounded-lg px-3 sm:px-4 py-1.5 hover:bg-gray-50 transition-all"
-                    >
-                      View Logic
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
 
     </div>
   );
 }
-
-export default BrandDashboard;

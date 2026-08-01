@@ -1,126 +1,10 @@
-// import {
-//   BrowserRouter as Router,
-//   Routes,
-//   Route,
-//   Navigate,
-// } from "react-router-dom";
-// import React from "react";
-// import { useSelector } from "react-redux";
-
-// // Auth pages
-// import Login from "../pages/auth/Login";
-// import Register from "../pages/auth/Register";
-// import ForgotPassword from "../pages/auth/ForgotPassword";
-// import VerifyOtp from "../pages/auth/VerifyOtp";
-// import ResetPassword from "../pages/auth/ResetPassword";
-
-// // Public pages
-// import LandingPage from "../pages/LandingPage";
-// import FeaturesPage from "../pages/FeaturesPage";
-// import AnalyticsPage from "../pages/features/AnalyticsPage";
-// import CampaignManagement from "../pages/features/CampaignManagement";
-// import FindMatchPage from "../pages/features/FindMatchPage";
-// import VerifiedProfilesPage from "../pages/features/VerifiedProfilesPage";
-// import HelpCenterPage from "../pages/HelpCenterPage";
-// import CaseStudiesPage from "../pages/CaseStudiesPage";
-// import PrivacyPolicyPage from "../pages/PrivacyPolicyPage";
-// import AboutUsPage from "../pages/AboutUsPage";
-// import ContactPage from "../pages/ContactPage";
-// import BlogPage from "../pages/BlogPage";
-
-// // Layout & Route guards
-// import DashboardLayout from "../components/layout/DashboardLayout";
-// import ProtectedRoute, { getDashboardByRole } from "./ProtectedRoute";
-// import PublicRoute from "./PublicRoute";
-
-// // Dashboard pages
-// import BrandDashboard from "../pages/dashboard/BrandDashboard";
-// import CampaignHub from "../pages/campaign/CampaignHub";
-// import Profile from "../pages/profile/ProfilesSetting";
-// import SearchExplore from "../components/layout/influencer/SearchExplore";
-// import CampaignDetail from "../components/layout/influencer/CampaignDetail";
-// import BrandPublicProfile from "../components/layout/influencer/BrandPublicProfile";
-// import InfluencerExplore from "../components/layout/brand/InfluencerExplore";
-
-// /**
-//  * Catch-all redirect component.
-//  * If logged in → go to their dashboard. If not → go to login.
-//  */
-// function CatchAll() {
-//   const { isAuthenticated, user } = useSelector((state) => state.auth);
-//   if (isAuthenticated && user) {
-//     return <Navigate to={getDashboardByRole(user.role)} replace />;
-//   }
-//   return <Navigate to="/login" replace />;
-// }
-
-// function AppRoutes() {
-//   return (
-//     <Router>
-//       <Routes>
-//         {/* ===== Public pages (accessible to everyone) ===== */}
-//         <Route path="/" element={<LandingPage />} />
-//         <Route path="/features" element={<FeaturesPage />} />
-//         <Route path="/features/analytics" element={<AnalyticsPage />} />
-//         <Route
-//           path="/features/campaign-management"
-//           element={<CampaignManagement />}
-//         />
-//         <Route path="/features/find-matches" element={<FindMatchPage />} />
-//         <Route
-//           path="/features/verified-profiles"
-//           element={<VerifiedProfilesPage />}
-//         />
-//         <Route path="/help-center" element={<HelpCenterPage />} />
-//         <Route path="/case-studies" element={<CaseStudiesPage />} />
-//         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-//         <Route path="/about" element={<AboutUsPage />} />
-//         <Route path="/contact" element={<ContactPage />} />
-//         <Route path="/blog" element={<BlogPage />} />
-
-//         {/* ===== Auth pages (PublicRoute: redirects if already logged in) ===== */}
-//         <Route element={<PublicRoute />}>
-//           <Route path="/login" element={<Login />} />
-//           <Route path="/register" element={<Register />} />
-//           <Route path="/forgot-password" element={<ForgotPassword />} />
-//           <Route path="/verify-otp" element={<VerifyOtp />} />
-//           <Route path="/reset-password" element={<ResetPassword />} />
-//         </Route>
-
-//         {/* ===== Brand routes (role-protected) ===== */}
-//         <Route element={<ProtectedRoute allowedRoles={["brand"]} />}>
-//           <Route element={<DashboardLayout />}>
-//             <Route path="/brand/dashboard" element={<BrandDashboard />} />
-//             <Route path="/brand/search" element={<InfluencerExplore />} />
-//             <Route path="/brand/requests" element={<BrandDashboard />} />
-//             <Route path="/brand/collaborations" element={<BrandDashboard />} />
-//             <Route path="/brand/campaigns" element={<CampaignHub />} />
-//             <Route path="/brand/settings" element={<Profile />} />
-//           </Route>
-//         </Route>
-
-//         {/* ===== Influencer routes (role-protected) ===== */}
-//         <Route element={<ProtectedRoute allowedRoles={["influencer"]} />}>
-//           <Route element={<DashboardLayout />}>
-//             <Route path="/influencer/dashboard" element={<BrandDashboard />} />
-//             <Route path="/influencer/search" element={<SearchExplore />} />
-//             <Route path="/influencer/search/campaign/:campaignId" element={<CampaignDetail />} />
-//             <Route path="/influencer/search/brand/:brandId" element={<BrandPublicProfile />} />
-
-//             <Route path="/influencer/requests" element={<BrandDashboard />} />
-//             <Route path="/influencer/collaborations" element={<BrandDashboard />} />
-//             <Route path="/influencer/settings" element={<Profile />} />
-//           </Route>
-//         </Route>
-
-//         {/* ===== Catch-all: unknown routes ===== */}
-//         <Route path="*" element={<CatchAll />} />
-//       </Routes>
-//     </Router>
-//   );
-// src/routes/AppRoutes.jsx
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import React, { Suspense, lazy } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { Suspense, lazy } from "react";
 
 // Layout & guards (eagerly loaded)
 import DashboardLayout from "../components/layout/DashboardLayout";
@@ -128,6 +12,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
 import LoadingFallback from "../components/common/LoadingFallback";
 import OAuthCallbackPage from "../pages/auth/OAuthCallbackPage";
+import ScrollToTop from "../components/common/ScrollToTop";
 
 // Auth pages (lazy loaded)
 const Login = lazy(() => import("../pages/auth/Login"));
@@ -140,14 +25,26 @@ const ResetPassword = lazy(() => import("../pages/auth/ResetPassword"));
 const LandingPage = lazy(() => import("../pages/LandingPage"));
 const FeaturesPage = lazy(() => import("../pages/FeaturesPage"));
 const AnalyticsPage = lazy(() => import("../pages/features/AnalyticsPage"));
-const CampaignManagement = lazy(() => import("../pages/features/CampaignManagement"));
+const CampaignManagement = lazy(
+  () => import("../pages/features/CampaignManagement"),
+);
 const FindMatchPage = lazy(() => import("../pages/features/FindMatchPage"));
-const VerifiedProfilesPage = lazy(() => import("../pages/features/VerifiedProfilesPage"));
-const SecurePaymentsPage = lazy(() => import("../pages/features/SecurePaymentsPage"));
-const RealTimeChatPage = lazy(() => import("../pages/features/RealTimeChatPage"));
-const IntegrationsPage = lazy(() => import("../pages/features/IntegrationsPage"));
+const VerifiedProfilesPage = lazy(
+  () => import("../pages/features/VerifiedProfilesPage"),
+);
+const SecurePaymentsPage = lazy(
+  () => import("../pages/features/SecurePaymentsPage"),
+);
+const RealTimeChatPage = lazy(
+  () => import("../pages/features/RealTimeChatPage"),
+);
+const IntegrationsPage = lazy(
+  () => import("../pages/features/IntegrationsPage"),
+);
 const ForBrandsPage = lazy(() => import("../pages/solutions/ForBrandsPage"));
-const ForCreatorsPage = lazy(() => import("../pages/solutions/ForCreatorsPage"));
+const ForCreatorsPage = lazy(
+  () => import("../pages/solutions/ForCreatorsPage"),
+);
 const AgenciesPage = lazy(() => import("../pages/solutions/AgenciesPage"));
 const EnterprisePage = lazy(() => import("../pages/solutions/EnterprisePage"));
 const SolutionsPage = lazy(() => import("../pages/SolutionsPage"));
@@ -167,48 +64,85 @@ const BrandDashboard = lazy(() => import("../pages/dashboard/BrandDashboard"));
 const CampaignHub = lazy(() => import("../pages/campaign/CampaignHub"));
 const Influencers = lazy(() => import("../pages/brand/Influencers"));
 const MyRequests = lazy(() => import("../pages/brand/MyRequests"));
-const InfluencerProfile = lazy(() => import("../pages/brand/InfluencerProfile"));
+const InfluencerProfile = lazy(
+  () => import("../pages/brand/InfluencerProfile"),
+);
 const MyProfileView = lazy(() => import("../pages/brand/MyProfileView"));
-const NotificationsPage = lazy(() => import("../pages/notifications/NotificationsPage"));
-const CollaborationsPage = lazy(() => import("../pages/collaboration/CollaborationsPage"));
-const CollabDetailView = lazy(() => import("../pages/collaboration/CollabDetailView"));
-const CollabOverviewTab = lazy(() => import("../pages/collaboration/CollabOverviewTab"));
-const CollabTasksTab = lazy(() => import("../pages/collaboration/CollabTasksTab"));
-const DeliverableListTab = lazy(() => import("../pages/collaboration/DeliverableListTab"));
-const DeliverableBoard = lazy(() => import("../pages/collaboration/DeliverableBoard"));
+const NotificationsPage = lazy(
+  () => import("../pages/notifications/NotificationsPage"),
+);
+const CollaborationsPage = lazy(
+  () => import("../pages/collaboration/CollaborationsPage"),
+);
+const CollabDetailView = lazy(
+  () => import("../pages/collaboration/CollabDetailView"),
+);
+const CollabOverviewTab = lazy(
+  () => import("../pages/collaboration/CollabOverviewTab"),
+);
+const CollabTasksTab = lazy(
+  () => import("../pages/collaboration/CollabTasksTab"),
+);
+const DeliverableListTab = lazy(
+  () => import("../pages/collaboration/DeliverableListTab"),
+);
+const DeliverableBoard = lazy(
+  () => import("../pages/collaboration/DeliverableBoard"),
+);
 
 // Profile settings (lazy loaded)
 const ProfileSettings = lazy(() => import("../pages/profile/ProfilesSetting"));
-const PaymentsDashboard = lazy(() => import("../pages/payments/PaymentsDashboard"));
+const PaymentsDashboard = lazy(
+  () => import("../pages/payments/PaymentsDashboard"),
+);
 
 // Messages (lazy loaded)
 const MessagesPage = lazy(() => import("../pages/MessagesPage"));
 
 // Influencer-specific pages (lazy loaded)
-const InfluencerDashboard = lazy(() => import("../pages/dashboard/InfluencerDashboard"));
-const MyProfileViewInfluencer = lazy(() => import("../pages/influencer/MyProfileView"));
-const SearchExplore = lazy(() => import("../components/layout/influencer/SearchExplore"));
-const CampaignDetail = lazy(() => import("../components/layout/influencer/CampaignDetail"));
-const BrandPublicProfile = lazy(() => import("../components/layout/influencer/BrandPublicProfile"));
-const InfluencerRequests = lazy(() => import("../pages/influencer/InfluencerRequests"));
-
-
+const InfluencerDashboard = lazy(
+  () => import("../pages/dashboard/InfluencerDashboard"),
+);
+const MyProfileViewInfluencer = lazy(
+  () => import("../pages/influencer/MyProfileView"),
+);
+const SearchExplore = lazy(
+  () => import("../components/layout/influencer/SearchExplore"),
+);
+const CampaignDetail = lazy(
+  () => import("../components/layout/influencer/CampaignDetail"),
+);
+const BrandPublicProfile = lazy(
+  () => import("../components/layout/influencer/BrandPublicProfile"),
+);
+const InfluencerRequests = lazy(
+  () => import("../pages/influencer/InfluencerRequests"),
+);
 
 export default function AppRoutes() {
   return (
     <Router>
+      <ScrollToTop />
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
-
           {/* ── Public (no auth needed) ────────────────────────────────── */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/solutions" element={<SolutionsPage />} />
           <Route path="/features/analytics" element={<AnalyticsPage />} />
-          <Route path="/features/campaign-management" element={<CampaignManagement />} />
+          <Route
+            path="/features/campaign-management"
+            element={<CampaignManagement />}
+          />
           <Route path="/features/find-matches" element={<FindMatchPage />} />
-          <Route path="/features/verified-profiles" element={<VerifiedProfilesPage />} />
-          <Route path="/features/secure-payments" element={<SecurePaymentsPage />} />
+          <Route
+            path="/features/verified-profiles"
+            element={<VerifiedProfilesPage />}
+          />
+          <Route
+            path="/features/secure-payments"
+            element={<SecurePaymentsPage />}
+          />
           <Route path="/real-time-chat" element={<RealTimeChatPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/solutions/for-brands" element={<ForBrandsPage />} />
@@ -242,19 +176,38 @@ export default function AppRoutes() {
           {/* ── Brand routes ──────────────────────────────────────────── */}
           <Route element={<ProtectedRoute allowedRoles={["brand"]} />}>
             <Route element={<DashboardLayout />}>
-              <Route element={<ProtectedRoute allowedRoles={["brand"]} requireComplete />}>
+              <Route
+                element={
+                  <ProtectedRoute allowedRoles={["brand"]} requireComplete />
+                }
+              >
                 <Route path="/brand/dashboard" element={<BrandDashboard />} />
                 <Route path="/brand/influencer" element={<Influencers />} />
-                <Route path="/brand/search" element={<Navigate to="/brand/influencer" replace />} />
-                <Route path="/brand/requests" element={<Navigate to="/brand/requests/received" replace />} />
+                <Route
+                  path="/brand/search"
+                  element={<Navigate to="/brand/influencer" replace />}
+                />
+                <Route
+                  path="/brand/requests"
+                  element={<Navigate to="/brand/requests/received" replace />}
+                />
                 <Route path="/brand/requests/:type" element={<MyRequests />}>
                   <Route path=":status" element={<MyRequests />} />
                 </Route>
 
-                <Route path="/brand/collaborations" element={<Navigate to="/brand/collaborations/all" replace />} />
-                <Route path="/brand/collaborations/:tab" element={<CollaborationsPage />} />
+                <Route
+                  path="/brand/collaborations"
+                  element={<Navigate to="/brand/collaborations/all" replace />}
+                />
+                <Route
+                  path="/brand/collaborations/:tab"
+                  element={<CollaborationsPage />}
+                />
 
-                <Route path="/brand/collaboration/:id" element={<CollabDetailView />}>
+                <Route
+                  path="/brand/collaboration/:id"
+                  element={<CollabDetailView />}
+                >
                   <Route index element={<Navigate to="overview" replace />} />
                   <Route path="overview" element={<CollabOverviewTab />} />
                   <Route path="tasks" element={<CollabTasksTab />}>
@@ -264,7 +217,10 @@ export default function AppRoutes() {
                   </Route>
                 </Route>
                 <Route path="/brand/campaigns" element={<CampaignHub />} />
-                <Route path="/brand/influencer/:influencerId" element={<InfluencerProfile />} />
+                <Route
+                  path="/brand/influencer/:influencerId"
+                  element={<InfluencerProfile />}
+                />
               </Route>
               {/* Always accessible for brands */}
               <Route path="/brand/profile" element={<MyProfileView />} />
@@ -276,18 +232,47 @@ export default function AppRoutes() {
           {/* ── Influencer routes ─────────────────────────────────────── */}
           <Route element={<ProtectedRoute allowedRoles={["influencer"]} />}>
             <Route element={<DashboardLayout />}>
-              <Route element={<ProtectedRoute allowedRoles={["influencer"]} requireComplete />}>
-                <Route path="/influencer/dashboard" element={<InfluencerDashboard />} />
-                
-                <Route path="/influencer/requests" element={<Navigate to="/influencer/requests/received" replace />} />
-                <Route path="/influencer/requests/:type" element={<InfluencerRequests />}>
+              <Route
+                element={
+                  <ProtectedRoute
+                    allowedRoles={["influencer"]}
+                    requireComplete
+                  />
+                }
+              >
+                <Route
+                  path="/influencer/dashboard"
+                  element={<InfluencerDashboard />}
+                />
+
+                <Route
+                  path="/influencer/requests"
+                  element={
+                    <Navigate to="/influencer/requests/received" replace />
+                  }
+                />
+                <Route
+                  path="/influencer/requests/:type"
+                  element={<InfluencerRequests />}
+                >
                   <Route path=":status" element={<InfluencerRequests />} />
                 </Route>
 
-                <Route path="/influencer/collaborations" element={<Navigate to="/influencer/collaborations/all" replace />} />
-                <Route path="/influencer/collaborations/:tab" element={<CollaborationsPage />} />
+                <Route
+                  path="/influencer/collaborations"
+                  element={
+                    <Navigate to="/influencer/collaborations/all" replace />
+                  }
+                />
+                <Route
+                  path="/influencer/collaborations/:tab"
+                  element={<CollaborationsPage />}
+                />
 
-                <Route path="/influencer/collaboration/:id" element={<CollabDetailView />}>
+                <Route
+                  path="/influencer/collaboration/:id"
+                  element={<CollabDetailView />}
+                >
                   <Route index element={<Navigate to="overview" replace />} />
                   <Route path="overview" element={<CollabOverviewTab />} />
                   <Route path="tasks" element={<CollabTasksTab />}>
@@ -296,16 +281,39 @@ export default function AppRoutes() {
                     <Route path="board" element={<DeliverableBoard />} />
                   </Route>
                 </Route>
-                <Route path="/influencer/search" element={<Navigate to="/influencer/search/campaigns" replace />} />
-                <Route path="/influencer/search/:tab" element={<SearchExplore />} />
-                <Route path="/influencer/search/campaign/:campaignId" element={<CampaignDetail />} />
-                <Route path="/influencer/search/brand/:brandId" element={<BrandPublicProfile />} />
+                <Route
+                  path="/influencer/search"
+                  element={
+                    <Navigate to="/influencer/search/campaigns" replace />
+                  }
+                />
+                <Route
+                  path="/influencer/search/:tab"
+                  element={<SearchExplore />}
+                />
+                <Route
+                  path="/influencer/search/campaign/:campaignId"
+                  element={<CampaignDetail />}
+                />
+                <Route
+                  path="/influencer/search/brand/:brandId"
+                  element={<BrandPublicProfile />}
+                />
               </Route>
 
               {/* Always accessible for influencers */}
-              <Route path="/influencer/profile" element={<MyProfileViewInfluencer />} />
-              <Route path="/influencer/settings" element={<ProfileSettings />} />
-              <Route path="/influencer/payments" element={<PaymentsDashboard />} />
+              <Route
+                path="/influencer/profile"
+                element={<MyProfileViewInfluencer />}
+              />
+              <Route
+                path="/influencer/settings"
+                element={<ProfileSettings />}
+              />
+              <Route
+                path="/influencer/payments"
+                element={<PaymentsDashboard />}
+              />
             </Route>
           </Route>
 
@@ -319,7 +327,11 @@ export default function AppRoutes() {
           </Route>
 
           {/* ===== Common Protected Routes ===== */}
-          <Route element={<ProtectedRoute allowedRoles={["brand", "influencer", "admin"]} />}>
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={["brand", "influencer", "admin"]} />
+            }
+          >
             <Route element={<DashboardLayout />}>
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/messages" element={<MessagesPage />} />

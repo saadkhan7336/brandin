@@ -62,7 +62,7 @@ export default function CaseStudiesPage() {
       <main className="pt-24 lg:pt-32 pb-24">
         
         {/* HEADER */}
-        <section className="px-6 max-w-7xl mx-auto mb-16 text-center md:text-left">
+        <section className="px-6 sm:px-8 max-w-[1440px] mx-auto mb-16 text-center md:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-full mb-6">
             <span className="text-[10px] font-bold tracking-wider text-blue-600 uppercase">Case Studies</span>
           </div>
@@ -75,7 +75,7 @@ export default function CaseStudiesPage() {
         </section>
 
         {/* FEATURED CASE STUDY */}
-        <section className="px-6 max-w-7xl mx-auto mb-32">
+        <section className="px-6 sm:px-8 max-w-[1440px] mx-auto mb-32">
           <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-4 md:p-8 border border-gray-100 shadow-xl flex flex-col lg:flex-row items-center gap-12 cursor-pointer hover:shadow-2xl transition-shadow" onClick={() => navigate('/case-studies/featured')}>
             {/* Image Side */}
             <div className="w-full lg:w-1/2 bg-[#2d5c4c] rounded-[2rem] p-8 relative overflow-hidden flex justify-center items-center aspect-square lg:aspect-auto h-full min-h-[400px]">
@@ -134,7 +134,7 @@ export default function CaseStudiesPage() {
         </section>
 
         {/* MARKET VERTICALS */}
-        <section className="px-6 max-w-7xl mx-auto mb-32">
+        <section className="px-6 sm:px-8 max-w-[1440px] mx-auto mb-32">
           <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12 border-b border-gray-200 pb-6">
             <div>
               <h2 className="text-3xl font-black text-[#0f172a] mb-2">Market Verticals</h2>
@@ -188,7 +188,7 @@ export default function CaseStudiesPage() {
         </section>
 
         {/* THE CURATOR ENGINE */}
-        <section className="px-6 max-w-7xl mx-auto mb-32 py-16 bg-[#f8fafc] rounded-[3rem] border border-gray-100">
+        <section className="px-6 sm:px-8 max-w-[1440px] mx-auto mb-32 py-16 bg-[#f8fafc] rounded-[3rem] border border-gray-100">
            <div className="flex flex-col lg:flex-row gap-16 items-center px-6 lg:px-16">
               {/* Cards Grid */}
               <div className="w-full lg:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-4 relative">
@@ -259,7 +259,7 @@ export default function CaseStudiesPage() {
         </section>
 
         {/* CTA SECTION */}
-        <section className="px-6 max-w-7xl mx-auto mb-12">
+        <section className="px-6 sm:px-8 max-w-[1440px] mx-auto mb-12">
           <div className="bg-[#2563eb] rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden shadow-2xl">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500 mix-blend-multiply"></div>
             

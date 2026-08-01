@@ -153,7 +153,7 @@ export default function AboutUsPage() {
 
       <main className="pt-24 lg:pt-32 pb-24">
         {/* HERO SECTION */}
-        <section className="px-6 max-w-7xl mx-auto mb-32">
+        <section className="px-6 sm:px-8 max-w-[1440px] mx-auto mb-32">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             {/* Left Content */}
             <div className="w-full lg:w-1/2">
@@ -206,7 +206,7 @@ export default function AboutUsPage() {
         </section>
 
         {/* THE PILLARS OF BRANDLY */}
-        <section className="px-6 max-w-7xl mx-auto mb-32">
+        <section className="px-6 sm:px-8 max-w-[1440px] mx-auto mb-32">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black text-[#0f172a] tracking-tight">
               The Pillars of Brandly
@@ -284,7 +284,7 @@ export default function AboutUsPage() {
         </section>
 
         {/* PLATFORM SOLUTIONS */}
-        <section className="px-6 max-w-7xl mx-auto mb-32 py-16 bg-[#f8fafc] rounded-[3rem] border border-gray-100">
+        <section className="px-6 sm:px-8 max-w-[1440px] mx-auto mb-32 py-16 bg-[#f8fafc] rounded-[3rem] border border-gray-100">
           <div className="text-center mb-16 px-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-full mb-6">
               <span className="text-[10px] font-bold tracking-wider text-blue-600 uppercase">
@@ -325,7 +325,7 @@ export default function AboutUsPage() {
         </section>
 
         {/* ROADMAP SECTION */}
-        <section className="px-6 max-w-7xl mx-auto mb-32">
+        <section className="px-6 sm:px-8 max-w-[1440px] mx-auto mb-32">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-50 border border-purple-100 rounded-full mb-4">
               <span className="text-[10px] font-bold tracking-wider text-purple-600 uppercase">Roadmap</span>
@@ -404,7 +404,7 @@ export default function AboutUsPage() {
         </section>
 
         {/* MEET THE CURATORS */}
-        <section className="px-6 max-w-7xl mx-auto mb-32">
+        <section className="px-6 sm:px-8 max-w-[1440px] mx-auto mb-32">
           <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
             <div>
               <h2 className="text-4xl font-black text-[#0f172a] mb-2">
@@ -468,7 +468,7 @@ export default function AboutUsPage() {
         </section>
 
         {/* CTA SECTION */}
-        <section className="px-6 max-w-7xl mx-auto mb-12">
+        <section className="px-6 sm:px-8 max-w-[1440px] mx-auto mb-12">
           <div className="bg-[#2563eb] rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden shadow-2xl">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500 mix-blend-multiply"></div>
 

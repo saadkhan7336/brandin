@@ -4,7 +4,9 @@
   "private": true,
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
-    "@reduxjs/toolkit": "^2.11.2",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "@reduxjs/toolkit": "^2.12.0",
     "@stripe/react-stripe-js": "^6.3.0",
     "@stripe/stripe-js": "^9.3.1",
     "@testing-library/dom": "^10.4.1",
@@ -12,24 +14,29 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^13.5.0",
     "ajv": "^8.20.0",
-    "axios": "^1.13.6",
+    "axios": "^1.18.1",
+    "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "d3-scale": "^4.0.2",
     "date-fns": "^4.1.0",
     "emoji-picker-react": "^4.18.0",
     "framer-motion": "^12.38.0",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.577.0",
     "react": "^19.2.4",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.71.2",
-    "react-redux": "^9.2.0",
-    "react-router-dom": "^7.13.1",
+    "react-redux": "^9.3.0",
+    "react-router-dom": "6.30.4",
     "react-scripts": "^5.0.1",
+    "react-simple-maps": "^3.0.0",
     "recharts": "^3.8.0",
     "socket.io-client": "^4.8.3",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
+    "three": "^0.185.1",
     "web-vitals": "^2.1.4",
     "zod": "^4.3.6"
   },
@@ -57,13 +64,7 @@
       "last 1 safari version"
     ]
   },
-  "jest": {
-    "moduleNameMapper": {
-      "^react-router-dom$": "<rootDir>/node_modules/react-router-dom/dist/index.js",
-      "^react-router/dom$": "<rootDir>/node_modules/react-router/dist/development/dom-export.js",
-      "^react-router$": "<rootDir>/node_modules/react-router/dist/development/index.js"
-    }
-  },
+  "jest": {},
   "devDependencies": {
     "tailwindcss": "^3.4.19"
   }

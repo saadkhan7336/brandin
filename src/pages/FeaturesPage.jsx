@@ -4,7 +4,6 @@ import LandingNavbar from "../components/layout/LandingNavbar";
 import LandingFooter from "../components/layout/LandingFooter";
 import {
   Sparkles,
-  CheckCircle,
   BarChart3,
   Lock,
   Layers,
@@ -12,7 +11,6 @@ import {
   Target,
   TrendingUp,
   Headphones,
-  ArrowRight,
   BadgeCheck
 } from "lucide-react";
 
@@ -23,7 +21,7 @@ export default function FeaturesPage() {
     <div className="min-h-screen bg-[#fcfcfd] font-sans selection:bg-blue-100">
       <LandingNavbar />
 
-      <main className="pt-24 sm:pt-32 pb-20 px-6 max-w-7xl mx-auto">
+      <main className="pt-24 sm:pt-32 pb-20 px-6 sm:px-8 max-w-[1440px] mx-auto">
         
         {/* HERO SECTION */}
         <div className="flex flex-col items-center text-center mb-24">

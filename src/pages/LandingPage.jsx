@@ -1,8 +1,312 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import LandingNavbar from '../components/layout/LandingNavbar.jsx';
-import LandingFooter from '../components/layout/LandingFooter';
-import { Sparkles, UserSearch, CheckCircle2, BrainCircuit, TrendingUp, Lock, Briefcase, Smartphone, Check, Send, Star } from 'lucide-react';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import LandingNavbar from "../components/layout/LandingNavbar.jsx";
+import LandingFooter from "../components/layout/LandingFooter";
+import TestimonialV2 from "../components/ui/testimonial-v2";
+import { DotGlobeHero } from "../components/ui/globe-hero";
+import CtaBanner from "../components/common/CtaBanner";
+import { motion } from "framer-motion";
+import {
+  UserSearch,
+  CheckCircle2,
+  BrainCircuit,
+  TrendingUp,
+  Lock,
+  Send,
+  ArrowRight,
+  Zap,
+} from "lucide-react";
+
+const testimonials = [
+  {
+    quote:
+      "Brandly is a great tool for building high-performing creator campaigns. It's easy to use and has a lot of features. I've been using it for a while now and I'm really happy with the results.",
+    name: "Alena Zhukova",
+    role: "Software Engineer",
+    avatar: "/images/landing/Img_margin-1.png",
+  },
+  {
+    quote:
+      "Finding authentic influencers used to take weeks. With Brandly's AI matching, we closed 15 creator partnerships in less than 48 hours.",
+    name: "Michael Chen",
+    role: "Marketing Director",
+    avatar: "/images/landing/img_margin-2.png",
+  },
+  {
+    quote:
+      "The seamless escrow payments and real-time chat make running sponsorship deals completely stress-free for both creators and brands.",
+    name: "Sarah Johnson",
+    role: "Fashion Influencer",
+    avatar: "/images/landing/Img_margin.png",
+  },
+  {
+    quote:
+      "The analytics dashboard gives us clear visibility into impression metrics and sales conversions. A game changer for digital commerce.",
+    name: "David Kim",
+    role: "Growth Engineer",
+    avatar: "/images/landing/Img_margin-1.png",
+  },
+  {
+    quote:
+      "As a creator, receiving verified campaign proposals directly with escrow protection gives me 100% peace of mind. Highly recommended!",
+    name: "Lisa Kemp",
+    role: "Frontend Developer",
+    avatar: "/images/landing/img_margin-2.png",
+  },
+  {
+    quote:
+      "Our marketing ROI increased by 140% in our very first month using Brandly's automated synergy matching engine.",
+    name: "Marcus Vance",
+    role: "Design Engineer",
+    avatar: "/images/landing/Img_margin.png",
+  },
+];
+
+// Live Animated Chat Simulation Component
+function LiveChatPreview() {
+  const [messages, setMessages] = React.useState([]);
+  const [isTyping, setIsTyping] = React.useState(false);
+  const [typingUser, setTypingUser] = React.useState("Sarah");
+  const chatScrollRef = React.useRef(null);
+
+  const fullConversation = React.useMemo(
+    () => [
+      {
+        id: 1,
+        sender: "creator",
+        name: "Sarah Johnson",
+        avatar: "/images/landing/Img_margin-1.png",
+        text: "Hey Alex! I just uploaded the raw video draft for Deliverable #1 (Unboxing Reel) to our campaign workspace! 🎬",
+        time: "11:15 AM",
+      },
+      {
+        id: 2,
+        sender: "brand",
+        name: "Alex (Brand Lead)",
+        avatar: "/images/landing/Img_margin.png",
+        text: "Awesome work Sarah! Visuals look crisp. Could you just boost the background audio track slightly around 0:30? 🎧",
+        time: "11:18 AM",
+      },
+      {
+        id: 3,
+        sender: "creator",
+        name: "Sarah Johnson",
+        avatar: "/images/landing/Img_margin-1.png",
+        text: "Got it! Audio revision updated & re-submitted for approval. ✨",
+        time: "11:22 AM",
+      },
+      {
+        id: 4,
+        sender: "brand",
+        name: "Alex (Brand Lead)",
+        avatar: "/images/landing/Img_margin.png",
+        text: "Looks perfect! Deliverable approved. Releasing your $2,500 escrow milestone payout now! 💳",
+        time: "11:25 AM",
+      },
+      {
+        id: 5,
+        sender: "system",
+        text: "✅ Deliverable Approved — $2,500 Escrow Payout Released",
+      },
+    ],
+    []
+  );
+
+  React.useEffect(() => {
+    let timeoutIds = [];
+    let currentIndex = 0;
+
+    const playSequence = () => {
+      setMessages([]);
+      currentIndex = 0;
+
+      const addNextMessage = () => {
+        if (currentIndex >= fullConversation.length) {
+          // Restart loop after 4 seconds pause
+          timeoutIds.push(setTimeout(playSequence, 4000));
+          return;
+        }
+
+        const currentMsg = fullConversation[currentIndex];
+
+        if (currentMsg.sender === "system") {
+          setIsTyping(false);
+          setMessages((prev) => [...prev, currentMsg]);
+          currentIndex++;
+          timeoutIds.push(setTimeout(addNextMessage, 3000));
+        } else {
+          // Show typing indicator
+          setTypingUser(currentMsg.sender === "creator" ? "Sarah" : "Alex");
+          setIsTyping(true);
+
+          timeoutIds.push(
+            setTimeout(() => {
+              setIsTyping(false);
+              setMessages((prev) => [...prev, currentMsg]);
+              currentIndex++;
+              timeoutIds.push(setTimeout(addNextMessage, 1800));
+            }, 1400)
+          );
+        }
+      };
+
+      addNextMessage();
+    };
+
+    playSequence();
+
+    return () => {
+      timeoutIds.forEach(clearTimeout);
+    };
+  }, [fullConversation]);
+
+  // Auto scroll chat to bottom when messages update
+  React.useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [messages, isTyping]);
+
+  return (
+    <div className="bg-white border border-[#e2e8f0] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] overflow-hidden">
+      {/* Chat Header */}
+      <div className="p-4 sm:p-5 border-b border-[#f1f5f9] flex items-center justify-between bg-[#f8fafc]/60">
+        <div className="flex items-center gap-3.5">
+          <div className="relative">
+            <img
+              src="/images/landing/Img_margin-1.png"
+              alt="Sarah"
+              className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+            />
+            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h4 className="font-bold text-sm text-[#1e293b]">
+                Sarah Johnson
+              </h4>
+              <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                Verified Creator
+              </span>
+            </div>
+            <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+              Live Escrow Chat
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 bg-slate-100/80 px-2.5 py-1 rounded-lg border border-slate-200/60">
+          <Lock className="w-3.5 h-3.5 text-emerald-600" />
+          <span className="text-[11px] font-bold text-slate-700">Encrypted</span>
+        </div>
+      </div>
+
+      {/* Dynamic Animated Chat Messages Body */}
+      <div
+        ref={chatScrollRef}
+        className="p-5 space-y-4 bg-slate-50/40 h-[310px] overflow-y-auto scroll-smooth relative"
+      >
+        {messages.map((msg) => {
+          if (msg.sender === "system") {
+            return (
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="my-3 text-center"
+              >
+                <span className="inline-block bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-xs font-bold px-3.5 py-1.5 rounded-full shadow-sm">
+                  {msg.text}
+                </span>
+              </motion.div>
+            );
+          }
+
+          const isBrand = msg.sender === "brand";
+
+          return (
+            <motion.div
+              key={msg.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className={`flex gap-3 ${isBrand ? "justify-end" : "justify-start"}`}
+            >
+              {!isBrand && (
+                <img
+                  src={msg.avatar}
+                  alt={msg.name}
+                  className="w-7 h-7 rounded-full object-cover mt-1 flex-shrink-0"
+                />
+              )}
+              <div
+                className={`p-3.5 rounded-2xl max-w-[82%] text-xs sm:text-sm leading-relaxed shadow-sm ${
+                  isBrand
+                    ? "bg-blue-600 text-white rounded-tr-xs shadow-blue-500/20"
+                    : "bg-white text-slate-800 border border-slate-200/80 rounded-tl-xs"
+                }`}
+              >
+                <p>{msg.text}</p>
+                <span
+                  className={`text-[10px] mt-1.5 block font-medium ${
+                    isBrand ? "text-blue-100 text-right" : "text-slate-400"
+                  }`}
+                >
+                  {msg.time}
+                </span>
+              </div>
+              {isBrand && (
+                <img
+                  src={msg.avatar}
+                  alt={msg.name}
+                  className="w-7 h-7 rounded-full object-cover mt-1 flex-shrink-0"
+                />
+              )}
+            </motion.div>
+          );
+        })}
+
+        {/* Live Typing Dots Indicator */}
+        {isTyping && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`flex items-center gap-2 ${
+              typingUser === "Alex" ? "justify-end" : "justify-start"
+            }`}
+          >
+            <div className="bg-white border border-slate-200/80 px-3 py-2 rounded-full shadow-sm flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold text-slate-500 mr-1">
+                {typingUser} is typing
+              </span>
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Chat Footer Mock Input */}
+      <div className="p-3.5 bg-white border-t border-[#f1f5f9]">
+        <div className="bg-[#f1f5f9] rounded-xl p-1.5 flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-full hover:bg-slate-200/60 flex items-center justify-center cursor-pointer text-slate-500 transition-colors text-sm font-bold">
+            +
+          </div>
+          <input
+            type="text"
+            placeholder="Type contract message..."
+            className="bg-transparent flex-1 outline-none text-xs text-slate-700 placeholder-slate-400"
+            readOnly
+          />
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-sm">
+            <Send className="w-3.5 h-3.5" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -11,414 +315,301 @@ export default function LandingPage() {
     <div className="min-h-screen font-sans bg-[#f9fafb]">
       <LandingNavbar />
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-16 px-4 sm:px-6 lg:px-8 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="order-2 lg:order-1 z-10">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#e0e7ff] text-[#1e3a8a] text-xs font-bold rounded-full mb-6">
-              <Sparkles className="w-3.5 h-3.5" /> NOW LIVE
-            </div>
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-[#111827] leading-[1.05] tracking-tight mb-6">
-              The pulse of <br />
-              <span className="text-[#1d4ed8]">creator</span> <br />
+      {/* Integrated Light Mode Interactive Particle Network Hero Section */}
+      <DotGlobeHero className="pt-20 pb-10">
+        <div className="max-w-[1340px] mx-auto px-6 sm:px-8 text-center space-y-6 relative z-10 pointer-events-none">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="space-y-5 max-w-4xl mx-auto pointer-events-auto"
+          >
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.08]">
+              The pulse of{" "}
+              <span className="relative inline-block">
+                <span className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 bg-clip-text text-transparent font-black">
+                  creator
+                </span>
+
+                {/* Animated Line with Starting Oval/Drop Node */}
+                <div className="absolute -bottom-2 -left-4 sm:-left-6 right-0 flex items-center pointer-events-none">
+                  {/* Sleek Non-Blinking Oval/Drop Starting Node */}
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.5, delay: 0.4 }}
+                    className="relative flex items-center justify-center flex-shrink-0 z-20"
+                  >
+                    <div className="w-4 h-2.5 bg-blue-600 rounded-full shadow-[0_0_12px_rgba(37,99,235,0.7)] border border-white/80" />
+                  </motion.div>
+
+                  {/* Left-to-Right Animated Gradient Line */}
+                  <motion.div
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{
+                      duration: 1.3,
+                      delay: 0.6,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                    style={{ transformOrigin: "left" }}
+                    className="h-2 w-full bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-400 rounded-r-full shadow-[0_4px_14px_rgba(37,99,235,0.4)] ml-[-3px]"
+                  />
+                </div>
+              </span>
+              <br />
               commerce.
             </h1>
-            <p className="text-lg sm:text-xl text-[#475569] mb-8 max-w-lg leading-relaxed">
-              The ultimate ecosystem where vloggers, models, and storytellers meet high-growth brands through hyper-precise AI orchestration.
+
+            <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed font-medium pt-2">
+              The ultimate ecosystem where vloggers, models, and storytellers
+              meet high-growth brands — on one seamless platform.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 mb-10">
-              <button
-                onClick={() => navigate('/register')}
-                className="bg-[#2563eb] text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-[#1d4ed8] transition-all shadow-[0_8px_30px_rgb(37,99,235,0.3)] hover:shadow-[0_8px_30px_rgb(37,99,235,0.5)] text-center text-sm sm:text-base"
-              >
-                Join the Movement
-              </button>
-              <button
-                onClick={() => navigate('/features')}
-                className="bg-[#f1f5f9] text-[#1e40af] px-8 py-3.5 rounded-xl font-semibold hover:bg-[#e2e8f0] transition-all text-center text-sm sm:text-base"
-              >
-                How it Works
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex -space-x-2">
-                <img className="w-9 h-9 rounded-full border-2 border-white object-cover" src="/images/landing/Img_margin.png" alt="Creator" />
-                <img className="w-9 h-9 rounded-full border-2 border-white object-cover" src="/images/landing/Img_margin-1.png" alt="Creator" />
-                <img className="w-9 h-9 rounded-full border-2 border-white object-cover" src="/images/landing/img_margin-2.png" alt="Creator" />
+          </motion.div>
+
+          {/* Action Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2 pointer-events-auto"
+          >
+            <button
+              onClick={() => navigate("/register")}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base shadow-[0_10px_30px_rgba(37,99,235,0.35)] hover:shadow-[0_15px_35px_rgba(37,99,235,0.45)] transition-all duration-300 transform hover:-translate-y-0.5"
+            >
+              <span>Join the Movement</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={() => {
+                const section = document.getElementById("how-it-works");
+                if (section) {
+                  section.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-white/90 hover:bg-white text-slate-800 border border-slate-300/80 rounded-xl font-bold text-base shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5"
+            >
+              <span>How It Works</span>
+            </button>
+          </motion.div>
+        </div>
+      </DotGlobeHero>
+
+      {/* Engineered for Accuracy Section - Redesigned & Compact */}
+      <section className="py-12 bg-slate-50/70 border-b border-slate-200/50">
+        <div className="max-w-[1340px] mx-auto px-6 sm:px-8">
+          <div className="text-center mb-8 space-y-2">
+            <span className="text-xs font-extrabold uppercase tracking-widest text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+              Why Brandly
+            </span>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+              Engineered for Precision & Speed
+            </h2>
+            <p className="text-slate-600 text-sm sm:text-base max-w-lg mx-auto">
+              Replaced manual searching with algorithmic matching. Built for modern brands and creators.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* Feature 1: AI Synergy */}
+            <div className="group relative bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-colors" />
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform">
+                  <BrainCircuit className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">
+                  AI-Powered Synergy
+                </h3>
+                <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
+                  Proprietary algorithms match creator aesthetic, audience sentiment, and ROI history instantly.
+                </p>
               </div>
-              <p className="text-xs sm:text-sm font-medium text-[#64748b]">
-                Trusted by <span className="font-bold text-[#334155]">2,500+</span> top-tier creators
-              </p>
+              <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-[11px] font-bold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full">
+                  99.4% Match Rate
+                </span>
+              </div>
+            </div>
+
+            {/* Feature 2: Real-Time ROI */}
+            <div className="group relative bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors" />
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform">
+                  <TrendingUp className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">
+                  Real-time Analytics
+                </h3>
+                <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
+                  Live dashboard tracking engagement, conversion funnel, clicks, and sales in real-time.
+                </p>
+              </div>
+              <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full">
+                  Live Metrics
+                </span>
+              </div>
+            </div>
+
+            {/* Feature 3: Escrow Payments */}
+            <div className="group relative bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-emerald-300 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors" />
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform">
+                  <Lock className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">
+                  Secure Escrow
+                </h3>
+                <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
+                  Zero-friction payment protection. Funds are safely held and released upon deliverable approval.
+                </p>
+              </div>
+              <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">
+                  100% Protected
+                </span>
+              </div>
+            </div>
+
+            {/* Feature 4: Global Network */}
+            <div className="group relative bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-indigo-300 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-colors" />
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform">
+                  <UserSearch className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">
+                  Global Creator Pool
+                </h3>
+                <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
+                  Access 50,000+ verified creators and storytellers across 120+ countries instantly.
+                </p>
+              </div>
+              <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full">
+                  50k+ Creators
+                </span>
+              </div>
             </div>
           </div>
-          
-          <div className="order-1 lg:order-2 relative flex justify-center lg:justify-end pr-0 lg:pr-8">
-            {/* Blurred background glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[450px] h-[450px] bg-gradient-to-tr from-[#3b82f6]/20 via-[#8b5cf6]/20 to-transparent rounded-full blur-3xl z-0 pointer-events-none" />
-            
-            <img 
-              src="/images/landing/Hero section Background.png" 
-              alt="Creator setup with ring light" 
-              className="w-full max-w-[500px] h-auto object-contain mix-blend-multiply relative z-10 right-0 lg:-right-10"
-            />
-            
-            {/* Floating Card */}
-            <div className="absolute -bottom-8 -left-4 sm:left-4 lg:-left-16 bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-5 sm:p-6 w-[280px] sm:w-[320px] transform -rotate-3 z-20 border border-[#f1f5f9]">
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex gap-3 items-center">
-                  <div className="w-10 h-10 bg-[#eff6ff] rounded-full flex items-center justify-center text-[#2563eb]">
-                    <UserSearch className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-[#1e293b]">Creator Match</h4>
-                    <p className="text-[10px] sm:text-xs text-[#64748b]">98% Affinity Score</p>
-                  </div>
-                </div>
-                <Sparkles className="w-5 h-5 text-[#8b5cf6]" />
-              </div>
-              
-              {/* Skeleton lines */}
-              <div className="space-y-2.5 mb-6">
-                <div className="h-2.5 bg-[#f1f5f9] rounded-full w-full"></div>
-                <div className="h-2.5 bg-[#f1f5f9] rounded-full w-5/6"></div>
-                <div className="h-2.5 bg-[#f1f5f9] rounded-full w-4/6"></div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <button className="flex-shrink-0 w-12 h-10 bg-[#eff6ff] rounded-lg flex items-center justify-center text-[#2563eb] hover:bg-[#e0e7ff] transition-colors">
-                  <CheckCircle2 className="w-5 h-5" />
-                </button>
-                <button className="flex-grow h-10 bg-[#2563eb] text-white rounded-lg text-sm font-semibold hover:bg-[#1d4ed8] transition-colors">
-                  Accept Deal
-                </button>
-              </div>
-            </div>
+          {/* View All Features Button */}
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => navigate("/features")}
+              className="inline-flex items-center gap-2.5 px-6 py-3 bg-white hover:bg-slate-50 text-slate-800 font-bold text-sm rounded-xl border border-slate-300/80 shadow-sm hover:shadow-md transition-all duration-200 group"
+            >
+              <span>Explore All Features</span>
+              <ArrowRight className="w-4 h-4 text-blue-600 group-hover:translate-x-1 transition-transform" />
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Engineered for Accuracy Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#f9fafb]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#1e293b] mb-4">Engineered for Accuracy</h2>
-            <p className="text-[#64748b] text-lg max-w-2xl mx-auto">
-              We replaced manual searching with algorithmic precision. No more scrolling, just results.
+      {/* How It Works & Live Interactive Chat Section */}
+      <section id="how-it-works" className="py-16 bg-white relative overflow-hidden">
+        <div className="max-w-[1440px] mx-auto px-6 sm:px-8">
+          <div className="text-center mb-12 space-y-3">
+            <span className="text-xs font-extrabold uppercase tracking-widest text-blue-600 bg-blue-50 px-3.5 py-1 rounded-full border border-blue-100">
+              Simple 3-Step Process
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1e293b] tracking-tight">
+              How Brandly Works
+            </h2>
+            <p className="text-base sm:text-lg text-[#64748b] max-w-xl mx-auto">
+              From instant discovery to verified escrow payouts — launch campaigns seamlessly.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Card 1: AI-Powered Synergy (Takes up 2 columns on lg) */}
-            <div className="bg-white border border-[#e2e8f0] rounded-3xl p-8 sm:p-10 lg:col-span-2 relative overflow-hidden flex flex-col md:flex-row items-center gap-8 shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] transition-shadow duration-300 min-h-[340px]">
-              {/* Text Content */}
-              <div className="z-20 relative w-full md:w-1/2 md:pr-6">
-                <div className="mb-6 w-14 h-14 bg-[#f8fafc] rounded-2xl border border-[#f1f5f9] flex items-center justify-center text-[#8b5cf6]">
-                  <BrainCircuit className="w-7 h-7" />
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-[#1e293b] mb-4">AI-Powered Synergy</h3>
-                <p className="text-[#64748b] text-base lg:text-lg leading-relaxed">
-                  Our proprietary algorithm analyzes audience sentiment, historical conversion data, and brand aesthetic to find the perfect match in seconds.
-                </p>
-              </div>
-              
-              {/* Image Content */}
-              <div className="w-full md:w-1/2 relative h-[200px] md:h-full md:absolute md:right-0 md:top-0 z-10 flex justify-end pointer-events-none">
-                <img 
-                  src="/images/landing/AI-powerd synergy.png" 
-                  alt="AI Network" 
-                  className="w-full h-full object-cover object-right opacity-40 mix-blend-multiply"
-                  style={{ 
-                    WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 40%)', 
-                    maskImage: 'linear-gradient(to right, transparent 0%, black 40%)' 
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Card 2: Real-time ROI */}
-            <div className="bg-white border border-[#e2e8f0] rounded-3xl p-8 sm:p-10 flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] transition-shadow duration-300 min-h-[340px]">
-              <div>
-                <div className="mb-6 text-[#2563eb]">
-                  <TrendingUp className="w-8 h-8" />
-                </div>
-                <h3 className="text-2xl font-bold text-[#1e293b] mb-4">Real-time ROI</h3>
-                <p className="text-[#64748b] text-base leading-relaxed mb-8">
-                  Watch your campaign performance live. Track clicks, conversions, and viral reach in one dashboard.
-                </p>
-              </div>
-              <div className="flex items-end gap-2 sm:gap-3 h-24 pt-4 mt-auto">
-                <div className="w-full bg-[#3b82f6] rounded-t-md h-[40%] transition-all duration-500 hover:h-[45%]"></div>
-                <div className="w-full bg-[#3b82f6] rounded-t-md h-[55%] transition-all duration-500 hover:h-[60%]"></div>
-                <div className="w-full bg-[#0369a1] rounded-t-md h-[95%] transition-all duration-500 hover:h-[100%] shadow-[0_4px_20px_rgba(3,105,161,0.3)]"></div>
-                <div className="w-full bg-[#3b82f6] rounded-t-md h-[50%] transition-all duration-500 hover:h-[55%]"></div>
-                <div className="w-full bg-[#3b82f6] rounded-t-md h-[80%] transition-all duration-500 hover:h-[85%]"></div>
-              </div>
-            </div>
-
-            {/* Card 3: Secure Payments */}
-            <div className="bg-white border border-[#e2e8f0] rounded-3xl p-8 sm:p-10 flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] transition-shadow duration-300 min-h-[340px]">
-              <div>
-                <div className="flex items-center gap-2 mb-6">
-                  <Lock className="w-4 h-4 text-[#475569]" />
-                  <span className="text-[#475569] font-bold text-xs tracking-[0.15em] uppercase">Secure Escrow</span>
-                </div>
-                <h3 className="text-2xl font-bold text-[#1e293b] mb-4">Secure Payments</h3>
-                <p className="text-[#64748b] text-base leading-relaxed mb-8">
-                  Funds are held safely and released instantly upon content approval. Zero friction, total trust.
-                </p>
-              </div>
-              <div className="bg-[#f8fafc] rounded-xl p-4 sm:p-5 flex items-center justify-between border border-[#e2e8f0] mt-auto">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-[#22c55e] rounded-full flex items-center justify-center text-white">
-                    <CheckCircle2 className="w-5 h-5" />
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-14">
+            {/* Left: Defined Steps */}
+            <div className="w-full lg:w-1/2 space-y-8">
+              {/* Step 1 */}
+              <div className="flex gap-5 relative group p-4 rounded-2xl transition-colors hover:bg-slate-50/80 border border-transparent hover:border-slate-100">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 font-black text-xl flex items-center justify-center border border-blue-100 shadow-sm group-hover:scale-105 transition-transform">
+                    01
                   </div>
-                  <span className="font-bold text-[#1e293b] sm:text-lg">$12,450.00</span>
                 </div>
-                <span className="text-[10px] sm:text-xs text-[#64748b] font-medium uppercase tracking-wide">Payout Complete</span>
-              </div>
-            </div>
-
-            {/* Card 4: Global Reach (Takes up 2 columns on lg) */}
-            <div className="bg-[#2a2f35] rounded-3xl p-8 sm:p-10 lg:col-span-2 relative overflow-hidden flex flex-col justify-center shadow-[0_8px_30px_rgb(0,0,0,0.15)] min-h-[340px]">
-              <div className="relative z-10 max-w-md">
-                <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">Global Reach, Local Impact</h3>
-                <p className="text-[#94a3b8] text-base leading-relaxed mb-8">
-                  Access a network of 50,000+ creators across 120 countries. Whether you're a startup or a Fortune 500, we scale with you.
-                </p>
-                <button className="bg-white text-[#1e293b] px-6 py-3 rounded-xl font-bold hover:bg-[#f1f5f9] transition-colors text-sm shadow-lg hover:shadow-xl">
-                  Explore Network
-                </button>
-              </div>
-              <img 
-                src="/images/landing/Global reach.png" 
-                alt="World Map" 
-                className="absolute right-0 top-0 bottom-0 h-full w-auto object-cover opacity-50 mix-blend-screen mask-image-gradient"
-                style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 30%)', maskImage: 'linear-gradient(to right, transparent, black 30%)' }}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works & Chat Glimpse Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1e293b] mb-4">How It Works</h2>
-            <p className="text-lg text-[#64748b]">Get started in minutes and launch your first campaign today.</p>
-          </div>
-          
-          <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-20">
-            {/* Left: Steps */}
-            <div className="w-full lg:w-1/2 space-y-12">
-              <div className="flex gap-6 relative">
-                <div className="flex-shrink-0">
-                  <span className="text-5xl font-black text-[#eff6ff]">01</span>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-[#1e293b] mb-2 mt-2">Create Your Profile</h3>
-                  <p className="text-[#64748b] leading-relaxed">Sign up as a brand or influencer and complete your profile with your details and preferences.</p>
-                </div>
-              </div>
-              
-              <div className="flex gap-6 relative">
-                <div className="flex-shrink-0">
-                  <span className="text-5xl font-black text-[#eff6ff]">02</span>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-[#1e293b] mb-2 mt-2">Connect & Discover</h3>
-                  <p className="text-[#64748b] leading-relaxed">Use powerful search tools and our AI matching to find the perfect collaboration partners for your goals.</p>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-[#1e293b]">
+                      Create Your Verified Profile
+                    </h3>
+                    <span className="text-[10px] font-bold text-blue-700 bg-blue-100/60 px-2 py-0.5 rounded-md">
+                      Brand & Creator
+                    </span>
+                  </div>
+                  <p className="text-sm text-[#64748b] leading-relaxed">
+                    Set up your profile in under 2 minutes. Sync social metrics, niche preferences, and brand aesthetic guidelines effortlessly.
+                  </p>
                 </div>
               </div>
 
-              <div className="flex gap-6 relative">
+              {/* Step 2 */}
+              <div className="flex gap-5 relative group p-4 rounded-2xl transition-colors hover:bg-slate-50/80 border border-transparent hover:border-slate-100">
                 <div className="flex-shrink-0">
-                  <span className="text-5xl font-black text-[#eff6ff]">03</span>
+                  <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 font-black text-xl flex items-center justify-center border border-purple-100 shadow-sm group-hover:scale-105 transition-transform">
+                    02
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-[#1e293b] mb-2 mt-2">Collaborate & Grow</h3>
-                  <p className="text-[#64748b] leading-relaxed">Launch campaigns, chat in real-time, track progress, and build lasting partnerships that drive results.</p>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-[#1e293b]">
+                      Discover & AI Match
+                    </h3>
+                    <span className="text-[10px] font-bold text-purple-700 bg-purple-100/60 px-2 py-0.5 rounded-md">
+                      Smart Synergy
+                    </span>
+                  </div>
+                  <p className="text-sm text-[#64748b] leading-relaxed">
+                    Our AI evaluates audience demographics and ROI potential to instantly recommend high-impact creator partnerships.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex gap-5 relative group p-4 rounded-2xl transition-colors hover:bg-slate-50/80 border border-transparent hover:border-slate-100">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 font-black text-xl flex items-center justify-center border border-emerald-100 shadow-sm group-hover:scale-105 transition-transform">
+                    03
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-[#1e293b]">
+                      Collaborate, Revise & Payout
+                    </h3>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-md">
+                      Active Workspace
+                    </span>
+                  </div>
+                  <p className="text-sm text-[#64748b] leading-relaxed">
+                    Once matched, unlock your dedicated collaboration chat. Share campaign assets, submit video revisions, track task milestones, and release escrow payouts safely.
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Right: Real-time Chat Mockup */}
+            {/* Right: Live Interactive Chat Animation */}
             <div className="w-full lg:w-1/2 relative">
-              <div className="absolute -inset-4 bg-gradient-to-tr from-blue-100 to-purple-50 rounded-[2.5rem] blur-2xl opacity-60 -z-10"></div>
-              
-              <div className="bg-white border border-[#e2e8f0] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] overflow-hidden">
-                {/* Chat Header */}
-                <div className="p-5 border-b border-[#f1f5f9] flex items-center justify-between bg-[#f8fafc]/50">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <img src="/images/landing/Img_margin-1.png" alt="Sarah" className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-[#1e293b]">Sarah Johnson</h4>
-                      <p className="text-xs text-green-600 font-medium">Online now</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <div className="w-8 h-8 rounded-full bg-white border border-[#e2e8f0] flex items-center justify-center shadow-sm">
-                      <div className="w-1 h-1 bg-[#64748b] rounded-full mx-[1px]"></div>
-                      <div className="w-1 h-1 bg-[#64748b] rounded-full mx-[1px]"></div>
-                      <div className="w-1 h-1 bg-[#64748b] rounded-full mx-[1px]"></div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Chat Messages */}
-                <div className="p-6 space-y-6 bg-[#f8fafc]/30 h-[280px] overflow-hidden relative">
-                  {/* Message 1 */}
-                  <div className="flex gap-4">
-                    <img src="/images/landing/Img_margin-1.png" alt="Sarah" className="w-8 h-8 rounded-full object-cover mt-1 flex-shrink-0" />
-                    <div className="bg-white border border-[#e2e8f0] p-4 rounded-2xl rounded-tl-sm shadow-sm max-w-[85%]">
-                      <p className="text-sm text-[#334155]">Hi! I reviewed the campaign brief and I absolutely love the concept. The aesthetic perfectly matches my feed! ✨</p>
-                      <span className="text-[10px] text-[#94a3b8] mt-2 block">10:42 AM</span>
-                    </div>
-                  </div>
-                  
-                  {/* Message 2 */}
-                  <div className="flex gap-4 justify-end">
-                    <div className="bg-blue-600 p-4 rounded-2xl rounded-tr-sm shadow-[0_4px_14px_0_rgb(37,99,235,0.39)] max-w-[85%] text-white">
-                      <p className="text-sm">That's fantastic to hear, Sarah! We think you'd be the perfect fit for this launch. Are you available to shoot this weekend?</p>
-                      <span className="text-[10px] text-blue-200 mt-2 block text-right">10:45 AM</span>
-                    </div>
-                  </div>
-                  
-                  {/* Typing indicator */}
-                  <div className="flex gap-4 items-center">
-                    <img src="/images/landing/Img_margin-1.png" alt="Sarah" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                    <div className="bg-white border border-[#e2e8f0] py-3 px-4 rounded-full shadow-sm flex gap-1.5 items-center">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                    </div>
-                  </div>
-                  
-                  {/* Fade out bottom */}
-                  <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white to-transparent"></div>
-                </div>
-                
-                {/* Chat Input */}
-                <div className="p-4 bg-white border-t border-[#f1f5f9]">
-                  <div className="bg-[#f1f5f9] rounded-xl p-2 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full hover:bg-[#e2e8f0] flex items-center justify-center cursor-pointer text-[#64748b] transition-colors">
-                      <span className="text-lg">+</span>
-                    </div>
-                    <input 
-                      type="text" 
-                      placeholder="Type your message..." 
-                      className="bg-transparent flex-1 outline-none text-sm text-[#334155] placeholder-[#94a3b8]"
-                      readOnly
-                    />
-                    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-sm cursor-pointer hover:bg-blue-700 transition-colors">
-                      <Send className="w-4 h-4 ml-[-2px]" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <div className="absolute -inset-4 bg-gradient-to-tr from-blue-100 via-indigo-50 to-purple-100 rounded-[2.5rem] blur-2xl opacity-70 -z-10" />
+              <LiveChatPreview />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-[#f8fafc] border-t border-[#e2e8f0]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1e293b] mb-4">Loved by Creators & Brands</h2>
-            <p className="text-lg text-[#64748b] max-w-2xl mx-auto">Join thousands of satisfied users who are growing their business with Brandly.</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Testimonial 1 */}
-            <div className="bg-white rounded-3xl p-8 border border-[#e2e8f0] shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-shadow duration-300">
-              <div className="flex gap-1 mb-6">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="w-5 h-5 fill-[#f59e0b] text-[#f59e0b]" />
-                ))}
-              </div>
-              <p className="text-[#334155] italic leading-relaxed mb-8">
-                "Brandly has transformed how I collaborate with brands. The platform is intuitive and the opportunities are endless!"
-              </p>
-              <div className="flex items-center gap-4">
-                <img src="/images/landing/Img_margin-1.png" alt="Sarah Johnson" className="w-12 h-12 rounded-full object-cover" />
-                <div>
-                  <h4 className="font-bold text-[#1e293b] text-sm">Sarah Johnson</h4>
-                  <p className="text-[#64748b] text-xs">Fashion Influencer</p>
-                </div>
-              </div>
-            </div>
+      {/* Testimonials Section with Vertical Infinite Scroll */}
+      <TestimonialV2 />
 
-            {/* Testimonial 2 */}
-            <div className="bg-white rounded-3xl p-8 border border-[#e2e8f0] shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-shadow duration-300">
-              <div className="flex gap-1 mb-6">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="w-5 h-5 fill-[#f59e0b] text-[#f59e0b]" />
-                ))}
-              </div>
-              <p className="text-[#334155] italic leading-relaxed mb-8">
-                "Finding the right influencers has never been easier. Brandly saved us countless hours and delivered amazing results."
-              </p>
-              <div className="flex items-center gap-4">
-                <img src="/images/landing/img_margin-2.png" alt="Michael Chen" className="w-12 h-12 rounded-full object-cover" />
-                <div>
-                  <h4 className="font-bold text-[#1e293b] text-sm">Michael Chen</h4>
-                  <p className="text-[#64748b] text-xs">Marketing Director at TechCorp</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Testimonial 3 */}
-            <div className="bg-white rounded-3xl p-8 border border-[#e2e8f0] shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-shadow duration-300">
-              <div className="flex gap-1 mb-6">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="w-5 h-5 fill-[#f59e0b] text-[#f59e0b]" />
-                ))}
-              </div>
-              <p className="text-[#334155] italic leading-relaxed mb-8">
-                "The best platform for managing collaborations. Professional, efficient, and genuinely cares about creators."
-              </p>
-              <div className="flex items-center gap-4">
-                <img src="/images/landing/Img_margin.png" alt="Emma Davis" className="w-12 h-12 rounded-full object-cover" />
-                <div>
-                  <h4 className="font-bold text-[#1e293b] text-sm">Emma Davis</h4>
-                  <p className="text-[#64748b] text-xs">Lifestyle Creator</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-[#f8fafc] flex justify-center">
-        <div className="max-w-4xl w-full bg-white rounded-[2rem] p-12 md:p-20 text-center shadow-xl border border-[#f1f5f9]">
-          <h2 className="text-4xl sm:text-5xl font-extrabold text-[#111827] mb-6">
-            Ready to revolutionize <br /> your reach?
-          </h2>
-          <p className="text-lg text-[#64748b] mb-10 max-w-xl mx-auto">
-            Join thousands of brands and creators already using Brandly to define the future of commerce.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button 
-              onClick={() => navigate('/register')}
-              className="bg-[#2563eb] text-white px-8 py-4 rounded-xl font-semibold hover:bg-[#1d4ed8] transition-all"
-            >
-              Join the Movement
-            </button>
-            <button 
-              onClick={() => navigate('/contact')}
-              className="bg-white text-[#1e293b] border border-[#cbd5e1] px-8 py-4 rounded-xl font-semibold hover:bg-[#f8fafc] transition-all shadow-sm"
-            >
-              Contact Sales
-            </button>
-          </div>
-        </div>
-      </section>
+      {/* Reusable Modern CTA Banner Section */}
+      <CtaBanner />
 
       <LandingFooter />
     </div>

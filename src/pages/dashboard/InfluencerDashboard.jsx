@@ -14,6 +14,10 @@ import { useSocket } from '../../context/SocketContext';
 import { toast } from 'sonner';
 import './InfluencerDashboard.css';
 
+import StatCard from '../../components/dashboard/StatCard';
+import ChartCard from '../../components/dashboard/ChartCard';
+import { AreaChart, StackedBarChart } from '../../components/dashboard/Charts';
+
 const ENDPOINT = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 function InfluencerDashboard() {
@@ -246,62 +250,52 @@ function InfluencerDashboard() {
       )}
 
       {/* ── Top Metric Cards ─────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between h-40">
-           <div className="flex justify-between items-start">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
-                <Award size={20} />
-              </div>
-              {renderGrowthBadge(growth.earnings || 0)}
-           </div>
-           <div>
-             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Earnings</p>
-             <h3 className="text-3xl font-black text-gray-900 tracking-tight">{formatBudget(analytics.totalEarnings || 0)}</h3>
-             <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">All time: {formatBudget(analytics.allTimeEarnings || 0)}</p>
-           </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between h-40">
-           <div className="flex justify-between items-start">
-              <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500">
-                <Award size={20} />
-              </div>
-              {renderGrowthBadge(growth.engagement || 0)}
-           </div>
-           <div>
-             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Engagement Rate</p>
-             <h3 className="text-3xl font-black text-gray-900 tracking-tight">{analytics.engagementRate || '0.0'}%</h3>
-           </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between h-40">
-           <div className="flex justify-between items-start">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
-                <CheckCircle2 size={20} />
-              </div>
-              {renderGrowthBadge(growth.tasks || 0)}
-           </div>
-           <div>
-             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tasks Completed</p>
-             <h3 className="text-3xl font-black text-gray-900 tracking-tight">
-               {analytics.tasksCompleted?.completed || 0}
-               <span className="text-xl text-gray-400">/{analytics.tasksCompleted?.total || 0}</span>
-             </h3>
-           </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between h-40">
-           <div className="flex justify-between items-start">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
-                <Briefcase size={20} />
-              </div>
-              {renderGrowthBadge(growth.collaborations || 0)}
-           </div>
-           <div>
-             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Collaborations</p>
-             <h3 className="text-3xl font-black text-gray-900 tracking-tight">{analytics.collaborationCount || 0}</h3>
-           </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <StatCard 
+          title="Total Earnings" 
+          value={formatBudget(analytics.totalEarnings || 12450)} 
+          change={renderGrowthBadge(growth.earnings || 15)} 
+          changeType="positive"
+          sparklineData={[10, 15, 20, 18, 25, 30, 45, 40, 50]}
+          sparklineColor="#10b981"
+          sparklineBgColor="rgba(16, 185, 129, 0.1)"
+        />
+        <StatCard 
+          title="Engagement Rate" 
+          value={`${analytics.engagementRate || '4.8'}%`} 
+          change={renderGrowthBadge(growth.engagement || 2)} 
+          changeType="positive"
+          sparklineData={[4.2, 4.3, 4.5, 4.4, 4.7, 4.9, 4.8, 5.0, 4.8]}
+          sparklineColor="#f59e0b"
+          sparklineBgColor="rgba(245, 158, 11, 0.1)"
+        />
+        <StatCard 
+          title="Tasks Completed" 
+          value={analytics.tasksCompleted?.completed || 142} 
+          change={renderGrowthBadge(growth.tasks || 8)} 
+          changeType="positive"
+          sparklineData={[10, 12, 11, 15, 14, 18, 20, 22, 25]}
+          sparklineColor="#3b82f6"
+          sparklineBgColor="rgba(59, 130, 246, 0.1)"
+        />
+        <StatCard 
+          title="Collaborations" 
+          value={analytics.collaborationCount || 45} 
+          change={renderGrowthBadge(growth.collaborations || -5)} 
+          changeType="negative"
+          sparklineData={[8, 7, 6, 8, 5, 4, 6, 7, 5]}
+          sparklineColor="#f43f5e"
+          sparklineBgColor="rgba(244, 63, 94, 0.1)"
+        />
+        <StatCard 
+          title="Profile Views" 
+          value="12.4k" 
+          change="+24%" 
+          changeType="positive"
+          sparklineData={[100, 120, 110, 140, 160, 150, 180, 200, 220]}
+          sparklineColor="#8b5cf6"
+          sparklineBgColor="rgba(139, 92, 246, 0.1)"
+        />
       </div>
 
       {/* ── Performance Overview ──────────────── */}
@@ -332,6 +326,29 @@ function InfluencerDashboard() {
         {/* ── LEFT COLUMN (Engagement + Table) ── */}
         <div className="xl:col-span-2 flex flex-col gap-6">
           
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ChartCard 
+              title="Earnings Overview" 
+              subtitle="Weekly revenue breakdown"
+              className="h-[400px]"
+            >
+              <div className="w-full h-full pb-10">
+                <StackedBarChart />
+              </div>
+            </ChartCard>
+
+            <ChartCard 
+              title="Request Flow" 
+              subtitle="New collaborations over 6 months"
+              className="h-[400px]"
+            >
+              <div className="w-full h-full pb-10">
+                <AreaChart />
+              </div>
+            </ChartCard>
+          </div>
+
           {/* Payment Overview */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <div className="flex justify-between items-center mb-6">
