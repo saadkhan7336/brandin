@@ -39,6 +39,9 @@ export default function ProfileDropdown() {
 
   useEffect(() => {
     function handleClickOutside(e) {
+      if (e.target.closest('[data-dropdown-trigger]')) {
+        return;
+      }
       if (panelRef.current && !panelRef.current.contains(e.target)) {
         onClose();
       }
@@ -61,7 +64,7 @@ export default function ProfileDropdown() {
   return (
     <div
       ref={panelRef}
-      className="absolute right-4 top-[80px] w-[300px] bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] overflow-hidden"
+      className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-4 top-[76px] sm:top-[80px] w-auto sm:w-[300px] max-w-full bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] overflow-hidden"
       style={{ animation: 'fadeSlideDown 0.2s ease-out' }}
     >
       {/* Blue gradient header / Cover image */}

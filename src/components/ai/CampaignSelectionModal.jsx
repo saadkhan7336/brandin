@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Target, Loader2, DollarSign, Sparkles } from 'lucide-react';
+import { X, Target, Loader2, DollarSign, Sparkles, ArrowRight, Layers } from 'lucide-react';
 import campaignService from '../../services/campaignService';
 import collaborationService from '../../services/collaborationService';
 
@@ -26,8 +26,6 @@ export default function CampaignSelectionModal({ isOpen, onClose, onSelect }) {
       const campaignsList = Array.isArray(campaignData) ? campaignData : (campaignData.campaigns || []);
       const collabsList = collabData.success && collabData.data ? (collabData.data.collaborations || []) : [];
 
-      // Filter out campaigns that are already in ongoing/active collaborations
-      // NOTE: backend getCollaborations aggregate returns campaign.id (not campaign._id)
       const activeCollabCampaignIds = collabsList
         .filter(c => ['active', 'in_progress', 'review', 'accepted', 'awaiting_funds', 'awaiting_onboarding', 'completed', 'suspended'].includes(c.status))
         .map(c => (c.campaign?.id || c.campaign?._id || c.campaign || c.campaignId?.id || c.campaignId?._id || c.campaignId || '').toString())
@@ -49,73 +47,79 @@ export default function CampaignSelectionModal({ isOpen, onClose, onSelect }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-150">
-      <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] border border-gray-100">
-        <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-white">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-               <div className="p-1.5 bg-blue-50 rounded-lg">
-                  <Sparkles className="w-5 h-5 text-blue-600" />
-               </div>
-               <h2 className="text-2xl font-bold text-gray-900 tracking-tight">AI Matching</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] border border-[#e2e8f0]">
+        
+        {/* Header */}
+        <div className="p-6 sm:p-7 border-b border-[#e2e8f0] flex justify-between items-center bg-gradient-to-r from-blue-50/50 via-indigo-50/30 to-white">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+              <Sparkles className="w-6 h-6 animate-pulse" />
             </div>
-            <p className="text-sm text-gray-500 font-medium">Select a campaign to find your ideal partners</p>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-[#1e293b] tracking-tight">AI Campaign Match</h2>
+              <p className="text-xs font-medium text-slate-500 mt-0.5">Select a campaign to discover precision-matched creators</p>
+            </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-2xl transition-all"
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1 bg-gray-50/30">
+        {/* Content */}
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 bg-[#f8fafc]">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 space-y-4">
-               <div className="relative">
-                  <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-                  <Sparkles className="w-4 h-4 text-blue-400 absolute -top-1 -right-1 animate-pulse" />
-               </div>
-               <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Fetching Campaigns</p>
+              <div className="relative">
+                <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+                <Sparkles className="w-4 h-4 text-indigo-500 absolute -top-1 -right-1 animate-pulse" />
+              </div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Analyzing Active Campaigns...</p>
             </div>
           ) : error ? (
-            <div className="p-6 bg-red-50 text-red-600 rounded-3xl text-center text-sm font-bold border border-red-100">
+            <div className="p-5 bg-rose-50 text-rose-600 rounded-2xl text-center text-xs font-bold border border-rose-100">
               {error}
             </div>
           ) : campaigns.length === 0 ? (
-            <div className="text-center py-16 px-8">
-              <div className="w-20 h-20 bg-white shadow-sm rounded-3xl flex items-center justify-center mx-auto mb-6 border border-gray-50">
-                 <Target className="w-10 h-10 text-gray-200" />
+            <div className="text-center py-12 px-6">
+              <div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center mx-auto mb-4 border border-[#e2e8f0]">
+                <Target className="w-8 h-8 text-slate-300" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No Active Campaigns</h3>
-              <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                You need an active campaign to use AI Matching. Please create one in the Campaigns Hub.
+              <h3 className="text-lg font-bold text-[#1e293b] mb-1">No Available Campaigns</h3>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-sm mx-auto">
+                Create an active campaign first to let our AI engine match the ideal influencers for your brand.
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Your Campaigns ({campaigns.length})</p>
               {campaigns.map(camp => (
                 <div 
                   key={camp._id} 
                   onClick={() => onSelect(camp._id)}
-                  className="p-5 rounded-[24px] bg-white border border-gray-100 hover:border-blue-400 cursor-pointer transition-all hover:shadow-xl hover:shadow-blue-500/5 group flex items-start justify-between"
+                  className="p-4 rounded-2xl bg-white border border-[#e2e8f0] hover:border-blue-500 cursor-pointer transition-all hover:shadow-md group flex items-center justify-between"
                 >
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-2">{camp.name}</h3>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-black tracking-widest uppercase bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100">
+                  <div className="flex-1 min-w-0 pr-3">
+                    <h3 className="text-sm font-bold text-[#1e293b] group-hover:text-blue-600 transition-colors truncate mb-1">
+                      {camp.name}
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[10px] font-bold uppercase bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full border border-blue-100">
                         {camp.industry || camp.category || 'General'}
                       </span>
                       {camp.budget && (
-                        <span className="text-[11px] font-bold text-emerald-600 flex items-center bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                        <span className="text-[10px] font-bold text-emerald-600 flex items-center bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
                           <DollarSign className="w-3 h-3 mr-0.5" />
                           {camp.budget.max ? `Up to $${camp.budget.max}` : `$${camp.budget}`}
                         </span>
                       )}
                     </div>
                   </div>
-                  <div className="w-10 h-10 rounded-2xl bg-gray-50 group-hover:bg-blue-600 flex items-center justify-center transition-all shadow-inner">
-                     <Target className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+                  <div className="w-9 h-9 rounded-xl bg-slate-50 group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-indigo-600 flex items-center justify-center transition-all shrink-0">
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
                   </div>
                 </div>
               ))}
@@ -123,8 +127,12 @@ export default function CampaignSelectionModal({ isOpen, onClose, onSelect }) {
           )}
         </div>
         
-        <div className="p-6 bg-white border-t border-gray-100 italic text-[11px] text-gray-400 text-center font-medium">
-           AI models analyze over 50 data points to ensure perfect brand alignment.
+        {/* Footer */}
+        <div className="p-4 bg-white border-t border-[#e2e8f0] text-center">
+          <p className="text-[11px] text-slate-400 font-semibold flex items-center justify-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+            AI analyzes 50+ audience metrics for precision matching
+          </p>
         </div>
       </div>
     </div>

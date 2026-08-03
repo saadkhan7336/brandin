@@ -375,13 +375,17 @@ function InfluencerDashboard() {
             <div className="mt-8 space-y-4">
               <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest">Recent Activity</h4>
               {analytics.recentTransactions?.length > 0 ? analytics.recentTransactions.map((transaction, i) => (
-                <div key={i} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-all">
+                <div 
+                  key={i} 
+                  onClick={() => navigate('/influencer/payments')}
+                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-all cursor-pointer group"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-gray-100 shadow-sm bg-gray-50">
+                    <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-gray-100 shadow-sm bg-gray-50 group-hover:scale-105 transition-transform">
                       <img loading="lazy" decoding="async" src={getOptimizedImage(transaction.brandPic || `https://ui-avatars.com/api/?name=Brand`, 'avatar')} alt="" className="w-full h-full object-cover" width="40" height="40" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-gray-900">{transaction.campaignName}</p>
+                      <p className="text-xs font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{transaction.campaignName}</p>
                       <p className="text-[10px] font-medium text-gray-400">{new Date(transaction.date).toLocaleDateString()}</p>
                     </div>
                   </div>

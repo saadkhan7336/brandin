@@ -62,6 +62,7 @@ const SecurityPage = lazy(() => import("../pages/SecurityPage"));
 // Dashboard / brand pages (lazy loaded)
 const BrandDashboard = lazy(() => import("../pages/dashboard/BrandDashboard"));
 const CampaignHub = lazy(() => import("../pages/campaign/CampaignHub"));
+const CreateCampaignPage = lazy(() => import("../pages/campaign/CreateCampaignPage"));
 const Influencers = lazy(() => import("../pages/brand/Influencers"));
 const MyRequests = lazy(() => import("../pages/brand/MyRequests"));
 const InfluencerProfile = lazy(
@@ -125,53 +126,52 @@ export default function AppRoutes() {
       <ScrollToTop />
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
-          {/* ── Public (no auth needed) ────────────────────────────────── */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/features" element={<FeaturesPage />} />
-          <Route path="/solutions" element={<SolutionsPage />} />
-          <Route path="/features/analytics" element={<AnalyticsPage />} />
-          <Route
-            path="/features/campaign-management"
-            element={<CampaignManagement />}
-          />
-          <Route path="/features/find-matches" element={<FindMatchPage />} />
-          <Route
-            path="/features/verified-profiles"
-            element={<VerifiedProfilesPage />}
-          />
-          <Route
-            path="/features/secure-payments"
-            element={<SecurePaymentsPage />}
-          />
-          <Route path="/real-time-chat" element={<RealTimeChatPage />} />
-          <Route path="/integrations" element={<IntegrationsPage />} />
-          <Route path="/solutions/for-brands" element={<ForBrandsPage />} />
-          <Route path="/solutions/for-creators" element={<ForCreatorsPage />} />
-          <Route path="/solutions/agencies" element={<AgenciesPage />} />
-          <Route path="/solutions/enterprise" element={<EnterprisePage />} />
-          <Route path="/help-center" element={<HelpCenterPage />} />
-          <Route path="/case-studies" element={<CaseStudiesPage />} />
-          <Route path="/case-studies/:id" element={<CaseStudyDetail />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/blog" element={<BlogPage />} />
-          <Route path="/terms-of-service" element={<TermsOfServicePage />} />
-          <Route path="/security" element={<SecurityPage />} />
+          {/* ── Public & Auth (redirect to dashboard if already logged in) ───── */}
+          <Route element={<PublicRoute />}>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/features" element={<FeaturesPage />} />
+            <Route path="/solutions" element={<SolutionsPage />} />
+            <Route path="/features/analytics" element={<AnalyticsPage />} />
+            <Route
+              path="/features/campaign-management"
+              element={<CampaignManagement />}
+            />
+            <Route path="/features/find-matches" element={<FindMatchPage />} />
+            <Route
+              path="/features/verified-profiles"
+              element={<VerifiedProfilesPage />}
+            />
+            <Route
+              path="/features/secure-payments"
+              element={<SecurePaymentsPage />}
+            />
+            <Route path="/real-time-chat" element={<RealTimeChatPage />} />
+            <Route path="/integrations" element={<IntegrationsPage />} />
+            <Route path="/solutions/for-brands" element={<ForBrandsPage />} />
+            <Route path="/solutions/for-creators" element={<ForCreatorsPage />} />
+            <Route path="/solutions/agencies" element={<AgenciesPage />} />
+            <Route path="/solutions/enterprise" element={<EnterprisePage />} />
+            <Route path="/help-center" element={<HelpCenterPage />} />
+            <Route path="/case-studies" element={<CaseStudiesPage />} />
+            <Route path="/case-studies/:id" element={<CaseStudyDetail />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+            <Route path="/security" element={<SecurityPage />} />
+
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-otp" element={<VerifyOtp />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+          </Route>
 
           {/* OAuth Callback — must be public, no auth required */}
           <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
           {/* Register — outside PublicRoute so Step 2 onboarding works after auto-login */}
           <Route path="/register" element={<Register />} />
-
-          {/* ── Auth (redirect if already logged in) ──────────────────── */}
-          <Route element={<PublicRoute />}>
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/verify-otp" element={<VerifyOtp />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-          </Route>
 
           {/* ── Brand routes ──────────────────────────────────────────── */}
           <Route element={<ProtectedRoute allowedRoles={["brand"]} />}>
@@ -217,6 +217,8 @@ export default function AppRoutes() {
                   </Route>
                 </Route>
                 <Route path="/brand/campaigns" element={<CampaignHub />} />
+                <Route path="/brand/campaigns/new" element={<CreateCampaignPage />} />
+                <Route path="/brand/campaigns/:id/edit" element={<CreateCampaignPage />} />
                 <Route
                   path="/brand/influencer/:influencerId"
                   element={<InfluencerProfile />}

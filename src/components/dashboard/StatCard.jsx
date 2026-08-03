@@ -82,19 +82,19 @@ export default function StatCard({
   }
 
   return (
-    <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-[#e2e8f0] flex flex-col h-full relative overflow-hidden group hover:shadow-md transition-shadow min-h-[140px]">
+    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-[#e2e8f0] flex flex-col h-full relative overflow-hidden group hover:shadow-md transition-shadow min-h-[120px] sm:min-h-[140px]">
       
-      <div className="flex justify-between items-start mb-2 relative z-10">
-        <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{title}</h4>
+      <div className="flex justify-between items-start mb-1.5 sm:mb-2 relative z-10">
+        <h4 className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-widest truncate mr-1">{title}</h4>
         {change && (
-          <span className={`${badgeColor} text-[10px] font-bold px-2 py-0.5 rounded-full`}>
+          <span className={`${badgeColor} text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full shrink-0`}>
             {change}
           </span>
         )}
       </div>
 
-      <div className="mt-1 relative z-10">
-        <h2 className="text-3xl font-black text-[#1e293b] tracking-tight">{value}</h2>
+      <div className="mt-0.5 sm:mt-1 relative z-10">
+        <h2 className="text-2xl sm:text-3xl font-black text-[#1e293b] tracking-tight">{value}</h2>
       </div>
 
       {/* Sparkline Container */}

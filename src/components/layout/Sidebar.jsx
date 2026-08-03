@@ -281,7 +281,7 @@ export default function Sidebar({ isCollapsed }) {
           <div className="flex flex-col gap-1 mt-auto pt-4 border-t border-[#e2e8f0]">
             {userRole === 'brand' && !isCollapsed && (
               <button
-                onClick={() => { onClose(); navigate('/brand/campaigns'); }}
+                onClick={() => { onClose(); navigate('/brand/campaigns/new'); }}
                 className="flex items-center justify-center py-2.5 px-4 mx-1 rounded-xl
                   bg-[#2563eb] hover:bg-blue-700
                   text-white font-semibold text-sm transition-all duration-200 mb-3 shadow-sm"
@@ -291,7 +291,7 @@ export default function Sidebar({ isCollapsed }) {
             )}
             {userRole === 'brand' && isCollapsed && (
               <button
-                onClick={() => { onClose(); navigate('/brand/campaigns'); }}
+                onClick={() => { onClose(); navigate('/brand/campaigns/new'); }}
                 title="Create Campaign"
                 className="flex items-center justify-center p-2.5 mx-auto rounded-xl
                   bg-[#2563eb] hover:bg-blue-700

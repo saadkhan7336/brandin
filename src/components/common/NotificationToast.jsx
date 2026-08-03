@@ -23,7 +23,7 @@ export const NotificationToast = ({ t, notification }) => {
   };
 
   return (
-    <div className="w-[356px] bg-[#0F172A] border border-[#1E293B] rounded-xl shadow-2xl p-4 flex gap-3 text-sm font-sans" style={{ pointerEvents: 'auto' }}>
+    <div className="w-full sm:w-[356px] max-w-[calc(100vw-2rem)] bg-[#0F172A] border border-[#1E293B] rounded-xl shadow-2xl p-4 flex gap-3 text-sm font-sans" style={{ pointerEvents: 'auto' }}>
       <div className="shrink-0 mt-0.5">
         {/* Simulating filled icon similar to the image by using fill and color */}
         <Icon size={16} fill={iconColor} color="#0F172A" />

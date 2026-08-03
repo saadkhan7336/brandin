@@ -575,12 +575,16 @@ export function SpendingComboChart() {
 
 // --- 3. Doughnut Chart for Stats ---
 export function StatsDoughnutChart({ data, labels, colors }) {
+  const chartValues = data || [300, 50, 100];
+  const chartLabels = labels || ['Completed', 'In Progress', 'Pending'];
+  const chartColors = colors || ['#10b981', '#3b82f6', '#f59e0b'];
+
   const chartData = {
-    labels: labels || ['Completed', 'In Progress', 'Pending'],
+    labels: chartLabels,
     datasets: [
       {
-        data: data || [300, 50, 100],
-        backgroundColor: colors || ['#10b981', '#3b82f6', '#f59e0b'],
+        data: chartValues,
+        backgroundColor: chartColors,
         borderWidth: 0,
         cutout: '75%',
       },
@@ -595,14 +599,39 @@ export function StatsDoughnutChart({ data, labels, colors }) {
         position: 'right',
         labels: {
           usePointStyle: false,
-          boxWidth: 20,
+          boxWidth: 14,
           boxHeight: 8,
-          font: { size: 11, family: 'system-ui' },
+          font: { size: 11, family: 'system-ui', weight: '500' },
           color: '#475569',
-          padding: 20
+          padding: 16,
+          generateLabels: (chart) => {
+            const dataset = chart.data.datasets[0];
+            const datasetTotal = dataset.data.reduce((a, b) => a + b, 0);
+            return chart.data.labels.map((label, i) => {
+              const val = dataset.data[i] || 0;
+              const pct = datasetTotal > 0 ? ((val / datasetTotal) * 100).toFixed(1) : '0';
+              return {
+                text: `${label}: ${pct}% (${val})`,
+                fillStyle: dataset.backgroundColor[i],
+                strokeStyle: 'transparent',
+                hidden: !chart.getDataVisibility(i),
+                index: i,
+              };
+            });
+          },
         }
       },
-      tooltip: sharedTooltip,
+      tooltip: {
+        ...sharedTooltip,
+        callbacks: {
+          label: (context) => {
+            const val = context.raw || 0;
+            const datasetTotal = context.dataset.data.reduce((a, b) => a + b, 0);
+            const pct = datasetTotal > 0 ? ((val / datasetTotal) * 100).toFixed(1) : '0';
+            return ` ${context.label}: ${val} (${pct}%)`;
+          }
+        }
+      },
     }
   };
 
@@ -928,7 +957,6 @@ export function HeatMap({ markers, viewMode = 'density' }) {
   const getSize = (count) => 14 + (count / maxCount) * 28; // range: 14px - 42px
 
   const getColor = (marker) => {
-    if (viewMode === 'category') return categoryColors[marker.category] || '#6366f1';
     // Density: red (high) → orange (mid) → yellow (low)
     const intensity = marker.count / maxCount;
     if (intensity > 0.8) return '#dc2626'; // Red — very high
@@ -938,15 +966,94 @@ export function HeatMap({ markers, viewMode = 'density' }) {
     return '#fbbf24';                       // Yellow-Orange — low
   };
 
-  const getStrokeColor = (marker) => {
-    if (viewMode === 'category') return 'white';
-    const intensity = marker.count / maxCount;
-    if (intensity > 0.8) return '#991b1b';
-    if (intensity > 0.6) return '#9a3412';
-    if (intensity > 0.4) return '#c2410c';
-    return '#d97706';
-  };
+  // ── Category View: premium niche breakdown card ──────────────────────────────
+  if (viewMode === 'category') {
+    const nicheData = [
+      { id: 'fashion',   label: 'Fashion & Apparel',     emoji: '👗', count: 128, growth: '+12%',  spend: '$24.5k', positive: true },
+      { id: 'tech',      label: 'Tech & Gadgets',        emoji: '💻', count: 110, growth: '+18%',  spend: '$12.8k', positive: true },
+      { id: 'lifestyle', label: 'Lifestyle & Wellness',  emoji: '🌿', count: 95,  growth: '+8%',   spend: '$18.2k', positive: true },
+      { id: 'gaming',    label: 'Gaming & Esports',      emoji: '🎮', count: 88,  growth: '+15%',  spend: '$19.4k', positive: true },
+      { id: 'luxury',    label: 'Luxury & Travel',       emoji: '✈️', count: 72,  growth: '+22%',  spend: '$31.0k', positive: true },
+      { id: 'beauty',    label: 'Beauty & Skincare',     emoji: '💄', count: 64,  growth: '+9%',   spend: '$9.6k',  positive: true },
+      { id: 'travel',    label: 'Travel & Adventure',    emoji: '🗺️', count: 51,  growth: '+11%',  spend: '$14.1k', positive: true },
+      { id: 'music',     label: 'Music & Entertainment', emoji: '🎵', count: 43,  growth: '+6%',   spend: '$8.3k',  positive: true },
+    ].sort((a, b) => b.count - a.count);
 
+    const total = nicheData.reduce((s, n) => s + n.count, 0);
+    const topNiche = nicheData[0];
+
+    return (
+      <div
+        className="w-full h-full flex flex-col gap-1 overflow-y-auto px-1 pt-1 pb-2"
+        style={{ scrollbarWidth: 'thin', scrollbarColor: '#e2e8f0 transparent' }}
+      >
+        {/* Summary header strip */}
+        <div className="flex items-center gap-4 pb-2 mb-1 border-b border-slate-100 shrink-0">
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Top Niche</p>
+            <p className="text-xs font-extrabold text-[#1e293b] truncate">{topNiche.emoji} {topNiche.label}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</p>
+            <p className="text-xs font-extrabold text-[#1e293b]">{total}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Niches</p>
+            <p className="text-xs font-extrabold text-[#1e293b]">{nicheData.length}</p>
+          </div>
+        </div>
+
+        {/* Category rows */}
+        {nicheData.map((niche) => {
+          const pct = Math.round((niche.count / total) * 100);
+          const color = categoryColors[niche.id] || '#6366f1';
+          return (
+            <div
+              key={niche.id}
+              className="group flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-slate-50 transition-all duration-150 cursor-pointer shrink-0"
+            >
+              {/* Emoji badge */}
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-sm shadow-sm"
+                style={{ backgroundColor: `${color}18`, border: `1.5px solid ${color}30` }}
+              >
+                {niche.emoji}
+              </div>
+
+              {/* Label + bar */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-0.5">
+                  <p className="text-[11px] font-bold text-[#1e293b] truncate leading-none">{niche.label}</p>
+                  <span className="text-[11px] font-extrabold text-[#1e293b] ml-2 shrink-0">{pct}%</span>
+                </div>
+                <div className="relative h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${pct}%`, backgroundColor: color }}
+                  />
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[10px] font-semibold text-slate-400">{niche.count} influencers</span>
+                  <span className="text-[10px] font-semibold text-slate-300">·</span>
+                  <span className="text-[10px] font-semibold text-slate-400">{niche.spend}</span>
+                </div>
+              </div>
+
+              {/* Growth badge */}
+              <div
+                className="shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap"
+                style={{ backgroundColor: `${color}18`, color }}
+              >
+                {niche.growth}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // ── Density View: original world map ─────────────────────────────────────────
   return (
     <div className="relative w-full h-full">
       <ComposableMap
@@ -1063,41 +1170,24 @@ export function HeatMap({ markers, viewMode = 'density' }) {
         </div>
       )}
 
-      {/* Category Legend (only in category mode) */}
-      {viewMode === 'category' && (
-        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 border border-slate-100 shadow-sm">
-          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Categories</p>
-          <div className="flex flex-col gap-1">
-            {Object.entries(categoryColors).map(([cat, color]) => (
-              <div key={cat} className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                <span className="text-[9px] font-medium text-slate-600 capitalize">{cat}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Density Legend (density mode) */}
-      {viewMode === 'density' && (
-        <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-slate-100 shadow-sm">
-          <p className="text-[9px] font-semibold text-slate-400 mb-1">Bubble size = influencer count</p>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-[#fbbf24]" />
-              <span className="text-[9px] text-slate-500">Low</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-[#f97316]" />
-              <span className="text-[9px] text-slate-500">Mid</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-4 h-4 rounded-full bg-[#dc2626]" />
-              <span className="text-[9px] text-slate-500">High</span>
-            </div>
+      <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-slate-100 shadow-sm">
+        <p className="text-[9px] font-semibold text-slate-400 mb-1">Bubble size = influencer count</p>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-[#fbbf24]" />
+            <span className="text-[9px] text-slate-500">Low</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded-full bg-[#f97316]" />
+            <span className="text-[9px] text-slate-500">Mid</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-4 h-4 rounded-full bg-[#dc2626]" />
+            <span className="text-[9px] text-slate-500">High</span>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

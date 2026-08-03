@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback, Fragment } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   fetchConversations,
   fetchMessages,
@@ -27,11 +27,10 @@ import collaborationService from "../../services/collaborationService";
 import VerifiedTick from "../common/VerifiedTick";
 import { getOptimizedImage } from "../../utils/imageOptimization";
 
-
-
 const ChatLayout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useSelector((state) => state.auth);
   const { conversations, messages, activeConversation, loading } = useSelector(
     (state) => state.chat
@@ -64,22 +63,35 @@ const ChatLayout = () => {
     dispatch(fetchConversations());
   }, [dispatch]);
 
-  // Sync activeConversation with the freshly fetched conversations list
-  // This ensures that if activeConversation was set from a raw Collab CTA (unpopulated),
-  // it gets swapped out for the fully populated version once conversations load.
+  // Sync activeConversation with state or location param if passed
   useEffect(() => {
-    if (activeConversation && conversations.length > 0) {
-      const syncedConv = conversations.find(c => c._id === activeConversation._id);
-      if (syncedConv && syncedConv !== activeConversation) {
-        // Only update if we are missing the full object data (like populated participants)
-        // or if campaign/collaboration metadata changed.
-        const activePartnerIsString = typeof activeConversation.participants?.[0] === 'string';
-        if (activePartnerIsString) {
-          dispatch(setActiveConversation(syncedConv));
+    if (conversations.length > 0) {
+      const searchParams = new URLSearchParams(location.search);
+      const targetUser = location.state?.userName || searchParams.get('user');
+
+      if (targetUser) {
+        const found = conversations.find(c => {
+          const other = c.participants?.find(p => typeof p === 'object' && p._id !== user?._id);
+          return other?.name?.toLowerCase().includes(targetUser.toLowerCase()) || 
+                 other?.username?.toLowerCase().includes(targetUser.toLowerCase());
+        });
+        if (found) {
+          dispatch(setActiveConversation(found));
+          return;
+        }
+      }
+
+      if (activeConversation) {
+        const syncedConv = conversations.find(c => c._id === activeConversation._id);
+        if (syncedConv && syncedConv !== activeConversation) {
+          const activePartnerIsString = typeof activeConversation.participants?.[0] === 'string';
+          if (activePartnerIsString) {
+            dispatch(setActiveConversation(syncedConv));
+          }
         }
       }
     }
-  }, [conversations, activeConversation, dispatch]);
+  }, [conversations, activeConversation, location, dispatch, user?._id]);
 
   useEffect(() => {
     if (socket && user) {

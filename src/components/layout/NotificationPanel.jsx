@@ -29,12 +29,15 @@ export default function NotificationPanel() {
 
   useEffect(() => {
     if (isOpen) {
-      dispatch(fetchNotifications({ limit: 5 }));
+      dispatch(fetchNotifications({ limit: 4 }));
     }
   }, [isOpen, dispatch]);
 
   useEffect(() => {
     function handleClickOutside(e) {
+      if (e.target.closest('[data-dropdown-trigger]')) {
+        return;
+      }
       if (panelRef.current && !panelRef.current.contains(e.target)) {
         onClose();
       }
@@ -68,7 +71,7 @@ export default function NotificationPanel() {
   return (
     <div
       ref={panelRef}
-      className="absolute right-16 top-[80px] w-[380px] bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] overflow-hidden animate-in"
+      className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-16 top-[76px] sm:top-[80px] w-auto sm:w-[380px] max-w-full bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] overflow-hidden animate-in"
       style={{ animation: 'fadeSlideDown 0.2s ease-out' }}
     >
       {/* Header */}
@@ -96,57 +99,65 @@ export default function NotificationPanel() {
       </div>
 
       {/* Notifications list */}
-      <div className="max-h-[360px] overflow-y-auto">
+      <div className="overflow-y-auto" style={{ maxHeight: '320px' }}>
         {loading && notifications.length === 0 ? (
           <div className="py-10 text-center text-gray-500 text-sm">Loading...</div>
         ) : notifications.length === 0 ? (
-          <div className="py-10 text-center text-gray-500 text-sm">No notifications found</div>
+          <div className="py-10 text-center">
+            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Info className="w-6 h-6 text-gray-300" />
+            </div>
+            <p className="text-sm text-gray-500">No notifications yet</p>
+          </div>
         ) : (
-          notifications.map((notif) => {
-            const cfg = typeConfig[notif.type] || typeConfig[notif.category] || typeConfig.info;
-            const Icon = cfg.icon;
-            return (
-              <div
-                key={notif._id}
-                onClick={() => !notif.isRead && handleMarkRead(notif._id)}
-                className={`group flex items-start gap-3 px-5 py-4 border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer relative ${
-                  !notif.isRead ? 'bg-blue-50/30' : ''
-                }`}
-              >
-                <div className={`w-9 h-9 rounded-full ${cfg.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                  <Icon className={`w-[18px] h-[18px] ${cfg.color}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">{notif.title}</p>
-                  <p className="text-sm text-gray-500 mt-0.5 leading-snug">{notif.message || notif.description}</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
-                  </p>
-                </div>
-                <div className="flex flex-col items-center gap-2">
+          <div className="divide-y divide-gray-50">
+            {notifications.slice(0, 4).map((notif) => {
+              const cfg = typeConfig[notif.type] || typeConfig[notif.category] || typeConfig.info;
+              const Icon = cfg.icon;
+              return (
+                <div
+                  key={notif._id}
+                  onClick={() => !notif.isRead && handleMarkRead(notif._id)}
+                  className={`group flex items-start gap-3 px-5 py-3.5 hover:bg-gray-50/70 transition-colors cursor-pointer relative ${
+                    !notif.isRead ? 'bg-blue-50/25' : ''
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-xl ${cfg.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <Icon className={`w-4 h-4 ${cfg.color}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-gray-900 leading-snug">{notif.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">{notif.message || notif.description}</p>
+                    <p className="text-[11px] text-gray-400 mt-1 font-medium">
+                      {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-center gap-2 ml-1">
                     {!notif.isRead && (
-                        <div className="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0" />
+                      <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1" />
                     )}
-                    <button 
-                        onClick={(e) => handleDelete(e, notif._id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
+                    <button
+                      onClick={(e) => handleDelete(e, notif._id)}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-500 transition-all rounded"
                     >
-                        <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-gray-100">
-        <button 
+      <div className="px-4 py-3 border-t border-gray-100">
+        <button
           onClick={handleViewAll}
-          className="w-full py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          className="w-full py-2.5 text-[13px] font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl transition-all shadow-sm shadow-blue-100 flex items-center justify-center gap-1.5"
         >
           View All Notifications
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
       </div>
     </div>

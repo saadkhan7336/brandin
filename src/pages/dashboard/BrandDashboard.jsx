@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { 
   CheckCircle2, UserPlus, Star, ChevronDown, 
-  MoreVertical, ArrowUpRight, TrendingUp, Bell, RefreshCw,
+  MoreVertical, ArrowUpRight, ArrowRight, TrendingUp, Bell, RefreshCw,
   Megaphone, FileText, Send, XCircle, Handshake, DollarSign,
   CreditCard, UserCheck, PenTool, Package, BadgeCheck, Calendar, Check
 } from 'lucide-react';
@@ -21,7 +21,9 @@ function DateRangePicker() {
   const [selectedLabel, setSelectedLabel] = useState('Jul 26 - Aug 1');
   const [startDate, setStartDate] = useState('2026-07-26');
   const [endDate, setEndDate] = useState('2026-08-01');
+  const [dropAlign, setDropAlign] = useState('right');
   const pickerRef = React.useRef(null);
+  const triggerRef = React.useRef(null);
 
   const presets = [
     { label: 'Last 7 Days', value: 'Jul 26 - Aug 1', start: '2026-07-26', end: '2026-08-01' },
@@ -40,6 +42,17 @@ function DateRangePicker() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleToggle = () => {
+    if (!isOpen && triggerRef.current) {
+      // Determine if there's enough space to the left for a right-aligned dropdown
+      const rect = triggerRef.current.getBoundingClientRect();
+      const dropdownWidth = window.innerWidth < 640 ? 256 : 288; // w-64 or w-72
+      const spaceToLeft = rect.right; // space from viewport left to right edge of trigger
+      setDropAlign(spaceToLeft >= dropdownWidth ? 'right' : 'left');
+    }
+    setIsOpen(prev => !prev);
+  };
 
   const handleSelectPreset = (preset) => {
     setSelectedLabel(preset.value);
@@ -61,7 +74,8 @@ function DateRangePicker() {
     <div className="relative" ref={pickerRef}>
       {/* Trigger Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        ref={triggerRef}
+        onClick={handleToggle}
         className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-3.5 py-2 hover:bg-slate-50 transition-all shadow-sm cursor-pointer"
       >
         <Calendar className="w-3.5 h-3.5 text-[#2563eb]" />
@@ -69,9 +83,12 @@ function DateRangePicker() {
         <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Popover Menu */}
+      {/* Popover Menu — dynamically aligned so it never overflows viewport */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-[#e2e8f0] p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div
+          className="absolute mt-2 w-64 sm:w-72 bg-white rounded-2xl shadow-xl border border-[#e2e8f0] p-4 z-50"
+          style={dropAlign === 'right' ? { right: 0 } : { left: 0 }}
+        >
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Select Date Range</p>
 
           {/* Quick Presets */}
@@ -240,46 +257,41 @@ export default function BrandDashboard() {
     dispatch(fetchNotifications());
   }, [dispatch]);
 
-  const recentActivity = notifications?.slice(0, 3) || [];
+  const recentActivity = notifications?.slice(0, 4) || [];
+  const mobileActivity = notifications?.slice(0, 2) || [];
 
   return (
-    <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-8 flex flex-col gap-5">
+    <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-8 pt-3 pb-8 flex flex-col gap-4 sm:gap-5">
       
-      {/* Page Actions (Top Header - Unboxed & Sleek) */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Page Actions (Top Header - Responsive) */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#1e293b] tracking-tight">Dashboard Overview</h1>
-          <p className="text-xs font-medium text-slate-500 mt-0.5">Track your campaigns, spending, and influencer performance.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#1e293b] tracking-tight">Dashboard Overview</h1>
+          <p className="text-xs font-medium text-slate-500 mt-0.5 hidden sm:block">Track your campaigns, spending, and influencer performance.</p>
         </div>
         
-        <div className="flex items-center gap-3 self-end sm:self-auto">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {/* Interactive Date Range Picker */}
           <DateRangePicker />
 
           {/* Export Button */}
-          <button className="flex items-center gap-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-xl px-4 py-2 font-semibold text-xs transition-colors shadow-sm">
+          <button className="flex items-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white rounded-xl px-3 sm:px-4 py-2 font-semibold text-xs transition-colors shadow-sm">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-            Export
+            <span>Export</span>
           </button>
         </div>
       </div>
 
-      {/* Top Row: Active Campaigns List + Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Top Row: Social Media Chart + Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         
-        {/* Social Media Analytics Chart (Replaces Active Campaigns) */}
+        {/* Social Media Analytics Chart */}
         <div className="lg:col-span-8">
           <ChartCard
             title="Social Media Performance"
             subtitle="Track reach, engagement, and tasks from influencer collaborations"
             headerAction={
-              <div className="flex items-center gap-3">
-                {/* Chart-specific Date Picker */}
-                <div className="hidden sm:flex items-center bg-slate-50 border border-[#e2e8f0] rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-slate-100 transition-colors">
-                  <span className="text-xs font-semibold text-[#475569] mr-2">Last 30 Days</span>
-                  <ChevronDown className="w-3 h-3 text-slate-400" />
-                </div>
-                
+              <div className="flex flex-wrap items-center gap-2">
                 <ChartToggle
                   options={[
                     { label: 'Engagement', value: 'engagement' },
@@ -292,46 +304,73 @@ export default function BrandDashboard() {
               </div>
             }
           >
-            <div className="w-full h-[280px]">
+            <div className="w-full h-[240px] sm:h-[280px]">
               <SocialMediaAreaChart mode={socialView} />
             </div>
           </ChartCard>
         </div>
 
         {/* Recent Activity */}
-        <div className="lg:col-span-4 bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-[#e2e8f0] flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-bold text-[#1e293b] uppercase tracking-wider">Recent Activity</h3>
-            <button 
-               onClick={() => dispatch(fetchNotifications())}
-               disabled={loadingNotifications}
-               className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
-            >
-               <RefreshCw className={`w-4 h-4 ${loadingNotifications ? 'animate-spin' : ''}`} />
-            </button>
+        <div className="lg:col-span-4 bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-[#e2e8f0] flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h3 className="text-xs font-extrabold text-[#1e293b] uppercase tracking-wider">Recent Activity</h3>
+              <button 
+                 onClick={() => dispatch(fetchNotifications())}
+                 disabled={loadingNotifications}
+                 className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+                 title="Refresh Activity"
+              >
+                 <RefreshCw className={`w-3.5 h-3.5 ${loadingNotifications ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              {recentActivity.length > 0 ? (
+                (window.innerWidth < 640 ? mobileActivity : recentActivity).map(activity => {
+                  const style = getActivityStyle(activity.type);
+                  const getActivityRoute = (act) => {
+                    const t = (act.type || '').toLowerCase();
+                    if (t.includes('collab') || act.collaborationId) return '/brand/collaborations';
+                    if (t.includes('campaign') || act.campaignId) return '/brand/campaigns';
+                    if (t.includes('request') || act.requestId) return '/brand/requests/sent';
+                    if (t.includes('message') || t.includes('chat')) return '/messages';
+                    if (t.includes('payment') || t.includes('escrow')) return '/brand/payments';
+                    return '/brand/collaborations';
+                  };
+
+                  return (
+                    <div 
+                      key={activity._id || activity.id} 
+                      onClick={() => navigate(getActivityRoute(activity))}
+                      className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50/70 border border-slate-100 hover:bg-white hover:border-blue-200 hover:shadow-md cursor-pointer transition-all group"
+                    >
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${style.bg} group-hover:scale-105 transition-transform shadow-sm`}>
+                        {style.icon}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-[#1e293b] group-hover:text-blue-600 transition-colors truncate">{activity.title}</p>
+                        <p className="text-[11px] font-medium text-slate-500 mt-0.5 line-clamp-1 leading-snug">
+                          {activity.message} • {formatDistanceToNow(new Date(activity.createdAt || Date.now()), { addSuffix: true })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center text-slate-400 text-xs py-8">No recent activity</div>
+              )}
+            </div>
           </div>
-          
-          <div className="flex flex-col gap-5 flex-1 justify-center">
-            {recentActivity.length > 0 ? (
-              recentActivity.map(activity => {
-                const style = getActivityStyle(activity.type);
-                return (
-                  <div key={activity._id || activity.id} className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${style.bg}`}>
-                      {style.icon}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-[#1e293b]">{activity.title}</p>
-                      <p className="text-xs font-medium text-slate-500 mt-0.5">
-                        {activity.message} • {formatDistanceToNow(new Date(activity.createdAt || Date.now()), { addSuffix: true })}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-center text-slate-500 text-sm py-4">No recent activity</div>
-            )}
+
+          {/* View All Activity Link */}
+          <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-center">
+            <button
+              onClick={() => navigate('/notifications')}
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1.5 transition-all"
+            >
+              View All Notifications & Activity <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 
@@ -387,7 +426,7 @@ export default function BrandDashboard() {
       </div>
 
       {/* Middle Row 1: Spending & Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         
         {/* Brand Spending Bar Chart */}
         <div className="lg:col-span-8">
@@ -395,7 +434,7 @@ export default function BrandDashboard() {
             title="Brand Spending" 
             subtitle="Weekly breakdown across channels & ROI"
             headerAction={
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2">
                 <ChartToggle
                   options={[
                     { label: 'Bar', value: 'bar' },
@@ -405,14 +444,11 @@ export default function BrandDashboard() {
                   value={spendingView}
                   onChange={setSpendingView}
                 />
-                <button className="flex items-center gap-2 text-xs font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg transition-colors border border-slate-200">
-                  Last 7 Days <ChevronDown className="w-3 h-3" />
-                </button>
               </div>
             }
             className="h-full"
           >
-            <div className="w-full h-[300px]">
+            <div className="w-full h-[260px] sm:h-[300px]">
               {spendingView === 'bar' && <StackedBarChart />}
               {spendingView === 'line' && <SpendingLineChart />}
               {spendingView === 'combo' && <SpendingComboChart />}
@@ -437,7 +473,7 @@ export default function BrandDashboard() {
             }
             className="h-full"
           >
-            <div className="w-full h-[250px] flex items-center justify-center">
+            <div className="w-full h-[220px] sm:h-[250px] flex items-center justify-center">
               {collabView === 'donut' && <StatsDoughnutChart />}
               {collabView === 'list'  && <StatsList />}
               {collabView === 'radar' && <CollabRadarChart />}
@@ -448,7 +484,7 @@ export default function BrandDashboard() {
       </div>
 
       {/* Middle Row 2: Map & Flow */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         
         {/* Enhanced Heat Map with toggle */}
         <div className="lg:col-span-6">
@@ -464,7 +500,7 @@ export default function BrandDashboard() {
             }
             className="h-full"
           >
-            <div className="w-full h-[300px] bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden">
+            <div className="w-full h-[260px] sm:h-[300px] bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden">
               <HeatMap viewMode={mapView} />
             </div>
           </ChartCard>
@@ -484,7 +520,7 @@ export default function BrandDashboard() {
             }
             className="h-full"
           >
-            <div className="w-full h-[300px]">
+            <div className="w-full h-[260px] sm:h-[300px]">
               {flowView === 'multi' ? <MultiLineChart /> : <AreaFrequencyChart />}
             </div>
           </ChartCard>
@@ -492,28 +528,58 @@ export default function BrandDashboard() {
 
       </div>
 
-      {/* Bottom Row: Messages & Campaigns Table */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Bottom Row: Messages & Campaigns */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         
         {/* Recent Messages */}
-        <div className="lg:col-span-4 bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-[#e2e8f0] flex flex-col">
-           <div className="flex items-center justify-between mb-6">
+        <div className="lg:col-span-4 bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-[#e2e8f0] flex flex-col">
+           <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-[#1e293b] uppercase tracking-wider">Recent Messages</h3>
-              <button className="text-xs font-bold text-blue-600 hover:underline">View All</button>
+              <button onClick={() => navigate('/messages')} className="text-xs font-bold text-blue-600 hover:underline cursor-pointer">View All</button>
            </div>
 
-           <div className="flex flex-col gap-5 flex-1">
-             {mockMessages.map(msg => (
-               <div key={msg.id} className="flex items-start gap-4 group cursor-pointer">
+           {/* Mobile: show only first 2 messages */}
+           <div className="flex sm:hidden flex-col gap-3 flex-1">
+             {mockMessages.slice(0, 2).map(msg => (
+               <div 
+                 key={msg.id} 
+                 onClick={() => navigate('/messages', { state: { userName: msg.name } })} 
+                 className="flex items-start gap-3 group cursor-pointer hover:bg-slate-50 p-1.5 rounded-xl transition-colors"
+               >
                   <div className="relative">
-                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${msg.color}`}>
+                     <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${msg.color}`}>
                         {msg.initial}
                      </div>
                      <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${msg.status === 'online' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                      <div className="flex items-center justify-between mb-0.5">
-                        <p className="text-sm font-bold text-[#1e293b] truncate">{msg.name}</p>
+                        <p className="text-sm font-bold text-[#1e293b] group-hover:text-blue-600 transition-colors truncate">{msg.name}</p>
+                        <span className="text-[10px] font-semibold text-slate-400 whitespace-nowrap ml-2">{msg.time}</span>
+                     </div>
+                     <p className="text-xs font-medium text-slate-500 truncate">{msg.desc}</p>
+                  </div>
+               </div>
+             ))}
+           </div>
+
+           {/* Desktop: show all messages */}
+           <div className="hidden sm:flex flex-col gap-5 flex-1">
+             {mockMessages.map(msg => (
+               <div 
+                 key={msg.id} 
+                 onClick={() => navigate('/messages', { state: { userName: msg.name } })} 
+                 className="flex items-start gap-3 group cursor-pointer hover:bg-slate-50 p-1.5 rounded-xl transition-colors"
+               >
+                  <div className="relative">
+                     <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${msg.color}`}>
+                        {msg.initial}
+                     </div>
+                     <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${msg.status === 'online' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                     <div className="flex items-center justify-between mb-0.5">
+                        <p className="text-sm font-bold text-[#1e293b] group-hover:text-blue-600 transition-colors truncate">{msg.name}</p>
                         <span className="text-[10px] font-semibold text-slate-400 whitespace-nowrap ml-2">{msg.time}</span>
                      </div>
                      <p className="text-xs font-medium text-slate-500 truncate">{msg.desc}</p>
@@ -523,20 +589,44 @@ export default function BrandDashboard() {
            </div>
         </div>
 
-        {/* Active Campaigns Table */}
-        <div className="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-[#e2e8f0] flex flex-col">
-           <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-[#1e293b]">Active Campaigns</h3>
+        {/* Active Campaigns - Table on desktop, cards on mobile */}
+        <div className="lg:col-span-8 bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-[#e2e8f0] flex flex-col">
+           <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base sm:text-lg font-bold text-[#1e293b]">Active Campaigns</h3>
               <button className="text-xs font-bold text-blue-600 hover:underline">Manage All</button>
            </div>
            
-           <div className="overflow-x-auto">
+           {/* Mobile Card View */}
+           <div className="flex flex-col gap-3 sm:hidden">
+             {mockCampaigns.map(camp => (
+               <div key={camp.id} className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${camp.color}`}>
+                   <TrendingUp className="w-4 h-4" />
+                 </div>
+                 <div className="flex-1 min-w-0">
+                   <div className="flex items-center justify-between gap-2 mb-1.5">
+                     <p className="text-sm font-bold text-[#1e293b] truncate">{camp.name}</p>
+                     <span className="bg-emerald-50 text-emerald-600 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider flex-shrink-0">{camp.status}</span>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                       <div className="h-full bg-blue-500 rounded-full" style={{ width: `${camp.progress}%` }} />
+                     </div>
+                     <span className="text-[10px] font-bold text-slate-500">{camp.progress}%</span>
+                   </div>
+                 </div>
+               </div>
+             ))}
+           </div>
+
+           {/* Desktop Table View */}
+           <div className="hidden sm:block overflow-x-auto">
              <table className="w-full text-left">
                 <thead className="border-b border-[#e2e8f0]">
                    <tr>
                       <th className="pb-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Campaign Name</th>
                       <th className="pb-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                      <th className="pb-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-1/3">Budget</th>
+                      <th className="pb-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-1/3">Progress</th>
                       <th className="pb-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Action</th>
                    </tr>
                 </thead>
