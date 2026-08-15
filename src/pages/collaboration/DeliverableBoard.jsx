@@ -11,7 +11,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useOutletContext } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { getOptimizedImage } from '../../utils/imageOptimization';
+import UserAvatar from '../../components/common/UserAvatar';
 
 const cn = (...inputs) => twMerge(clsx(inputs));
 
@@ -166,16 +166,18 @@ const DeliverableBoard = () => {
                           <div className="flex items-center justify-between pt-4 border-t border-gray-50/50">
                             <div className="flex items-center gap-2">
                                <div className="flex -space-x-2">
-                                  <img loading="lazy" decoding="async" 
-                                    src={getOptimizedImage(collaboration.influencer?.profilePic || "https://ui-avatars.com/api/?name=I&background=random", 'avatar')} 
-                                    className="w-7 h-7 rounded-lg border-2 border-white shadow-sm object-cover" 
-                                    alt="Influencer"
-                                   width="28" height="28" />
-                                  <img loading="lazy" decoding="async" 
-                                    src={getOptimizedImage(collaboration.brand?.profilePic || "https://ui-avatars.com/api/?name=B&background=random", 'avatar')} 
-                                    className="w-7 h-7 rounded-lg border-2 border-white shadow-sm object-cover" 
-                                    alt="Brand"
-                                   width="28" height="28" />
+                                  <UserAvatar
+                                    src={collaboration.influencer?.profilePic}
+                                    name={collaboration.influencer?.fullname || collaboration.influencer?.username || 'I'}
+                                    className="w-7 h-7 rounded-lg border-2 border-white shadow-sm"
+                                    textClassName="text-[10px]"
+                                  />
+                                  <UserAvatar
+                                    src={collaboration.brand?.profilePic}
+                                    name={collaboration.brand?.fullname || collaboration.brand?.name || 'B'}
+                                    className="w-7 h-7 rounded-lg border-2 border-white shadow-sm"
+                                    textClassName="text-[10px]"
+                                  />
                                </div>
                             </div>
                             

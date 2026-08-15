@@ -4,7 +4,7 @@ import {
   Send, CheckCircle, TrendingUp, DollarSign, X 
 } from "lucide-react";
 import api from "../../../services/api";
-import { getOptimizedImage } from "../../../utils/imageOptimization";
+import UserAvatar from "../../common/UserAvatar";
 
 const InfluencerCard = ({ influencer, onSendRequest }) => {
   const name = influencer.userFullname || influencer.username || "Influencer";
@@ -16,13 +16,12 @@ const InfluencerCard = ({ influencer, onSendRequest }) => {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          {profilePic ? (
-            <img loading="lazy" decoding="async" src={getOptimizedImage(profilePic, 'avatar')} alt={name} className="w-12 h-12 rounded-full object-cover border border-gray-100"  width="48" height="48" />
-          ) : (
-            <div className="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-lg">
-              {name[0]}
-            </div>
-          )}
+          <UserAvatar
+            src={profilePic}
+            name={name}
+            className="w-12 h-12 rounded-full border border-gray-100"
+            textClassName="text-lg"
+          />
           <div>
             <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors flex items-center gap-1.5">
               {name}

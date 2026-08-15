@@ -5,6 +5,7 @@ import { Settings, LogOut, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import VerifiedTick from '../common/VerifiedTick';
 import { useDashboardContext } from '../../context/DashboardContext';
+import UserAvatar from '../common/UserAvatar';
 import { getOptimizedImage } from '../../utils/imageOptimization';
 
 export default function ProfileDropdown() {
@@ -31,7 +32,6 @@ export default function ProfileDropdown() {
     (fullName || 'User');
 
   const userEmail = user?.email || 'user@example.com';
-  const initial = displayName.charAt(0).toUpperCase();
 
   // Dynamic avatars & cover
   const avatarUrl = user?.profilePic || (isBrand ? roleProfile?.logo : null);
@@ -64,7 +64,7 @@ export default function ProfileDropdown() {
   return (
     <div
       ref={panelRef}
-      className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-4 top-[76px] sm:top-[80px] w-auto sm:w-[300px] max-w-full bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] overflow-hidden"
+      className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-4 top-[76px] sm:top-[80px] w-auto sm:w-[300px] max-w-full bg-white rounded-2xl shadow-2xl border border-gray-100 z-[210] overflow-hidden"
       style={{ animation: 'fadeSlideDown 0.2s ease-out' }}
     >
       {/* Blue gradient header / Cover image */}
@@ -78,13 +78,12 @@ export default function ProfileDropdown() {
       {/* Avatar overlapping header - Moved outside to prevent overflow clipping */}
       <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20">
         <div className="relative">
-          <div className="w-16 h-16 rounded-2xl bg-slate-100 border-[3px] border-white flex items-center justify-center shadow-lg overflow-hidden">
-            {avatarUrl ? (
-              <img loading="lazy" decoding="async" src={getOptimizedImage(avatarUrl, 'avatar')} alt={displayName} className="w-full h-full object-cover" width="64" height="64" />
-            ) : (
-              <span className="text-xl font-bold text-slate-500">{initial}</span>
-            )}
-          </div>
+          <UserAvatar
+            src={avatarUrl}
+            name={displayName}
+            className="w-16 h-16 rounded-2xl border-[3px] border-white shadow-lg"
+            textClassName="text-xl"
+          />
           {/* Status dot */}
           <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
             user?.status === 'offline' ? 'bg-gray-400' : 'bg-green-500'

@@ -33,7 +33,8 @@ export const SocketProvider = ({ children }) => {
         const newSocket = io(ENDPOINT, {
             withCredentials: true,
             transports: ['websocket'], // Force WebSocket to bypass polling proxy issues
-            reconnectionAttempts: 5,
+            reconnection: true,
+            reconnectionAttempts: Infinity,
             reconnectionDelay: 1000,
         });
 
@@ -98,22 +99,19 @@ export const SocketProvider = ({ children }) => {
         setSocket(newSocket);
 
         const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                if (!newSocket.connected) {
-                    newSocket.connect();
-                }
-                // Always emit setup to ensure server knows we are active
-                newSocket.emit('setup', user);
-            } else if (document.visibilityState === 'hidden') {
-                // User explicitly wants the socket to disconnect when leaving the window
-                newSocket.disconnect();
-            }
+            if (document.visibilityState !== 'visible') return;
+            if (!newSocket.connected) newSocket.connect();
+            newSocket.emit('setup', user);
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
+        const pingId = setInterval(() => {
+            if (newSocket.connected) newSocket.emit('presence_ping');
+        }, 30000);
 
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+            clearInterval(pingId);
             newSocket.disconnect();
         };
     }, [isAuthenticated, user?._id, dispatch]);

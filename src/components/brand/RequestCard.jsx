@@ -12,7 +12,7 @@ import {
   DollarSign,
   RotateCcw
 } from 'lucide-react';
-import { getOptimizedImage } from '../../utils/imageOptimization';
+import UserAvatar from '../common/UserAvatar';
 
 const RequestCard = ({ request, type, userId, onAccept, onReject, onViewProfile, onResend }) => {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ const RequestCard = ({ request, type, userId, onAccept, onReject, onViewProfile,
   const roleProfile = request.influencerProfile || {};
   
   const username = otherParty.fullname || 'Unknown User';
-  const avatar = otherParty.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`;
+  const avatar = otherParty.profilePic;
   
   // Campaign details
   const campaignName = request.campaignDetails?.name || request.title || 'Collaboration';
@@ -79,11 +79,12 @@ const RequestCard = ({ request, type, userId, onAccept, onReject, onViewProfile,
       <div className="flex flex-col md:flex-row md:items-start gap-5">
         {/* Avatar */}
         <div className="relative shrink-0">
-          <img loading="lazy" decoding="async" 
-            src={getOptimizedImage(avatar, 'avatar')} 
-            alt={username} 
-            className="w-[60px] h-[60px] rounded-full object-cover ring-4 ring-white shadow-sm"
-           width="60" height="60" />
+          <UserAvatar
+            src={avatar}
+            name={username}
+            className="w-[60px] h-[60px] rounded-full ring-4 ring-white shadow-sm"
+            textClassName="text-lg"
+          />
         </div>
 
         {/* Content */}

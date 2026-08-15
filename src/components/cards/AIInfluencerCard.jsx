@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import VerifiedTick from '../common/VerifiedTick';
 import SocialIcon from '../common/SocialIcon';
-import { getOptimizedImage } from '../../utils/imageOptimization';
+import UserAvatar from '../common/UserAvatar';
 
 const stripHtml = (text) => {
   if (!text) return '';
@@ -84,13 +84,11 @@ const AIInfluencerCard = memo(({ data, onInvite }) => {
       <div className="px-4 pt-4 pb-3 flex items-start gap-3">
         {/* Avatar */}
         <div className="relative flex-shrink-0">
-          <img
-            loading="lazy"
-            decoding="async"
-            src={getOptimizedImage(data.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanUsername)}&background=random`, 'avatar')}
-            alt={cleanName}
-            className="w-[52px] h-[52px] rounded-xl object-cover border-2 border-white shadow-md bg-white"
-            width="52" height="52"
+          <UserAvatar
+            src={data.profileImage}
+            name={cleanUsername}
+            className="w-[52px] h-[52px] rounded-xl border-2 border-white shadow-md"
+            textClassName="text-lg"
           />
           {isVerified && (
             <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border border-white shadow-sm">

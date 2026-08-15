@@ -3,7 +3,7 @@
 // Replaces the placeholder at /influencer/search-brands
 
 import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { fetchSidebarCounts } from "../../../redux/slices/collaborationSlice";
 import {
@@ -35,7 +35,7 @@ import VerifiedTick from "../../common/VerifiedTick";
 import SocialIcon from "../../common/SocialIcon";
 import { clsx } from "clsx";
 import { twMerge } from 'tailwind-merge';
-import { getOptimizedImage } from "../../../utils/imageOptimization";
+import UserAvatar from "../../common/UserAvatar";
 
 const cn = (...inputs) => twMerge(clsx(inputs));
 
@@ -101,16 +101,12 @@ const CampaignCard = ({
 
           {/* Brand Logo */}
           <div className="relative z-10 transition-transform duration-500 group-hover:scale-110">
-             {brandLogo ? (
-               <img loading="lazy" decoding="async"                  src={getOptimizedImage(brandLogo, 'avatar')}
-                 alt={brandName}
-                 className="w-20 h-20 rounded-2xl object-cover border-[3px] border-white/20 shadow-2xl bg-white"
-                width="80" height="80" />
-             ) : (
-               <div className="w-20 h-20 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl border-[3px] border-white/20 shadow-2xl">
-                 {brandName[0]}
-               </div>
-             )}
+             <UserAvatar
+               src={brandLogo}
+               name={brandName}
+               className="w-20 h-20 rounded-2xl border-[3px] border-white/20 shadow-2xl"
+               textClassName="text-2xl"
+             />
           </div>
           
           <div className="mt-3 text-center z-10">
@@ -290,16 +286,12 @@ const BrandCard = ({
       <div className="px-5 pb-5 flex-1 flex flex-col -mt-10 relative items-center text-center">
          {/* Profile Image */}
          <div className="relative mb-2 transition-transform duration-500 group-hover:scale-105">
-            {logo ? (
-              <img loading="lazy" decoding="async"                 src={getOptimizedImage(logo, 'avatar')}
-                alt={name}
-                className="w-[84px] h-[84px] rounded-[24px] object-cover border-[4px] border-white shadow-md bg-white relative z-10 transition-transform duration-500 group-hover:scale-110"
-               width="84" height="84" />
-            ) : (
-              <div className="w-[84px] h-[84px] rounded-[24px] bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl border-[4px] border-white shadow-md relative z-10 transition-transform duration-500 group-hover:scale-110">
-                {name[0]}
-              </div>
-            )}
+            <UserAvatar
+              src={logo}
+              name={name}
+              className="w-[84px] h-[84px] rounded-[24px] border-[4px] border-white shadow-md relative z-10"
+              textClassName="text-2xl"
+            />
          </div>
          
          <div className="flex items-center gap-1.5 justify-center mb-0.5">
@@ -488,6 +480,8 @@ const SearchExplore = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const urlSearch = searchParams.get("q") || "";
 
   const { tab } = useParams();
   const activeTab = tab === "brands" ? "brands" : "campaigns";
@@ -548,9 +542,13 @@ const SearchExplore = () => {
   const [activeCollaborations, setActiveCollaborations] = useState([]); // List of { campaignId, brandId, collaborationId }
 
   // Filters
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(urlSearch);
   const [industry, setIndustry] = useState("All");
   const [platform, setPlatform] = useState("All");
+
+  useEffect(() => {
+    setSearch((prev) => (prev === urlSearch ? prev : urlSearch));
+  }, [urlSearch]);
 
   // Pagination
   const [page, setPage] = useState(1);

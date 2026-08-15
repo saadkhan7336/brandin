@@ -24,7 +24,7 @@ import { setActiveConversation } from '../../redux/slices/chatSlice';
 import Modal from '../../components/common/Modal';
 import { cn } from '../../utils/helper';
 import { useSocket } from '../../context/SocketContext';
-import { getOptimizedImage } from '../../utils/imageOptimization';
+import UserAvatar from '../../components/common/UserAvatar';
 import paymentService from '../../services/paymentService';
 import PaymentModal from '../../components/payment/PaymentModal';
 import { toast } from 'sonner';
@@ -294,7 +294,6 @@ const CollabDetailView = () => {
 
   const { campaign, influencer, brand, status, deliverables = [], actionRequest, agreedBudget } = collaboration;
   const partner = user.role === 'brand' ? influencer : brand;
-  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(partner?.fullname || 'User')}&background=random&size=150`;
 
   // Progress logic
   const delivTotal = deliverables.length;
@@ -435,11 +434,12 @@ const CollabDetailView = () => {
           </div>
 
           <div className="shrink-0 flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-            <img loading="lazy" decoding="async" 
-              src={getOptimizedImage(partner?.profilePic || fallbackAvatar, 'avatar')} 
-              alt={partner?.fullname}
-              className="w-14 h-14 rounded-xl object-cover border border-gray-200"
-             width="56" height="56" />
+            <UserAvatar
+              src={partner?.profilePic}
+              name={partner?.fullname || 'User'}
+              className="w-14 h-14 rounded-xl border border-gray-200"
+              textClassName="text-lg"
+            />
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Partner</p>
               <h4 className="font-bold text-gray-900 truncate max-w-[150px] capitalize text-[15px]">{partner?.fullname}</h4>

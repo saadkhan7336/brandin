@@ -5,6 +5,7 @@ import { Briefcase, Video, Eye, EyeOff, Globe, Hash, CheckCircle2, Shield, Zap }
 import api from '../../services/api.js';
 import { ENDPOINTS } from '../../services/endpoints.js';
 import { setLoading, clearAuthState, setAuthUser } from '../../redux/slices/authSlice.js';
+import GoogleAuthButton from '../../components/auth/GoogleAuthButton.jsx';
 import { compressImage } from '../../utils/imageCompression.js';
 import { getDashboardByRole } from '../../routes/ProtectedRoute.jsx';
 
@@ -45,7 +46,12 @@ export default function Register() {
   const fileInputRef = useRef(null);
   
   const [fieldErrors, setFieldErrors] = useState({});
-  const [submitError, setSubmitError] = useState('');
+  const [submitError, setSubmitError] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('error') === 'google'
+      ? (params.get('msg') || 'Google sign-in failed.')
+      : '';
+  });
   
 
   useEffect(() => {
@@ -290,6 +296,23 @@ export default function Register() {
               <h2 className="text-3xl sm:text-[2.5rem] font-black text-[#0f172a] mb-2 tracking-tight">Join the Movement</h2>
               <p className="text-[#64748b] font-medium mb-10">Step 1 of 2: Basic Information</p>
 
+              <div className="flex gap-2 mb-6 lg:hidden">
+                <button
+                  type="button"
+                  onClick={() => setRole('brand')}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-colors ${role === 'brand' ? 'bg-[#eff6ff] text-[#2563eb] ring-1 ring-[#3b82f6]/30' : 'bg-[#f8fafc] text-[#64748b]'}`}
+                >
+                  Brand
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('influencer')}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-colors ${role === 'influencer' ? 'bg-[#faf5ff] text-[#a855f7] ring-1 ring-[#a855f7]/30' : 'bg-[#f8fafc] text-[#64748b]'}`}
+                >
+                  Creator
+                </button>
+              </div>
+
               {submitError && step === 1 && (
                 <div className="bg-red-50 text-red-600 p-3.5 rounded-xl mb-5 text-sm border border-red-100 flex items-start gap-2.5">
                   <span className="mt-0.5 shrink-0 w-4 h-4 rounded-full bg-red-100 flex items-center justify-center text-red-500 text-[10px] font-bold">!</span>
@@ -362,6 +385,15 @@ export default function Register() {
                   </button>
                 </div>
               </form>
+
+              <div className="relative flex items-center justify-center mt-8 mb-6">
+                <div className="border-t border-[#e2e8f0] w-full"></div>
+                <span className="bg-white px-4 text-[11px] font-bold text-[#94a3b8] tracking-widest uppercase absolute">Or</span>
+              </div>
+              <GoogleAuthButton intent="signup" role={role} />
+              <p className="text-center text-xs text-[#94a3b8] font-medium mt-3">
+                Google signup uses your {role === 'influencer' ? 'Creator' : 'Brand'} selection above.
+              </p>
 
               {/* Bottom Feature Cards */}
               <div className="grid grid-cols-2 gap-4 mt-10">

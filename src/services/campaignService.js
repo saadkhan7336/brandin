@@ -12,6 +12,11 @@ const campaignService = {
     return response.data.data;
   },
 
+  getCampaign: async (id) => {
+    const response = await api.get(`/campaigns/${id}`);
+    return response.data.data;
+  },
+
   createCampaign: async (campaignData) => {
     const response = await api.post('/campaigns', campaignData);
     return response.data.data;

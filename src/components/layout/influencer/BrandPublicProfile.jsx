@@ -27,6 +27,7 @@ import SendCollabModal from "./SendCollabModal";
 import { cn } from "../../../utils/helper";
 import VerifiedTick from "../../common/VerifiedTick";
 import { getOptimizedImage } from "../../../utils/imageOptimization";
+import UserAvatar from "../../common/UserAvatar";
 
 const SocialIcon = ({ name, size = 16, className }) => {
   const map = {
@@ -289,16 +290,12 @@ const BrandPublicProfile = () => {
               <div className="flex items-start gap-4">
                 {/* Logo */}
                 <div className="absolute -top-16 left-8">
-                  {user.profilePic || brand?.logo ? (
-                    <img loading="lazy" decoding="async"                       src={getOptimizedImage(user.profilePic || brand?.logo, 'avatar')}
-                      alt={name}
-                      className="w-36 h-36 rounded-2xl object-cover border-4 border-white shadow-xl"
-                     width="144" height="144" />
-                  ) : (
-                    <div className="w-36 h-36 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 border-4 border-white shadow-xl flex items-center justify-center text-blue-600 font-bold text-4xl">
-                      {name[0]}
-                    </div>
-                  )}
+                  <UserAvatar
+                    src={user.profilePic || brand?.logo}
+                    name={name}
+                    className="w-36 h-36 rounded-2xl border-4 border-white shadow-xl"
+                    textClassName="text-4xl"
+                  />
                 </div>
 
                 {/* Name + Meta */}
@@ -718,14 +715,12 @@ const BrandPublicProfile = () => {
                   key={i}
                   className="p-6 bg-white border border-gray-100 rounded-2xl flex flex-col md:flex-row gap-5 items-start group hover:shadow-lg transition-all duration-500"
                 >
-                  <img loading="lazy" decoding="async"                     src={getOptimizedImage(
-                      review.reviewer?.profilePic ||
-                      `https://ui-avatars.com/api/?name=${review.reviewer?.fullname}`,
-                      'avatar'
-                    )}
-                    className="w-12 h-12 rounded-xl object-cover border-2 border-gray-100 shadow"
-                    alt="Reviewer"
-                   width="48" height="48" />
+                  <UserAvatar
+                    src={review.reviewer?.profilePic}
+                    name={review.reviewer?.fullname || 'User'}
+                    className="w-12 h-12 rounded-xl border-2 border-gray-100 shadow"
+                    textClassName="text-sm"
+                  />
                   <div className="flex-1 text-left space-y-2">
                     <div className="flex items-center justify-between">
                       <h4 className="font-bold text-gray-900 text-sm">

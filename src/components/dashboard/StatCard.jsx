@@ -97,18 +97,9 @@ export default function StatCard({
         <h2 className="text-2xl sm:text-3xl font-black text-[#1e293b] tracking-tight">{value}</h2>
       </div>
 
-      {/* Sparkline Container */}
-      {sparklineData ? (
+      {sparklineData && (
         <div className="absolute bottom-0 left-0 right-0 h-16 opacity-70 group-hover:opacity-100 transition-opacity">
           <Line data={chartData} options={chartOptions} />
-        </div>
-      ) : (
-        <div className="mt-auto pt-4 relative z-10">
-           {/* Fallback bar if no sparkline data is provided (e.g. standard metric) */}
-           <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-1000 ease-out" 
-                   style={{ width: '70%', backgroundColor: sparklineColor }} />
-           </div>
         </div>
       )}
     </div>

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { getDashboardByRole } from './ProtectedRoute';
+import { setLoading } from '../redux/slices/authSlice';
 
 /**
  * PublicRoute — wraps auth pages (login, register, etc.).
@@ -9,10 +10,23 @@ import { getDashboardByRole } from './ProtectedRoute';
  * Prevents logged-in users from accessing login/register pages.
  */
 export default function PublicRoute() {
+  const dispatch = useDispatch();
   const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
+  const [waitedOut, setWaitedOut] = useState(false);
 
-  // While verifying session, show spinner (prevents brief flash of login page)
-  if (loading) {
+  useEffect(() => {
+    if (!loading) {
+      setWaitedOut(false);
+      return undefined;
+    }
+    const t = setTimeout(() => {
+      setWaitedOut(true);
+      dispatch(setLoading(false));
+    }, 12000);
+    return () => clearTimeout(t);
+  }, [loading, dispatch]);
+
+  if (loading && !waitedOut) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">

@@ -12,7 +12,7 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { chatService } from '../../services/chatService';
 import { setActiveConversation } from '../../redux/slices/chatSlice';
-import { getOptimizedImage } from '../../utils/imageOptimization';
+import UserAvatar from './UserAvatar';
 
 const cn = (...inputs) => twMerge(clsx(inputs));
 
@@ -49,8 +49,6 @@ const CollaborationCard = ({ collaboration, userRole }) => {
     partnerAvatar = influencer.avatar || influencer.profilePic || null;
     partnerId = influencer._id || influencer.id;
   }
-
-  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(partnerName)}&background=random&size=150`;
 
   // Stats
   const delivCompleted = deliverablesSummary?.completed || 0;
@@ -91,12 +89,11 @@ const CollaborationCard = ({ collaboration, userRole }) => {
       {/* Main Info Part (Left/Middle) */}
       <div className="flex-1 w-full space-y-6 lg:border-r border-gray-100 lg:pr-8">
         <div className="flex items-center gap-5">
-          <img loading="lazy" decoding="async" 
-            src={getOptimizedImage(partnerAvatar || fallbackAvatar, 'avatar')} 
-            alt={partnerName}
-            className="w-14 h-14 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform duration-300 ring-2 ring-gray-100"
-            onError={(e) => { e.target.src = fallbackAvatar; }}
-            width="56" height="56"
+          <UserAvatar
+            src={partnerAvatar}
+            name={partnerName}
+            className="w-14 h-14 rounded-xl shadow-sm ring-2 ring-gray-100"
+            textClassName="text-lg"
           />
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-1">

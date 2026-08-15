@@ -25,6 +25,7 @@ import {
 } from "../../redux/slices/authSlice";
 import { cn } from "../../utils/helper";
 import VerifiedTick from "../../components/common/VerifiedTick";
+import UserAvatar from "../../components/common/UserAvatar";
 import { getOptimizedImage } from "../../utils/imageOptimization";
 
 
@@ -189,16 +190,12 @@ const MyProfileView = () => {
             {/* LOGO AREA */}
             <div className="relative group/logo shrink-0">
               <div className="w-44 h-44 rounded-[2.5rem] overflow-hidden border-[10px] border-white shadow-2xl bg-white flex items-center justify-center relative ring-1 ring-gray-100">
-                {userDoc.profilePic ? (
-                  <img loading="lazy" decoding="async"                     src={getOptimizedImage(userDoc.profilePic, 'avatar')}
-                    alt={name}
-                    className="w-full h-full object-cover"
-                    width="176" height="176" />
-                ) : (
-                  <span className="text-5xl font-black text-slate-100 italic">
-                    {(name || "B")[0]}
-                  </span>
-                )}
+                <UserAvatar
+                  src={userDoc.profilePic}
+                  name={name}
+                  className="w-full h-full rounded-[2.5rem]"
+                  textClassName="text-5xl"
+                />
               </div>
             </div>
 
@@ -567,14 +564,12 @@ const MyProfileView = () => {
                         className="p-10 bg-white border border-slate-100 rounded-[2.5rem] flex flex-col md:flex-row gap-8 items-start group hover:shadow-2xl hover:shadow-slate-200/40 transition-all duration-700"
                       >
                         <div className="relative shrink-0">
-                          <img loading="lazy" decoding="async"                             src={getOptimizedImage(
-                              review.reviewer?.profilePic ||
-                              `https://ui-avatars.com/api/?name=${review.reviewer?.fullname}`,
-                              'avatar'
-                            )}
-                            className="w-20 h-20 rounded-[1.5rem] object-cover border-[6px] border-slate-50 shadow-xl group-hover:scale-105 transition-transform duration-500"
-                            alt="Reviewer"
-                           width="80" height="80" />
+                          <UserAvatar
+                            src={review.reviewer?.profilePic}
+                            name={review.reviewer?.fullname || 'User'}
+                            className="w-20 h-20 rounded-[1.5rem] border-[6px] border-slate-50 shadow-xl"
+                            textClassName="text-2xl"
+                          />
                         </div>
                         <div className="flex-1 text-left space-y-4">
                           <div className="flex items-center justify-between">

@@ -278,6 +278,8 @@ class WebGLErrorBoundary extends React.Component {
 const DotGlobeHero = React.forwardRef(
   ({ className, children, ...props }, ref) => {
     const [isWebGLSupported, setIsWebGLSupported] = useState(true);
+    const [canvasReady, setCanvasReady] = useState(false);
+    const eventSourceRef = useRef(null);
 
     useEffect(() => {
       try {
@@ -289,6 +291,17 @@ const DotGlobeHero = React.forwardRef(
       } catch (e) {
         setIsWebGLSupported(false);
       }
+    }, []);
+
+    useEffect(() => {
+      let cancelled = false;
+      const id = requestAnimationFrame(() => {
+        if (!cancelled && eventSourceRef.current) setCanvasReady(true);
+      });
+      return () => {
+        cancelled = true;
+        cancelAnimationFrame(id);
+      };
     }, []);
 
     return (
@@ -310,11 +323,13 @@ const DotGlobeHero = React.forwardRef(
         </div>
 
         {/* Interactive WebGL Canvas with Fallback */}
-        <div className="absolute inset-0 z-0">
-          {isWebGLSupported ? (
+        <div ref={eventSourceRef} className="absolute inset-0 z-0">
+          {isWebGLSupported && canvasReady ? (
             <WebGLErrorBoundary>
               <Canvas
                 camera={{ position: [0, 0, 5], fov: 55 }}
+                eventSource={eventSourceRef}
+                eventPrefix="client"
                 gl={{
                   antialias: true,
                   alpha: true,
@@ -323,11 +338,13 @@ const DotGlobeHero = React.forwardRef(
                   preserveDrawingBuffer: false,
                 }}
                 onCreated={({ gl }) => {
+                  const target = gl?.domElement;
+                  if (!target) return;
                   const handleContextLost = (e) => {
                     e.preventDefault();
                     console.warn("WebGL Context Lost. Preserving state...");
                   };
-                  gl.domElement.addEventListener("webglcontextlost", handleContextLost, false);
+                  target.addEventListener("webglcontextlost", handleContextLost, false);
                 }}
                 style={{ pointerEvents: "auto" }}
               >
@@ -335,9 +352,9 @@ const DotGlobeHero = React.forwardRef(
                 <InteractiveMesh />
               </Canvas>
             </WebGLErrorBoundary>
-          ) : (
+          ) : !isWebGLSupported ? (
             <Canvas2DFallback />
-          )}
+          ) : null}
         </div>
       </div>
     );

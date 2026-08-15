@@ -7,7 +7,7 @@ import {
   ShieldClose, LogOut,
   Plus, Instagram, Twitter, Linkedin, Youtube, Globe, Facebook,
   Shield, ShieldCheck, Zap, Info, ExternalLink,
-  ChevronRight, Loader2, X, Link, File, UploadCloud, CreditCard
+  ChevronRight, Loader2, X, Link, File, UploadCloud, CreditCard, MapPin
 } from "lucide-react";
 import { updateProfileComplete, updateUserFields } from "../../redux/slices/authSlice";
 import {
@@ -18,13 +18,20 @@ import profileService from "../../services/profileService";
 import { cn } from "../../utils/helper";
 import { getOptimizedImage } from "../../utils/imageOptimization";
 import { compressImage } from "../../utils/imageCompression";
+import { getNameInitial } from "../../utils/avatar";
+import LocationPicker from "../../components/common/LocationPicker";
 
 // ── Avatar upload area (Standardized) ───────────────────────────────────────────
-function AvatarUpload({ label, currentUrl, onChange, shape = "circle", size = "lg" }) {
+function AvatarUpload({ label, currentUrl, onChange, shape = "circle", size = "lg", fallbackName = "" }) {
   const inputRef = useRef();
   const [preview, setPreview] = useState(currentUrl || "");
+  const [imgFailed, setImgFailed] = useState(false);
+  const isCircle = shape === "circle";
 
-  useEffect(() => { setPreview(currentUrl || ""); }, [currentUrl]);
+  useEffect(() => {
+    setPreview(currentUrl || "");
+    setImgFailed(false);
+  }, [currentUrl]);
 
   const handleFile = async (e) => {
     let file = e.target.files?.[0];
@@ -33,10 +40,10 @@ function AvatarUpload({ label, currentUrl, onChange, shape = "circle", size = "l
     file = await compressImage(file, isCircle ? 'avatar' : 'normal');
     
     setPreview(URL.createObjectURL(file));
+    setImgFailed(false);
     onChange(file);
   };
 
-  const isCircle = shape === "circle";
   const containerClass = isCircle
     ? `${size === "lg" ? "w-24 h-24" : "w-16 h-16"} rounded-2xl`
     : "w-full max-w-[280px] h-24 md:h-24 rounded-2xl aspect-[3/1]";
@@ -52,8 +59,12 @@ function AvatarUpload({ label, currentUrl, onChange, shape = "circle", size = "l
           containerClass
         )}
       >
-        {preview ? (
-          <img loading="lazy" decoding="async" src={getOptimizedImage(preview, isCircle ? 'avatar' : 'cover')} alt={label} className="w-full h-full object-cover" />
+        {preview && !imgFailed ? (
+          <img loading="lazy" decoding="async" src={getOptimizedImage(preview, isCircle ? 'avatar' : 'cover')} alt={label} className="w-full h-full object-cover" onError={() => setImgFailed(true)} />
+        ) : isCircle ? (
+          <div className="w-full h-full flex items-center justify-center font-bold text-2xl bg-blue-50 text-blue-700">
+            <span>{getNameInitial(fallbackName)}</span>
+          </div>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50">
             <Camera size={20} className="text-gray-300" />
@@ -152,6 +163,7 @@ export default function ProfileSettings() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const [showManageAccount, setShowManageAccount] = useState(null);
+  const [place, setPlace] = useState({ formatted: "", lat: null, lng: null, city: "", country: "" });
 
   // Toast
   const [toast, setToast] = useState(null);
@@ -190,6 +202,15 @@ export default function ProfileSettings() {
       setAbout(roleProfile.about || "");
       setCategory(roleProfile.category || "");
       setPortfolio(Array.isArray(roleProfile.portfolio) ? roleProfile.portfolio : []);
+      const geo = roleProfile.geo || {};
+      const formatted = geo.formatted || roleProfile.location || roleProfile.address || "";
+      setPlace({
+        formatted,
+        lat: geo.lat ?? null,
+        lng: geo.lng ?? null,
+        city: geo.city || "",
+        country: geo.country || "",
+      });
 
 
       // Load verified platforms from user data
@@ -297,6 +318,42 @@ export default function ProfileSettings() {
       showToast("Settings updated!");
     } catch (err) {
       showToast("Update failed", "error");
+    } finally {
+      dispatch(setProfileSaving(false));
+    }
+  };
+
+  const saveLocation = async () => {
+    dispatch(setProfileSaving(true));
+    try {
+      const hasPin = place?.lat != null && place?.lng != null;
+      const payload = hasPin
+        ? { lat: place.lat, lng: place.lng, city: place.city || "", country: place.country || "", formatted: place.formatted || "" }
+        : {};
+      if (user?.role === "brand") {
+        const brandFd = new FormData();
+        brandFd.append("address", place.formatted || "");
+        brandFd.append("geo", JSON.stringify(payload));
+        const brandRes = await profileService.updateBrandProfile(brandFd);
+        dispatch(setProfileData({ roleProfile: brandRes.brand, completion: brandRes.completion }));
+        if (brandRes.user) {
+          dispatch(updateUserFields(brandRes.user));
+          dispatch(updateProfileComplete(brandRes.completion?.isComplete));
+        }
+      } else {
+        const infFd = new FormData();
+        infFd.append("location", place.formatted || "");
+        infFd.append("geo", JSON.stringify(payload));
+        const infRes = await profileService.updateInfluencerProfile(infFd);
+        dispatch(setProfileData({ roleProfile: infRes.influencer, completion: infRes.completion }));
+        if (infRes.user) {
+          dispatch(updateUserFields(infRes.user));
+          dispatch(updateProfileComplete(infRes.completion?.isComplete));
+        }
+      }
+      showToast("Location updated!");
+    } catch (err) {
+      showToast("Location update failed", "error");
     } finally {
       dispatch(setProfileSaving(false));
     }
@@ -432,6 +489,7 @@ export default function ProfileSettings() {
             <AvatarUpload 
               label={user?.role === 'brand' ? "Logo" : "Avatar"} 
               currentUrl={user?.profilePic} 
+              fallbackName={fullname || user?.fullname}
               onChange={setProfilePic} 
             />
             <AvatarUpload 
@@ -490,6 +548,21 @@ export default function ProfileSettings() {
 
           </div>
         </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Location"
+        description={
+          user?.role === "brand"
+            ? "Pin your brand on the map so creators know where you operate."
+            : "Drop a live pin so brands can find you on the influencer map."
+        }
+        saving={saving}
+        onSave={saveLocation}
+        saveLabel="Save location"
+        icon={MapPin}
+      >
+        <LocationPicker value={place} onChange={setPlace} />
       </SectionCard>
       
       {/* Section: Portfolio (Influencer Only) */}

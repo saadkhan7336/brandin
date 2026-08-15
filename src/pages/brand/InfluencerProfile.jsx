@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getOptimizedImage } from "../../utils/imageOptimization";
+import UserAvatar from "../../components/common/UserAvatar";
 import {
   ArrowLeft,
   Instagram,
@@ -232,10 +233,7 @@ const InfluencerProfile = () => {
   }
 
   const name = user?.fullname || influencer?.username || "Influencer";
-  const avatar =
-    user?.profilePic ||
-    influencer?.profilePicture ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=200`;
+  const avatarSrc = user?.profilePic || influencer?.profilePicture;
   const cover =
     user?.coverPic ||
     influencer?.coverImage ||
@@ -295,10 +293,12 @@ const InfluencerProfile = () => {
         <div className="px-12 pb-12">
           <div className="flex flex-col md:flex-row items-end gap-12 -mt-16 relative z-10">
             <div className="relative group/logo">
-              <img loading="lazy" decoding="async"                 src={getOptimizedImage(avatar, 'avatar')}
-                alt="Avatar"
-                className="w-44 h-44 rounded-[2.5rem] object-cover border-[10px] border-white shadow-2xl bg-white"
-               width="176" height="176" />
+              <UserAvatar
+                src={avatarSrc}
+                name={name}
+                className="w-44 h-44 rounded-[2.5rem] border-[10px] border-white shadow-2xl"
+                textClassName="text-5xl"
+              />
               <VerifiedTick
                 user={user}
                 roleProfile={influencer}
@@ -653,13 +653,12 @@ const InfluencerProfile = () => {
                         key={i}
                         className="p-8 bg-slate-50/50 border border-slate-100 rounded-[2.5rem] flex flex-col md:flex-row gap-6 items-start group hover:bg-white hover:shadow-2xl transition-all duration-500"
                       >
-                        <img loading="lazy" decoding="async"                           src={getOptimizedImage(
-                            review.reviewer?.profilePic ||
-                            `https://ui-avatars.com/api/?name=${review.reviewer?.fullname}`, 'avatar'
-                          )}
-                          className="w-14 h-14 rounded-2xl object-cover border-4 border-white shadow-lg"
-                          alt="Reviewer"
-                         width="56" height="56" />
+                        <UserAvatar
+                          src={review.reviewer?.profilePic}
+                          name={review.reviewer?.fullname || 'User'}
+                          className="w-14 h-14 rounded-2xl border-4 border-white shadow-lg"
+                          textClassName="text-lg"
+                        />
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center justify-between">
                             <h4 className="font-black text-slate-900 uppercase italic tracking-tight">

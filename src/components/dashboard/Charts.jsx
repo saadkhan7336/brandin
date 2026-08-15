@@ -15,7 +15,6 @@ import {
   Filler
 } from 'chart.js';
 import { Line, Bar, Doughnut, Radar, PolarArea } from 'react-chartjs-2';
-import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 
 ChartJS.register(
   CategoryScale,
@@ -340,21 +339,27 @@ export function AreaChart({ data, labels }) {
   return <Line data={chartData} options={options} />;
 }
 
+const moneyTick = (value) => {
+  const n = Number(value) || 0;
+  if (Math.abs(n) >= 1000) return `$${(n / 1000).toFixed(1)}k`;
+  return `$${Math.round(n)}`;
+};
+
 // --- 2. Bar Chart for Brand Spending ---
-export function StackedBarChart({ labels, dataset1, dataset2 }) {
+export function StackedBarChart({ labels, dataset1, dataset2, label1, label2, stacked = true }) {
   const chartData = {
     labels: labels || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     datasets: [
       {
-        label: 'Instagram',
+        label: label1 || 'Instagram',
         data: dataset1 || [4000, 3000, 2000, 2780, 1890, 2390, 3490],
         backgroundColor: '#3b82f6',
-        borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0 },
+        borderRadius: { topLeft: stacked ? 0 : 4, topRight: stacked ? 0 : 4, bottomLeft: 0, bottomRight: 0 },
         barPercentage: 0.6,
         categoryPercentage: 0.8
       },
       {
-        label: 'Facebook',
+        label: label2 || 'Facebook',
         data: dataset2 || [2400, 1398, 9800, 3908, 4800, 3800, 4300],
         backgroundColor: '#a855f7',
         borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
@@ -382,20 +387,18 @@ export function StackedBarChart({ labels, dataset1, dataset2 }) {
     },
     scales: {
       x: { 
-        stacked: true, 
+        stacked, 
         grid: { display: false },
         ticks: { color: '#64748b', font: { size: 11, family: 'system-ui' } }
       },
       y: { 
-        stacked: true, 
+        stacked, 
         grid: { color: '#f1f5f9' }, 
         border: { display: false },
         ticks: { 
           color: '#64748b', 
           font: { size: 11, family: 'system-ui' },
-          callback: function(value) {
-            return value.toLocaleString();
-          }
+          callback: moneyTick
         }
       },
     },
@@ -405,13 +408,13 @@ export function StackedBarChart({ labels, dataset1, dataset2 }) {
 }
 
 // --- 2b. Line version of Brand Spending (toggle) ---
-export function SpendingLineChart({ labels, dataset1, dataset2 }) {
+export function SpendingLineChart({ labels, dataset1, dataset2, label1, label2 }) {
   const chartData = {
     labels: labels || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     datasets: [
       {
-        label: 'Instagram',
-        data: dataset1 || [4000, 3000, 2000, 2780, 1890, 2390, 3490],
+        label: label1 || 'Funded',
+        data: dataset1 || [],
         borderColor: '#3b82f6',
         backgroundColor: 'rgba(59, 130, 246, 0.08)',
         fill: true,
@@ -422,8 +425,8 @@ export function SpendingLineChart({ labels, dataset1, dataset2 }) {
         borderWidth: 2,
       },
       {
-        label: 'Facebook',
-        data: dataset2 || [2400, 1398, 9800, 3908, 4800, 3800, 4300],
+        label: label2 || 'Released',
+        data: dataset2 || [],
         borderColor: '#a855f7',
         backgroundColor: 'rgba(168, 85, 247, 0.06)',
         fill: true,
@@ -463,7 +466,7 @@ export function SpendingLineChart({ labels, dataset1, dataset2 }) {
         ticks: { 
           color: '#64748b', 
           font: { size: 11 },
-          callback: (v) => v.toLocaleString()
+          callback: moneyTick
         }
       },
     },
@@ -473,17 +476,17 @@ export function SpendingLineChart({ labels, dataset1, dataset2 }) {
 }
 
 // --- 2c. Combo Bar+Line version of Brand Spending (toggle) ---
-export function SpendingComboChart() {
-  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+export function SpendingComboChart({ labels, funded, released, payoutRate }) {
+  const chartLabels = labels || [];
 
   const chartData = {
-    labels,
+    labels: chartLabels,
     datasets: [
       {
         type: 'bar',
-        label: 'Instagram Spend',
-        data: [4000, 3000, 2000, 2780, 1890, 2390, 3490],
-        backgroundColor: 'rgba(37, 99, 235, 0.75)',   // primary blue
+        label: 'Escrow funded',
+        data: funded || [],
+        backgroundColor: 'rgba(37, 99, 235, 0.75)',
         borderRadius: { topLeft: 4, topRight: 4 },
         barPercentage: 0.55,
         categoryPercentage: 0.8,
@@ -492,9 +495,9 @@ export function SpendingComboChart() {
       },
       {
         type: 'bar',
-        label: 'Facebook Spend',
-        data: [2400, 1398, 4800, 3908, 3200, 3800, 2900],
-        backgroundColor: 'rgba(139, 92, 246, 0.6)',   // accent purple
+        label: 'Paid to creators',
+        data: released || [],
+        backgroundColor: 'rgba(139, 92, 246, 0.6)',
         borderRadius: { topLeft: 4, topRight: 4 },
         barPercentage: 0.55,
         categoryPercentage: 0.8,
@@ -503,9 +506,9 @@ export function SpendingComboChart() {
       },
       {
         type: 'line',
-        label: 'Total ROI %',
-        data: [62, 48, 75, 71, 55, 80, 78],
-        borderColor: '#f97316',                       // orange accent
+        label: 'Payout rate %',
+        data: payoutRate || [],
+        borderColor: '#f97316',
         backgroundColor: 'rgba(249, 115, 22, 0.08)',
         borderWidth: 2.5,
         tension: 0.4,
@@ -551,7 +554,7 @@ export function SpendingComboChart() {
         ticks: {
           color: '#64748b',
           font: { size: 11 },
-          callback: (v) => v.toLocaleString(),
+          callback: moneyTick,
         },
       },
       y1: {
@@ -565,7 +568,6 @@ export function SpendingComboChart() {
           callback: (v) => v + '%',
         },
         min: 0,
-        max: 100,
       },
     },
   };
@@ -574,19 +576,24 @@ export function SpendingComboChart() {
 }
 
 // --- 3. Doughnut Chart for Stats ---
-export function StatsDoughnutChart({ data, labels, colors }) {
-  const chartValues = data || [300, 50, 100];
-  const chartLabels = labels || ['Completed', 'In Progress', 'Pending'];
-  const chartColors = colors || ['#10b981', '#3b82f6', '#f59e0b'];
+export function StatsDoughnutChart({ data, labels, colors, centerLabel = 'Collabs' }) {
+  const chartValues = (data && data.length ? data : [0]).map((n) => Number(n) || 0);
+  const chartLabels = labels && labels.length ? labels : ['None'];
+  const chartColors = colors || ['#10b981', '#3b82f6', '#f59e0b', '#94a3b8'];
+  const total = chartValues.reduce((a, b) => a + b, 0);
 
   const chartData = {
     labels: chartLabels,
     datasets: [
       {
-        data: chartValues,
-        backgroundColor: chartColors,
-        borderWidth: 0,
-        cutout: '75%',
+        data: total > 0 ? chartValues : [1],
+        backgroundColor: total > 0 ? chartColors.slice(0, chartValues.length) : ['#e2e8f0'],
+        borderWidth: 4,
+        borderColor: '#ffffff',
+        hoverBorderWidth: 4,
+        hoverOffset: 6,
+        cutout: '74%',
+        borderRadius: 6,
       },
     ],
   };
@@ -595,39 +602,14 @@ export function StatsDoughnutChart({ data, labels, colors }) {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { 
-        position: 'right',
-        labels: {
-          usePointStyle: false,
-          boxWidth: 14,
-          boxHeight: 8,
-          font: { size: 11, family: 'system-ui', weight: '500' },
-          color: '#475569',
-          padding: 16,
-          generateLabels: (chart) => {
-            const dataset = chart.data.datasets[0];
-            const datasetTotal = dataset.data.reduce((a, b) => a + b, 0);
-            return chart.data.labels.map((label, i) => {
-              const val = dataset.data[i] || 0;
-              const pct = datasetTotal > 0 ? ((val / datasetTotal) * 100).toFixed(1) : '0';
-              return {
-                text: `${label}: ${pct}% (${val})`,
-                fillStyle: dataset.backgroundColor[i],
-                strokeStyle: 'transparent',
-                hidden: !chart.getDataVisibility(i),
-                index: i,
-              };
-            });
-          },
-        }
-      },
+      legend: { display: false },
       tooltip: {
         ...sharedTooltip,
+        enabled: total > 0,
         callbacks: {
           label: (context) => {
             const val = context.raw || 0;
-            const datasetTotal = context.dataset.data.reduce((a, b) => a + b, 0);
-            const pct = datasetTotal > 0 ? ((val / datasetTotal) * 100).toFixed(1) : '0';
+            const pct = total > 0 ? ((val / total) * 100).toFixed(0) : '0';
             return ` ${context.label}: ${val} (${pct}%)`;
           }
         }
@@ -635,7 +617,32 @@ export function StatsDoughnutChart({ data, labels, colors }) {
     }
   };
 
-  return <Doughnut data={chartData} options={options} />;
+  return (
+    <div className="w-full h-full flex items-center gap-2 min-h-0">
+      <div className="relative flex-1 min-w-0 h-full">
+        <Doughnut data={chartData} options={options} />
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span className="text-2xl sm:text-[26px] font-black text-[#0f172a] leading-none tabular-nums">{total}</span>
+          <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400 mt-1">{centerLabel}</span>
+        </div>
+      </div>
+      <div className="w-[46%] shrink-0 flex flex-col justify-center gap-3 pr-1">
+        {chartLabels.map((label, i) => {
+          const val = chartValues[i] || 0;
+          const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+          return (
+            <div key={label} className="flex items-start gap-2.5">
+              <span className="w-3.5 h-2 rounded-[2px] mt-1 shrink-0" style={{ backgroundColor: chartColors[i] }} />
+              <div className="min-w-0 leading-tight">
+                <p className="text-[11px] font-semibold text-slate-600 truncate">{label}</p>
+                <p className="text-[11px] font-bold text-slate-800 tabular-nums">{pct}% ({val})</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 // --- 3b. List view for Collab Stats (toggle) ---
@@ -675,27 +682,23 @@ export function StatsList({ data, labels, colors }) {
 }
 
 // --- 3c. Radial Gradient / Polar Area Chart for Collab Stats (toggle option) ---
-export function CollabRadialGradientChart() {
+export function CollabRadialGradientChart({ data, labels }) {
+  const vals = (data && data.length ? data : [0, 0, 0, 0, 0]).map((n) => Number(n) || 0);
+  const lbls = labels && labels.length ? labels : ['Completed', 'Active', 'Review', 'Pending', 'Closed'];
   const chartData = {
-    labels: ['Completed', 'Approved', 'Pending', 'In Progress', 'Revision'],
+    labels: lbls,
     datasets: [
       {
-        label: 'Tasks',
-        data: [300, 250, 100, 50, 35],
+        label: 'Collaborations',
+        data: vals,
         backgroundColor: [
-          'rgba(37, 99, 235, 0.75)',   // Primary Blue
-          'rgba(139, 92, 246, 0.75)',  // Accent Purple
-          'rgba(245, 158, 11, 0.75)',  // Amber
-          'rgba(16, 185, 129, 0.75)',  // Emerald
-          'rgba(239, 68, 68, 0.75)',   // Red
+          'rgba(16, 185, 129, 0.75)',
+          'rgba(37, 99, 235, 0.75)',
+          'rgba(139, 92, 246, 0.75)',
+          'rgba(245, 158, 11, 0.75)',
+          'rgba(100, 116, 139, 0.75)',
         ],
-        borderColor: [
-          '#2563eb',
-          '#8b5cf6',
-          '#f59e0b',
-          '#10b981',
-          '#ef4444',
-        ],
+        borderColor: ['#10b981', '#2563eb', '#8b5cf6', '#f59e0b', '#64748b'],
         borderWidth: 2,
       },
     ],
@@ -732,20 +735,14 @@ export function CollabRadialGradientChart() {
 // Alias for backwards compatibility
 export const CollabRadarChart = CollabRadialGradientChart;
 
-// --- 4. Multi-Line Frequency Chart (new) ---
-// Matches the "3 colored lines" screenshot
-export function MultiLineChart({ labels }) {
-  const months = labels || [
-    'Dec 22', 'Feb 23', 'Apr 23', 'Jun 23', 'Aug 23', 'Oct 23', 'Dec 23',
-    'Feb 24', 'Apr 24', 'Jun 24', 'Aug 24', 'Oct 24', 'Dec 24'
-  ];
-
+// --- 4. Multi-Line Frequency Chart (real campaign pipeline) ---
+export function MultiLineChart({ labels = [], campaigns = [], requests = [], completed = [] }) {
   const chartData = {
-    labels: months,
+    labels,
     datasets: [
       {
-        label: 'Instagram',
-        data: [180, 140, 370, 120, 130, 140, 150, 280, 100, 200, 250, 120, 340],
+        label: 'Campaigns',
+        data: campaigns,
         borderColor: '#6366f1',
         backgroundColor: 'transparent',
         tension: 0.4,
@@ -754,8 +751,8 @@ export function MultiLineChart({ labels }) {
         borderWidth: 2,
       },
       {
-        label: 'Facebook',
-        data: [70, 120, 110, 140, 150, 120, 100, 130, 100, 140, 200, 290, 130],
+        label: 'Requests',
+        data: requests,
         borderColor: '#38bdf8',
         backgroundColor: 'transparent',
         tension: 0.4,
@@ -764,8 +761,8 @@ export function MultiLineChart({ labels }) {
         borderWidth: 2,
       },
       {
-        label: 'TikTok',
-        data: [150, 100, 130, 160, 200, 180, 160, 120, 200, 100, 130, 230, 250],
+        label: 'Completed',
+        data: completed,
         borderColor: '#34d399',
         backgroundColor: 'transparent',
         tension: 0.4,
@@ -795,7 +792,7 @@ export function MultiLineChart({ labels }) {
       tooltip: {
         ...sharedTooltip,
         callbacks: {
-          label: (ctx) => ` ${ctx.dataset.label}: $${ctx.parsed.y}`
+          label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y}`
         }
       }
     },
@@ -806,11 +803,13 @@ export function MultiLineChart({ labels }) {
       },
       y: {
         border: { display: false },
+        beginAtZero: true,
         grid: { color: '#f1f5f9' },
         ticks: {
           color: '#94a3b8',
           font: { size: 10 },
-          callback: (v) => `$${v}`
+          precision: 0,
+          stepSize: 1,
         }
       }
     }
@@ -819,19 +818,14 @@ export function MultiLineChart({ labels }) {
   return <Line data={chartData} options={options} />;
 }
 
-// --- 5. Area Frequency Chart (new) ---
-// Matches the filled purple + gray comparison line screenshot
-export function AreaFrequencyChart({ labels }) {
-  const months = labels || [
-    'Dec 22', 'Mar 23', 'Jun 23', 'Sep 23', 'Dec 23', 'Mar 24', 'Jun 24', 'Sep 24', 'Dec 24'
-  ];
-
+// --- 5. Area Frequency Chart (this year vs last year campaigns) ---
+export function AreaFrequencyChart({ labels = [], thisPeriod = [], lastPeriod = [] }) {
   const chartData = {
-    labels: months,
+    labels,
     datasets: [
       {
-        label: 'This Period',
-        data: [5000, 9000, 11000, 10000, 21000, 8000, 10000, 15000, 17000],
+        label: 'This year',
+        data: thisPeriod,
         borderColor: '#6366f1',
         backgroundColor: 'rgba(99, 102, 241, 0.15)',
         fill: true,
@@ -841,8 +835,8 @@ export function AreaFrequencyChart({ labels }) {
         borderWidth: 2.5,
       },
       {
-        label: 'Last Period',
-        data: [7000, 5000, 9000, 12000, 7000, 13000, 8000, 11000, 10000],
+        label: 'Last year',
+        data: lastPeriod,
         borderColor: '#cbd5e1',
         backgroundColor: 'transparent',
         fill: false,
@@ -874,7 +868,7 @@ export function AreaFrequencyChart({ labels }) {
       tooltip: {
         ...sharedTooltip,
         callbacks: {
-          label: (ctx) => ` ${ctx.dataset.label}: ${(ctx.parsed.y / 1000).toFixed(1)}K`
+          label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y}`
         }
       }
     },
@@ -885,11 +879,13 @@ export function AreaFrequencyChart({ labels }) {
       },
       y: {
         border: { display: false },
+        beginAtZero: true,
         grid: { color: '#f1f5f9' },
         ticks: {
           color: '#94a3b8',
           font: { size: 10 },
-          callback: (v) => v >= 1000 ? `${v / 1000}K` : v
+          precision: 0,
+          stepSize: 1,
         }
       }
     }
@@ -898,299 +894,7 @@ export function AreaFrequencyChart({ labels }) {
   return <Line data={chartData} options={options} />;
 }
 
-// --- 6. Enhanced Interactive Heat Map ---
-const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
-
-// Rich marker data with influencer stats per region
-const defaultMarkerData = [
-  {
-    name: "New York",       coordinates: [-74.006, 40.7128],   count: 128, avgRating: 4.8,
-    topCategory: "Fashion",  growth: "+12%",  spend: "$24.5k",  markerOffset: -22, category: "fashion"
-  },
-  {
-    name: "London",         coordinates: [-0.1276, 51.5072],   count: 95,  avgRating: 4.7,
-    topCategory: "Lifestyle", growth: "+8%",  spend: "$18.2k", markerOffset: -22, category: "lifestyle"
-  },
-  {
-    name: "Dubai",          coordinates: [55.2708, 25.2048],   count: 72,  avgRating: 4.9,
-    topCategory: "Luxury",   growth: "+22%", spend: "$31.0k",  markerOffset: -22, category: "luxury"
-  },
-  {
-    name: "Mumbai",         coordinates: [72.8777, 19.0760],   count: 110, avgRating: 4.6,
-    topCategory: "Tech",     growth: "+18%", spend: "$12.8k",  markerOffset: 30,  category: "tech"
-  },
-  {
-    name: "Tokyo",          coordinates: [139.6917, 35.6895],  count: 88,  avgRating: 4.8,
-    topCategory: "Gaming",   growth: "+15%", spend: "$19.4k",  markerOffset: 30,  category: "gaming"
-  },
-  {
-    name: "São Paulo",      coordinates: [-46.6333, -23.5505], count: 64,  avgRating: 4.5,
-    topCategory: "Beauty",   growth: "+9%",  spend: "$9.6k",   markerOffset: 30,  category: "beauty"
-  },
-  {
-    name: "Sydney",         coordinates: [151.2093, -33.8688], count: 51,  avgRating: 4.7,
-    topCategory: "Travel",   growth: "+11%", spend: "$14.1k",  markerOffset: 30,  category: "travel"
-  },
-  {
-    name: "Berlin",         coordinates: [13.4050, 52.5200],   count: 43,  avgRating: 4.6,
-    topCategory: "Music",    growth: "+6%",  spend: "$8.3k",   markerOffset: -22, category: "music"
-  },
-];
-
-const categoryColors = {
-  fashion:   '#ec4899',
-  lifestyle: '#f59e0b',
-  luxury:    '#a855f7',
-  tech:      '#6366f1',
-  gaming:    '#06b6d4',
-  beauty:    '#f43f5e',
-  travel:    '#10b981',
-  music:     '#8b5cf6',
-};
-
-export function HeatMap({ markers, viewMode = 'density' }) {
-  const [tooltip, setTooltip] = React.useState(null); // { x, y, data }
-  const mapMarkers = markers || defaultMarkerData;
-
-  // Bubble size: much larger for visual impact
-  const maxCount = Math.max(...mapMarkers.map(m => m.count));
-  const getSize = (count) => 14 + (count / maxCount) * 28; // range: 14px - 42px
-
-  const getColor = (marker) => {
-    // Density: red (high) → orange (mid) → yellow (low)
-    const intensity = marker.count / maxCount;
-    if (intensity > 0.8) return '#dc2626'; // Red — very high
-    if (intensity > 0.6) return '#ea580c'; // Red-Orange — high
-    if (intensity > 0.4) return '#f97316'; // Orange — mid
-    if (intensity > 0.2) return '#fb923c'; // Light Orange — low-mid
-    return '#fbbf24';                       // Yellow-Orange — low
-  };
-
-  // ── Category View: premium niche breakdown card ──────────────────────────────
-  if (viewMode === 'category') {
-    const nicheData = [
-      { id: 'fashion',   label: 'Fashion & Apparel',     emoji: '👗', count: 128, growth: '+12%',  spend: '$24.5k', positive: true },
-      { id: 'tech',      label: 'Tech & Gadgets',        emoji: '💻', count: 110, growth: '+18%',  spend: '$12.8k', positive: true },
-      { id: 'lifestyle', label: 'Lifestyle & Wellness',  emoji: '🌿', count: 95,  growth: '+8%',   spend: '$18.2k', positive: true },
-      { id: 'gaming',    label: 'Gaming & Esports',      emoji: '🎮', count: 88,  growth: '+15%',  spend: '$19.4k', positive: true },
-      { id: 'luxury',    label: 'Luxury & Travel',       emoji: '✈️', count: 72,  growth: '+22%',  spend: '$31.0k', positive: true },
-      { id: 'beauty',    label: 'Beauty & Skincare',     emoji: '💄', count: 64,  growth: '+9%',   spend: '$9.6k',  positive: true },
-      { id: 'travel',    label: 'Travel & Adventure',    emoji: '🗺️', count: 51,  growth: '+11%',  spend: '$14.1k', positive: true },
-      { id: 'music',     label: 'Music & Entertainment', emoji: '🎵', count: 43,  growth: '+6%',   spend: '$8.3k',  positive: true },
-    ].sort((a, b) => b.count - a.count);
-
-    const total = nicheData.reduce((s, n) => s + n.count, 0);
-    const topNiche = nicheData[0];
-
-    return (
-      <div
-        className="w-full h-full flex flex-col gap-1 overflow-y-auto px-1 pt-1 pb-2"
-        style={{ scrollbarWidth: 'thin', scrollbarColor: '#e2e8f0 transparent' }}
-      >
-        {/* Summary header strip */}
-        <div className="flex items-center gap-4 pb-2 mb-1 border-b border-slate-100 shrink-0">
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Top Niche</p>
-            <p className="text-xs font-extrabold text-[#1e293b] truncate">{topNiche.emoji} {topNiche.label}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</p>
-            <p className="text-xs font-extrabold text-[#1e293b]">{total}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Niches</p>
-            <p className="text-xs font-extrabold text-[#1e293b]">{nicheData.length}</p>
-          </div>
-        </div>
-
-        {/* Category rows */}
-        {nicheData.map((niche) => {
-          const pct = Math.round((niche.count / total) * 100);
-          const color = categoryColors[niche.id] || '#6366f1';
-          return (
-            <div
-              key={niche.id}
-              className="group flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-slate-50 transition-all duration-150 cursor-pointer shrink-0"
-            >
-              {/* Emoji badge */}
-              <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-sm shadow-sm"
-                style={{ backgroundColor: `${color}18`, border: `1.5px solid ${color}30` }}
-              >
-                {niche.emoji}
-              </div>
-
-              {/* Label + bar */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-0.5">
-                  <p className="text-[11px] font-bold text-[#1e293b] truncate leading-none">{niche.label}</p>
-                  <span className="text-[11px] font-extrabold text-[#1e293b] ml-2 shrink-0">{pct}%</span>
-                </div>
-                <div className="relative h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{ width: `${pct}%`, backgroundColor: color }}
-                  />
-                </div>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[10px] font-semibold text-slate-400">{niche.count} influencers</span>
-                  <span className="text-[10px] font-semibold text-slate-300">·</span>
-                  <span className="text-[10px] font-semibold text-slate-400">{niche.spend}</span>
-                </div>
-              </div>
-
-              {/* Growth badge */}
-              <div
-                className="shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap"
-                style={{ backgroundColor: `${color}18`, color }}
-              >
-                {niche.growth}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  // ── Density View: original world map ─────────────────────────────────────────
-  return (
-    <div className="relative w-full h-full">
-      <ComposableMap
-        projection="geoMercator"
-        projectionConfig={{ scale: 100, center: [10, 20] }}
-        style={{ width: '100%', height: '100%' }}
-      >
-        <Geographies geography={geoUrl}>
-          {({ geographies }) =>
-            geographies.map((geo) => (
-              <Geography
-                key={geo.rsmKey}
-                geography={geo}
-                fill="#e8eaf6"
-                stroke="#c5cae9"
-                strokeWidth={0.4}
-                style={{
-                  default: { outline: "none" },
-                  hover:   { outline: "none", fill: "#d1d5db" },
-                  pressed: { outline: "none" },
-                }}
-              />
-            ))
-          }
-        </Geographies>
-
-        {mapMarkers.map((marker) => {
-          const size = getSize(marker.count);
-          const color = getColor(marker);
-          return (
-            <Marker
-              key={marker.name}
-              coordinates={marker.coordinates}
-              onMouseEnter={() => setTooltip({ marker })}
-              onMouseLeave={() => setTooltip(null)}
-            >
-              {/* Layer 1: Outermost glow — very transparent, wide spread */}
-              <circle r={size * 2.2} fill={color} opacity={0.07} />
-              {/* Layer 2: Mid halo — moderate transparency */}
-              <circle r={size * 1.5} fill={color} opacity={0.18} />
-              {/* Layer 3: Inner ring — semi-transparent */}
-              <circle r={size * 1.1} fill={color} opacity={0.35} />
-              {/* Layer 4: Core bubble — solid but with slight transparency */}
-              <circle
-                r={size}
-                fill={color}
-                opacity={0.72}
-                stroke="rgba(255,255,255,0.6)"
-                strokeWidth={1}
-                style={{ cursor: 'pointer', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' }}
-              />
-              {/* Count label inside core */}
-              <text
-                textAnchor="middle"
-                dominantBaseline="central"
-                style={{ fontSize: size > 24 ? '10px' : '8px', fontWeight: '800', fill: 'white', pointerEvents: 'none', letterSpacing: '0.02em' }}
-              >
-                {marker.count}
-              </text>
-              {/* Region name label above bubble */}
-              <text
-                textAnchor="middle"
-                y={-(size * 2.2 + 5)}
-                style={{
-                  fontFamily: "system-ui",
-                  fill: "#334155",
-                  fontSize: "8.5px",
-                  fontWeight: "700",
-                  pointerEvents: 'none',
-                }}
-              >
-                {marker.name}
-              </text>
-            </Marker>
-          );
-        })}
-      </ComposableMap>
-
-      {/* Tooltip Popup */}
-      {tooltip && (
-        <div
-          className="absolute z-50 pointer-events-none"
-          style={{ bottom: '12px', left: '50%', transform: 'translateX(-50%)' }}
-        >
-          <div className="bg-white rounded-xl shadow-xl border border-[#e2e8f0] px-4 py-3 min-w-[220px]">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-bold text-[#1e293b]">{tooltip.marker.name}</p>
-              <span
-                className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white capitalize"
-                style={{ backgroundColor: categoryColors[tooltip.marker.category] || '#6366f1' }}
-              >
-                {tooltip.marker.topCategory}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-              <div>
-                <p className="text-[10px] font-medium text-slate-400">Influencers</p>
-                <p className="text-sm font-bold text-[#1e293b]">{tooltip.marker.count}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-medium text-slate-400">Avg Rating</p>
-                <p className="text-sm font-bold text-[#1e293b]">⭐ {tooltip.marker.avgRating}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-medium text-slate-400">Total Spend</p>
-                <p className="text-sm font-bold text-emerald-600">{tooltip.marker.spend}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-medium text-slate-400">Growth</p>
-                <p className="text-sm font-bold text-blue-600">{tooltip.marker.growth}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Density Legend (density mode) */}
-      <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-slate-100 shadow-sm">
-        <p className="text-[9px] font-semibold text-slate-400 mb-1">Bubble size = influencer count</p>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-[#fbbf24]" />
-            <span className="text-[9px] text-slate-500">Low</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-[#f97316]" />
-            <span className="text-[9px] text-slate-500">Mid</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded-full bg-[#dc2626]" />
-            <span className="text-[9px] text-slate-500">High</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+export { HeatMap } from './InfluencerHeatMap';
 
 // --- 7. Complex Mixed ROI/Performance Chart ---
 // 3 toggle modes: ROI Overview (bar+line mixed), By Channel (grouped bar), Trend Analysis (multi-area)

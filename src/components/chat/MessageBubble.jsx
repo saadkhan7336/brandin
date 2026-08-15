@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import clsx from "clsx";
 import { Check, CheckCheck, ChevronDown, Reply, Edit2, Copy, Trash2, Smile, CheckSquare } from "lucide-react";
+import UserAvatar from "../common/UserAvatar";
 import { getOptimizedImage } from "../../utils/imageOptimization";
 
 const MessageBubble = ({ message, isOwnMessage, onReply, onEdit, onDeleteMe, onDeleteEveryone, onReact, onSelect, isSelected, selectMode, showAvatar }) => {
@@ -58,16 +59,13 @@ const MessageBubble = ({ message, isOwnMessage, onReply, onEdit, onDeleteMe, onD
         {!isOwnMessage && (
           <div className="flex-shrink-0 w-10">
             {showAvatar ? (
-              <div className="h-10 w-10 rounded-xl bg-indigo-100 overflow-hidden flex items-center justify-center font-bold text-indigo-800 shadow-sm border border-white">
-                {message.sender?.profilePic ? (
-                  <img loading="lazy" decoding="async"                     src={getOptimizedImage(message.sender.profilePic, 'chat')}
-                    alt="Profile"
-                    width="40" height="40"
-                    className="h-full w-full object-cover" />
-                ) : (
-                  <span>{message.sender?.fullname?.charAt(0) || "U"}</span>
-                )}
-              </div>
+              <UserAvatar
+                src={message.sender?.profilePic}
+                name={message.sender?.fullname || "U"}
+                className="h-10 w-10 rounded-xl shadow-sm border border-white"
+                textClassName="text-sm"
+                imageType="chat"
+              />
             ) : (
               <div className="h-10 w-10" />
             )}

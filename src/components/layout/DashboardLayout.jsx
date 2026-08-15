@@ -47,7 +47,7 @@ export default function DashboardLayout() {
     <DashboardProvider>
       <div className="min-h-screen bg-[#f8f9fb]">
         {/* Navbar — fixed top */}
-        <div className="relative z-[60]">
+        <div className="relative z-[200]">
           <Navbar />
 
           {/* Dropdowns — positioned relative to navbar */}

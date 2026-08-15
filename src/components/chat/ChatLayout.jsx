@@ -25,6 +25,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import EmojiPicker from 'emoji-picker-react';
 import collaborationService from "../../services/collaborationService";
 import VerifiedTick from "../common/VerifiedTick";
+import UserAvatar from "../common/UserAvatar";
 import { getOptimizedImage } from "../../utils/imageOptimization";
 
 const ChatLayout = () => {
@@ -484,14 +485,14 @@ const ChatLayout = () => {
                   }`}
                 >
                   <div className="relative flex-shrink-0">
-                    <div className="h-12 w-12 rounded-2xl overflow-hidden bg-indigo-100 flex items-center justify-center shadow-sm">
-                      <div className="relative w-12 h-12 rounded-2xl overflow-hidden shrink-0 group">
-                        {otherUser?.profilePic ? (
-                          <img loading="lazy" decoding="async" src={getOptimizedImage(otherUser.profilePic, 'chat')} alt="pic" className="h-full w-full object-cover transition-transform group-hover:scale-110" width="48" height="48" />
-                        ) : (
-                          <span className="text-indigo-700 font-bold text-lg">{otherUser?.fullname?.charAt(0)}</span>
-                        )}
-                      </div>
+                    <div className="h-12 w-12 rounded-2xl overflow-hidden shadow-sm">
+                      <UserAvatar
+                        src={otherUser?.profilePic}
+                        name={otherUser?.fullname}
+                        className="h-12 w-12 rounded-2xl"
+                        textClassName="text-lg"
+                        imageType="chat"
+                      />
                     </div>
                     {isOnline && (
                       <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
@@ -583,11 +584,13 @@ const ChatLayout = () => {
                     <X className="w-6 h-6" />
                   </button>
                   <div className="relative">
-                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-800 font-bold overflow-hidden shadow-sm">
-                        <div className="h-11 w-11 rounded-2xl overflow-hidden shadow-sm shrink-0">
-                          <img loading="lazy" decoding="async" className="h-full w-full object-cover" src={getOptimizedImage(chatOtherUser?.profilePic, 'chat')} alt="" width="44" height="44" /> 
-                        </div> : <span>{chatOtherUser?.fullname?.charAt(0)}</span>
-                    </div>
+                    <UserAvatar
+                      src={chatOtherUser?.profilePic}
+                      name={chatOtherUser?.fullname}
+                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl shadow-sm"
+                      textClassName="text-base"
+                      imageType="chat"
+                    />
                     {isOnline && (
                       <span className="absolute -top-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-green-500 border-2 border-white rounded-full ring-2 ring-transparent transition-all"></span>
                     )}
@@ -784,11 +787,12 @@ const ChatLayout = () => {
              return (
                <>
                  <div className="p-8 flex flex-col items-center text-center border-b border-gray-50">
-                    <div className="w-24 h-24 rounded-3xl bg-indigo-50 overflow-hidden mb-4 shadow-xl shadow-indigo-100 ring-4 ring-white">
-                      <div className="w-24 h-24 mx-auto rounded-3xl overflow-hidden border-4 border-white shadow-xl relative z-10 bg-white">
-                        <img loading="lazy" decoding="async" src={getOptimizedImage(chatOtherUser.profilePic, 'avatar')} alt="avatar" className="w-full h-full object-cover" width="96" height="96" />
-                      </div>
-                    </div>
+                    <UserAvatar
+                      src={chatOtherUser?.profilePic}
+                      name={chatOtherUser?.fullname}
+                      className="w-24 h-24 rounded-3xl shadow-xl shadow-indigo-100 ring-4 ring-white"
+                      textClassName="text-3xl"
+                    />
                     <div className="flex items-center gap-1.5 mb-1 justify-center">
                       <h3 className="text-lg font-bold text-gray-900 leading-tight">{chatOtherUser?.fullname}</h3>
                       <VerifiedTick user={chatOtherUser} size="xs" />

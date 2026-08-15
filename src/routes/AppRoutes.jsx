@@ -12,6 +12,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
 import LoadingFallback from "../components/common/LoadingFallback";
 import OAuthCallbackPage from "../pages/auth/OAuthCallbackPage";
+import GoogleLoginCallback from "../pages/auth/GoogleLoginCallback";
 import ScrollToTop from "../components/common/ScrollToTop";
 
 // Auth pages (lazy loaded)
@@ -169,6 +170,7 @@ export default function AppRoutes() {
 
           {/* OAuth Callback — must be public, no auth required */}
           <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+          <Route path="/oauth/google/callback" element={<GoogleLoginCallback />} />
 
           {/* Register — outside PublicRoute so Step 2 onboarding works after auto-login */}
           <Route path="/register" element={<Register />} />

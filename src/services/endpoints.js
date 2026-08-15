@@ -65,6 +65,7 @@ export const ENDPOINTS = {
   RESET_PASSWORD: "/auth/reset-password",
   CHANGE_PASSWORD: "/auth/change-password",
   LOGOUT: "/auth/logout",
+  GOOGLE_AUTH: "/auth/google",
   SEND_OTP: "/auth/send-otp",
   VERIFY_OTP: "/auth/verify-otp",
 
@@ -103,15 +104,6 @@ export const ENDPOINTS = {
     getOne: (id) => `/influencers/${id}`,
   },
 
-  // Activities / Notifications
-  activities: {
-    getAll: "/activities",
-    markRead: (id) => `/activities/${id}/read`,
-    markAllRead: "/activities/read-all",
-    delete: (id) => `/activities/${id}`
-  },
-
-  // Collaborations
   collaborations: {
     getRequests: "/collaborations/request",
     sendRequest: "/collaborations/request",
@@ -151,5 +143,11 @@ export const ENDPOINTS = {
     revoke: (platform) => `/oauth/${platform}/revoke`,
     // connect is a full-page redirect (not an API call), so we use the backend URL directly
     connectUrl: (platform) => `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/v1/oauth/${platform}/connect`,
+  },
+
+  geo: {
+    search: "/geo/search",
+    reverse: "/geo/reverse",
+    mapsConfig: "/geo/maps-config",
   },
 };

@@ -10,7 +10,7 @@ import {
   ChevronRight,
   RotateCcw,
 } from "lucide-react";
-import { getOptimizedImage } from "../../utils/imageOptimization";
+import UserAvatar from "../common/UserAvatar";
 
 const InfluencerRequestCard = ({
   request,
@@ -40,9 +40,7 @@ const InfluencerRequestCard = ({
   const roleProfile = request.brandProfile || {};
 
   const brandName = otherParty.fullname || "Premium Brand";
-  const logo =
-    otherParty.profilePic ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(brandName)}&background=random`;
+  const logo = otherParty.profilePic;
 
   // Campaign details
   const campaignName =
@@ -105,10 +103,12 @@ const InfluencerRequestCard = ({
         {/* Brand Identity */}
         <div className="flex items-center gap-4 min-w-0">
           <div className="relative shrink-0">
-            <img loading="lazy" decoding="async"               src={getOptimizedImage(logo, 'avatar')}
-              alt={brandName}
-              className="w-16 h-16 rounded-[20px] object-cover border-2 border-white shadow-sm ring-1 ring-gray-100"
-             width="64" height="64" />
+            <UserAvatar
+              src={logo}
+              name={brandName}
+              className="w-16 h-16 rounded-[20px] border-2 border-white shadow-sm ring-1 ring-gray-100"
+              textClassName="text-xl"
+            />
             <div
               className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${status === "pending" ? "bg-amber-400" : status === "accepted" ? "bg-emerald-400" : "bg-gray-300"}`}
             ></div>

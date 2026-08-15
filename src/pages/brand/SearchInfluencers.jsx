@@ -12,7 +12,7 @@ const CampaignSelectionModal = lazy(() => import('../../components/ai/CampaignSe
 const AIInfluencerCard = lazy(() => import('../../components/cards/AIInfluencerCard.jsx'));
 const SendCollabModal = lazy(() => import('../../components/layout/influencer/SendCollabModal'));
 import VerifiedTick from '../../components/common/VerifiedTick';
-import { getOptimizedImage } from '../../utils/imageOptimization';
+import UserAvatar from '../../components/common/UserAvatar';
 
 function SearchInfluencers() {
   const navigate = useNavigate();
@@ -373,10 +373,12 @@ function SearchInfluencers() {
 
                 return (
                   <div key={influencer._id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center transition-all hover:shadow-xl hover:-translate-y-1.5 w-full max-w-[360px] mx-auto">
-                    <img loading="lazy" decoding="async"                       src={getOptimizedImage(influencer.profilePicture || `https://ui-avatars.com/api/?name=${influencer.username}&background=random`, 'avatar')}
-                      alt={influencer.username}
-                      className="w-[72px] h-[72px] rounded-full object-cover mb-3.5 ring-[3px] ring-gray-50"
-                     width="72" height="72" />
+                    <UserAvatar
+                      src={influencer.profilePicture}
+                      name={influencer.username}
+                      className="w-[72px] h-[72px] rounded-full mb-3.5 ring-[3px] ring-gray-50"
+                      textClassName="text-2xl"
+                    />
 
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <h3 className="text-[15px] font-bold text-gray-900">{influencer.username}</h3>

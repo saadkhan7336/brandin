@@ -6,8 +6,6 @@ import { Plus } from 'lucide-react';
 import CampaignStats from '../../components/campaign/CampaignStats';
 import CampaignFilters from '../../components/campaign/CampaignFilters';
 import CampaignList from '../../components/campaign/CampaignList';
-import { Button } from '../../components/common/Button';
-import CreateCampaign from './CreateCampaign';
 import DeleteConfirmationModal from '../../components/campaign/DeleteConfirmationModal';
 import CancelCampaignModal from '../../components/campaign/CancelCampaignModal';
 import ExtendDurationModal from '../../components/campaign/ExtendDurationModal';
@@ -32,9 +30,7 @@ const CampaignHub = () => {
     pages
   } = useSelector((state) => state.campaign);
 
-  const [view, setView] = React.useState('hub'); // 'hub' or 'create'
   const [viewMode, setViewMode] = React.useState(() => localStorage.getItem('campaigns_view_mode') || 'list');
-  const [editData, setEditData] = React.useState(null);
   const [deleteModal, setDeleteModal] = React.useState({ open: false, campaign: null });
   const [cancelModal, setCancelModal] = React.useState({ open: false, campaign: null });
   const [extendModal, setExtendModal] = React.useState({ open: false, campaign: null });
@@ -101,8 +97,7 @@ const CampaignHub = () => {
   };
 
   const handleEdit = (campaign) => {
-    setEditData(campaign);
-    setView('create');
+    navigate(`/brand/campaigns/${campaign._id}/edit`);
   };
 
   const fetchCampaigns = useCallback(async () => {
@@ -133,23 +128,6 @@ const CampaignHub = () => {
   const handlePageChange = (newPage) => {
     dispatch(setFilters({ page: newPage }));
   };
-
-  if (view === 'create') {
-    return (
-      <CreateCampaign 
-        onCancel={() => {
-          setView('hub');
-          setEditData(null);
-        }} 
-        campaign={editData}
-        onSuccess={() => {
-          setView('hub');
-          setEditData(null);
-          fetchCampaigns();
-        }} 
-      />
-    );
-  }
 
   return (
     <div className="w-full max-w-[1800px] mx-auto pb-10 px-4 md:px-6">

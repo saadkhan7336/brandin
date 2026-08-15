@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import VerifiedTick from '../common/VerifiedTick';
 import { useDashboardContext } from '../../context/DashboardContext';
-import { getOptimizedImage } from '../../utils/imageOptimization';
+import UserAvatar from '../common/UserAvatar';
 import { getDashboardByRole } from '../../routes/ProtectedRoute';
 
 export default function Navbar() {
@@ -21,6 +21,7 @@ export default function Navbar() {
   } = useDashboardContext();
 
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const shortcutsRef = useRef(null);
 
   const userRole = user?.role || 'brand';
@@ -38,7 +39,6 @@ export default function Navbar() {
     (fullName || 'User');
 
   const userEmail = user?.email || '';
-  const initial = displayName.charAt(0).toUpperCase();
 
   const navigate = useNavigate();
 
@@ -90,6 +90,16 @@ export default function Navbar() {
     navigate(route);
   };
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (isBrand) {
+      navigate(q ? `/brand/influencer?q=${encodeURIComponent(q)}` : '/brand/influencer');
+      return;
+    }
+    navigate(q ? `/influencer/search/campaigns?q=${encodeURIComponent(q)}` : '/influencer/search/campaigns');
+  };
+
   return (
     <header className="bg-white border-b border-[#e2e8f0] shadow-sm sticky top-0 z-40 h-[72px] sm:h-[80px]">
       <div className="flex items-center justify-between h-full px-2.5 sm:px-6">
@@ -118,28 +128,38 @@ export default function Navbar() {
 
         {/* Middle: Search Bar (Hidden on small screens) */}
         <div className="hidden md:flex flex-1 max-w-xl mx-8">
-          <div className="relative w-full">
+          <form className="relative w-full" onSubmit={handleSearchSubmit}>
             <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
               <Search className="w-4 h-4 text-[#94a3b8]" />
             </div>
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="block w-full py-2 pl-10 pr-4 text-sm text-[#1e293b] bg-[#f1f5f9] border border-slate-200 rounded-full placeholder-[#94a3b8] focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all"
-              placeholder="Search campaigns, influencers..."
+              placeholder={isBrand ? 'Search influencers...' : 'Search campaigns, brands...'}
             />
-          </div>
+          </form>
         </div>
 
         {/* Right: Actions + Profile */}
         <div className="flex items-center gap-1 sm:gap-2 relative">
           
-          {/* Dark Mode */}
-          <button className="hidden sm:flex p-2 text-[#64748b] hover:text-[#1e293b] hover:bg-slate-50 rounded-full transition-colors">
+          {/* Dark Mode — visual only until theme is wired */}
+          <button
+            type="button"
+            title="Dark mode (coming in a later polish pass)"
+            className="hidden sm:flex p-2 text-[#64748b] hover:text-[#1e293b] hover:bg-slate-50 rounded-full transition-colors"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
           </button>
 
-          {/* Language Selector */}
-          <button className="hidden sm:flex p-2 text-[#64748b] hover:text-[#1e293b] hover:bg-slate-50 rounded-full transition-colors items-center justify-center">
+          {/* Language — visual only until i18n is wired */}
+          <button
+            type="button"
+            title="Language (English only for now)"
+            className="hidden sm:flex p-2 text-[#64748b] hover:text-[#1e293b] hover:bg-slate-50 rounded-full transition-colors items-center justify-center"
+          >
             <span className="text-lg leading-none">🇬🇧</span>
           </button>
 
@@ -221,13 +241,13 @@ export default function Navbar() {
           >
             {/* Avatar */}
             <div className="relative">
-              <div className="w-8 h-8 rounded-full bg-white border border-[#e2e8f0] flex items-center justify-center overflow-hidden shrink-0">
-                {avatarUrl ? (
-                  <img loading="lazy" decoding="async" src={getOptimizedImage(avatarUrl, 'chat')} alt={displayName} className="w-full h-full object-cover" width="32" height="32" />
-                ) : (
-                  <span className="text-[#64748b] font-semibold text-sm">{initial}</span>
-                )}
-              </div>
+              <UserAvatar
+                src={avatarUrl}
+                name={displayName}
+                className="w-8 h-8 rounded-full border border-[#e2e8f0]"
+                textClassName="text-sm"
+                imageType="chat"
+              />
               {/* Status dot */}
               <div className={`absolute top-0 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${
                 user?.status === 'offline' ? 'bg-gray-400' : 'bg-green-500'

@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import {
   ArrowLeft, ArrowRight, Check, Sparkles,
   Target, DollarSign, Calendar, Users,
@@ -10,7 +10,7 @@ import {
   Save, Eye, AlertCircle
 } from 'lucide-react';
 import campaignService from '../../services/campaignService';
-import { addCampaign } from '../../redux/slices/campaignSlice';
+import { addCampaign, updateCampaignInState } from '../../redux/slices/campaignSlice';
 import { compressImage } from '../../utils/imageCompression';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -455,11 +455,14 @@ function Step4({ data, onChange, errors }) {
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function CreateCampaignPage() {
   const navigate  = useNavigate();
+  const { id }    = useParams();
   const dispatch  = useDispatch();
+  const isEdit    = Boolean(id);
 
   const [step, setStep]           = useState(1);
   const [dir, setDir]             = useState('forward');
   const [submitting, setSubmitting] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(isEdit);
   const [globalError, setGlobalError] = useState('');
   const [errors, setErrors]       = useState({});
 
@@ -470,6 +473,40 @@ export default function CreateCampaignPage() {
     deliverables: '', additionalRequirements: '',
     imageFile: null, imagePreview: null,
   });
+
+  useEffect(() => {
+    if (!id) return undefined;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        setLoadingEdit(true);
+        const c = await campaignService.getCampaign(id);
+        if (cancelled || !c) return;
+        setFormData({
+          name: c.name || '',
+          industry: c.industry || 'Technology',
+          description: c.description || '',
+          minBudget: c.budget?.min ?? '',
+          maxBudget: c.budget?.max ?? '',
+          startDate: c.campaignTimeline?.startDate ? new Date(c.campaignTimeline.startDate).toISOString().split('T')[0] : '',
+          endDate: c.campaignTimeline?.endDate ? new Date(c.campaignTimeline.endDate).toISOString().split('T')[0] : '',
+          platforms: Array.isArray(c.platform) ? c.platform : (Array.isArray(c.platforms) ? c.platforms : []),
+          goals: Array.isArray(c.goals) ? c.goals : [],
+          targetAudience: c.targetAudience || '',
+          deliverables: c.deliverables || '',
+          additionalRequirements: c.additionalRequirements || '',
+          imageFile: null,
+          imagePreview: c.image || null,
+        });
+      } catch (err) {
+        if (!cancelled) setGlobalError(err.response?.data?.message || 'Failed to load campaign');
+      } finally {
+        if (!cancelled) setLoadingEdit(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [id]);
 
   const onChange = (key, val) => {
     setFormData(p => ({ ...p, [key]: val }));
@@ -528,7 +565,8 @@ export default function CreateCampaignPage() {
     fd.append('campaignTimeline[endDate]', formData.endDate);
     formData.platforms.forEach(p => fd.append('platform[]', p));
     formData.goals.forEach(g => fd.append('goals[]', g));
-    fd.append('status', asDraft ? 'draft' : 'pending');
+    if (asDraft) fd.append('status', 'draft');
+    else if (!isEdit) fd.append('status', 'pending');
     if (formData.imageFile) fd.append('image', formData.imageFile);
     return fd;
   };
@@ -537,8 +575,11 @@ export default function CreateCampaignPage() {
     if (!formData.name.trim()) { setErrors({ name: 'Enter a name to save draft' }); setStep(1); return; }
     try {
       setSubmitting(true);
-      const data = await campaignService.createCampaign(buildPayload(true));
-      dispatch(addCampaign(data));
+      const payload = buildPayload(true);
+      const data = isEdit
+        ? await campaignService.updateCampaign(id, payload)
+        : await campaignService.createCampaign(payload);
+      dispatch(isEdit ? updateCampaignInState(data) : addCampaign(data));
       navigate('/brand/campaigns');
     } catch (err) {
       setGlobalError(err.response?.data?.message || 'Failed to save draft');
@@ -553,11 +594,14 @@ export default function CreateCampaignPage() {
     }
     try {
       setSubmitting(true);
-      const data = await campaignService.createCampaign(buildPayload(false));
-      dispatch(addCampaign(data));
+      const payload = buildPayload(false);
+      const data = isEdit
+        ? await campaignService.updateCampaign(id, payload)
+        : await campaignService.createCampaign(payload);
+      dispatch(isEdit ? updateCampaignInState(data) : addCampaign(data));
       navigate('/brand/campaigns');
     } catch (err) {
-      setGlobalError(err.response?.data?.message || 'Failed to create campaign');
+      setGlobalError(err.response?.data?.message || (isEdit ? 'Failed to update campaign' : 'Failed to create campaign'));
     } finally { setSubmitting(false); }
   };
 
@@ -567,6 +611,14 @@ export default function CreateCampaignPage() {
     'Select all platforms where you want content. Multi-platform campaigns perform 40% better.',
     'Review carefully. Once published, your campaign is visible to matched influencers within minutes.',
   ];
+
+  if (loadingEdit) {
+    return (
+      <div className="w-full max-w-[1800px] mx-auto flex items-center justify-center py-24 text-sm font-medium text-slate-500">
+        Loading campaign…
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-4 md:px-6 pb-16 pt-2">
@@ -581,7 +633,7 @@ export default function CreateCampaignPage() {
           </button>
           <div className="w-px h-4 bg-slate-200 hidden sm:block" />
           <h1 className="text-base sm:text-2xl font-black text-slate-900 leading-none">
-            Create <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Campaign</span>
+            {isEdit ? 'Edit' : 'Create'} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Campaign</span>
           </h1>
         </div>
 
@@ -660,8 +712,8 @@ export default function CreateCampaignPage() {
               <button type="button" onClick={handlePublish} disabled={submitting}
                 className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-md shadow-blue-200 transition-all disabled:opacity-60">
                 {submitting
-                  ? <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /><span className="hidden xs:inline"> Publishing...</span></>
-                  : <><Rocket className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span className="hidden xs:inline"> Publish</span><span className="xs:hidden">Go</span></>}
+                  ? <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /><span className="hidden xs:inline"> {isEdit ? 'Saving...' : ' Publishing...'}</span></>
+                  : <><Rocket className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span className="hidden xs:inline"> {isEdit ? 'Save changes' : ' Publish'}</span><span className="xs:hidden">Go</span></>}
               </button>
             )}
           </div>

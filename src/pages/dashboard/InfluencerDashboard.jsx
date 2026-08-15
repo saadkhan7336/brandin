@@ -7,7 +7,7 @@ import {
   Clock, Briefcase, Send, Download
 } from 'lucide-react';
 import api from '../../services/api';
-import { getOptimizedImage } from '../../utils/imageOptimization';
+import UserAvatar from '../../components/common/UserAvatar';
 import collaborationService from '../../services/collaborationService';
 import paymentService from '../../services/paymentService';
 import { useSocket } from '../../context/SocketContext';
@@ -381,9 +381,12 @@ function InfluencerDashboard() {
                   className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-all cursor-pointer group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-gray-100 shadow-sm bg-gray-50 group-hover:scale-105 transition-transform">
-                      <img loading="lazy" decoding="async" src={getOptimizedImage(transaction.brandPic || `https://ui-avatars.com/api/?name=Brand`, 'avatar')} alt="" className="w-full h-full object-cover" width="40" height="40" />
-                    </div>
+                    <UserAvatar
+                      src={transaction.brandPic}
+                      name={transaction.brandName || transaction.campaignName || 'Brand'}
+                      className="w-10 h-10 rounded-xl border border-gray-100 shadow-sm"
+                      textClassName="text-sm"
+                    />
                     <div>
                       <p className="text-xs font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{transaction.campaignName}</p>
                       <p className="text-[10px] font-medium text-gray-400">{new Date(transaction.date).toLocaleDateString()}</p>
@@ -415,9 +418,12 @@ function InfluencerDashboard() {
                   <div className="w-8 h-8 shrink-0 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold shadow-md shadow-blue-500/20">
                     {index + 1}
                   </div>
-                  <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm shrink-0 bg-gray-50 border border-gray-100">
-                    <img loading="lazy" decoding="async" src={getOptimizedImage(brand.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(brand.name)}`, 'avatar')} alt={brand.name} className="w-full h-full object-cover" width="40" height="40" />
-                  </div>
+                  <UserAvatar
+                    src={brand.avatar}
+                    name={brand.name}
+                    className="w-10 h-10 rounded-xl shadow-sm border border-gray-100"
+                    textClassName="text-sm"
+                  />
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-bold text-gray-900 truncate">{brand.name}</h4>
                     <p className="text-xs font-medium text-gray-500 truncate">{formatBudget(brand.totalSpending)} spent</p>

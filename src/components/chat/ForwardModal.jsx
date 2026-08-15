@@ -1,6 +1,6 @@
 import React from "react";
 import { X, Search } from "lucide-react";
-import { getOptimizedImage } from "../../utils/imageOptimization";
+import UserAvatar from "../common/UserAvatar";
 
 const ForwardModal = ({ isOpen, onClose, conversations, onForward, user }) => {
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -51,13 +51,12 @@ const ForwardModal = ({ isOpen, onClose, conversations, onForward, user }) => {
                   onClick={() => onForward(conv._id)}
                   className="w-full flex items-center p-3 hover:bg-indigo-50 rounded-xl transition-colors group"
                 >
-                  <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold overflow-hidden mr-3">
-                    {other?.profilePic ? (
-                      <img loading="lazy" decoding="async" src={getOptimizedImage(other.profilePic, 'avatar')} alt="" className="h-full w-full object-cover" width="40" height="40" />
-                    ) : (
-                      other?.fullname?.charAt(0).toUpperCase()
-                    )}
-                  </div>
+                  <UserAvatar
+                    src={other?.profilePic}
+                    name={other?.fullname}
+                    className="h-10 w-10 rounded-full mr-3"
+                    textClassName="text-sm"
+                  />
                   <div className="text-left flex-1">
                     <p className="text-sm font-semibold text-gray-800 group-hover:text-indigo-700 transition-colors">
                       {other?.fullname}

@@ -71,7 +71,7 @@ export default function NotificationPanel() {
   return (
     <div
       ref={panelRef}
-      className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-16 top-[76px] sm:top-[80px] w-auto sm:w-[380px] max-w-full bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] overflow-hidden animate-in"
+      className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-16 top-[76px] sm:top-[80px] w-auto sm:w-[380px] max-w-full bg-white rounded-2xl shadow-2xl border border-gray-100 z-[210] overflow-hidden animate-in"
       style={{ animation: 'fadeSlideDown 0.2s ease-out' }}
     >
       {/* Header */}

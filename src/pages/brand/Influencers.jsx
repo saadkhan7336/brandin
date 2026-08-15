@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   FileText, CheckCircle, Clock, Users,
   Search, X, Briefcase, Sparkles, XCircle,
@@ -12,7 +12,7 @@ import VerifiedTick from '../../components/common/VerifiedTick';
 import SocialIcon from '../../components/common/SocialIcon';
 import { getFilteredInfluencers } from '../../services/aiService.js';
 import SendCollabModal from '../../components/layout/influencer/SendCollabModal';
-import { getOptimizedImage } from '../../utils/imageOptimization';
+import UserAvatar from '../../components/common/UserAvatar';
 
 const CampaignSelectionModal = lazy(() => import('../../components/ai/CampaignSelectionModal.jsx'));
 const AIInfluencerCard = lazy(() => import('../../components/cards/AIInfluencerCard.jsx'));
@@ -140,17 +140,11 @@ function InfluencerCard({ inf, collab, isRequested, onInvite, onNavigate }) {
       <div className="px-4 pt-4 pb-3 flex items-start gap-3">
         {/* Avatar */}
         <div className="relative flex-shrink-0">
-          <img
-            loading="lazy"
-            decoding="async"
-            src={getOptimizedImage(
-              inf.profilePicture
-                || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanUsername)}&background=random`,
-              'avatar'
-            )}
-            alt={cleanUsername}
-            className="w-[52px] h-[52px] rounded-xl object-cover border-2 border-white shadow-md bg-white"
-            width="52" height="52"
+          <UserAvatar
+            src={inf.profilePicture}
+            name={cleanUsername}
+            className="w-[52px] h-[52px] rounded-xl border-2 border-white shadow-md"
+            textClassName="text-lg"
           />
           {isVerified && (
             <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border border-white shadow-sm">
@@ -286,12 +280,19 @@ function InfluencerCard({ inf, collab, isRequested, onInvite, onNavigate }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 function Influencers() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const urlSearch = searchParams.get('q') || '';
 
   const [stats, setStats] = useState({
     totalRequests: 0, activeCampaigns: 0, pendingRequests: 0,
     totalInfluencersContacted: 0, totalCampaigns: 0, completedCampaigns: 0, successRate: 0
   });
-  const [filters, setFilters] = useState({ category: '', platform: '', minFollowers: '', search: '' });
+  const [filters, setFilters] = useState({ category: '', platform: '', minFollowers: '', search: urlSearch });
+
+  useEffect(() => {
+    setFilters((prev) => (prev.search === urlSearch ? prev : { ...prev, search: urlSearch }));
+  }, [urlSearch]);
+
   const [influencers, setInfluencers] = useState([]);
   const [pagination, setPagination] = useState({ total: 0, page: 1, pages: 1 });
   const [activeCollaborations, setActiveCollaborations] = useState([]);
