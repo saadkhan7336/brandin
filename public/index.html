@@ -24,14 +24,60 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
-    <!-- Botpress Webchat -->
-    <script src="https://cdn.botpress.cloud/webchat/v5.0/inject.js"></script>
-    <script src="https://files.bpcontent.cloud/2026/08/25/16/20260825160122-4YO2BAWY.js" defer></script>
+    <title>Brandly</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <!-- Botpress webchat -->
+    <script src="https://cdn.botpress.cloud/webchat/v5.0/inject.js"></script>
+    <script src="https://files.bpcontent.cloud/2026/08/27/15/20260827154835-CU4F7O8G.js" defer></script>
+    <!-- Hapy AI support — Brandly FYP (local). Hapy :3000 · Brandly UI :3001 · API :8000 -->
+    <script
+      src="http://localhost:3000/embed.js?v=11"
+      data-hapy-key="BBxGkFzzcL8fSEmbEAT2XSxe"
+      defer
+    ></script>
+    <script>
+      (function () {
+        var API = (window.REACT_APP_API_URL || "http://127.0.0.1:8000") + "/api/v1";
+        function pushUser(user, accessToken) {
+          if (!window.hapyChat || !user) return;
+          var subject = String(user._id || user.id || "");
+          if (!subject) return;
+          window.hapyChat.setUser({
+            subject: subject,
+            displayName: user.fullname || user.name || "Brandly user",
+            accessToken: accessToken || undefined,
+          });
+        }
+        async function syncFromBrandly() {
+          if (!window.hapyChat) return;
+          try {
+            var res = await fetch(API + "/users/me", { credentials: "include" });
+            if (!res.ok) {
+              // Guest path — clear only if previously set; handshake null is handled by Hapy
+              return;
+            }
+            var body = await res.json();
+            var user = body?.data?.user || body?.data || body?.user;
+            pushUser(user);
+          } catch (e) {
+            console.info("[hapy] Brandly me sync skipped", e && e.message);
+          }
+        }
+        function wire() {
+          if (!window.hapyChat) return;
+          window.hapyChat.onAuthRefreshNeeded = function () {
+            syncFromBrandly();
+          };
+          syncFromBrandly();
+        }
+        window.addEventListener("load", wire);
+        setTimeout(wire, 600);
+        setTimeout(wire, 2000);
+      })();
+    </script>
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
