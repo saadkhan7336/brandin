@@ -29,10 +29,10 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <!-- AIDE webchat (Brandly support agent) -->
+    <!-- AIDE webchat -->
     <script
-      src="http://localhost:3000/embed.js?v=11"
-      data-aide-key="zhsi1XYQbmkob9GjxLPtPOx0"
+      src="https://ai-customer-support-agent-coral.vercel.app/embed.js?v=11"
+      data-aide-key="FWGELyHWSsyHdR4BFuGEKC6J"
       defer
     ></script>
     <!--
@@ -44,16 +44,19 @@
       Guest lookups must return redacted data only.
       Docs: docs/features/EMBED_END_USER_IDENTITY.md
     -->
-    <!-- After site login (every page load while signed in) — optional for guest chat:
+    <!-- After your site login (every page load while signed in) -->
+    <!--
     <script>
+      // Option A — one object; embed.js applies it automatically on load
       window.__AIDE_CHAT_USER__ = {
         subject: "user_123",
         displayName: "Alex",
         accessToken: "MERCHANT_SESSION_OR_API_TOKEN"
       };
+      // Option B — explicit (same effect)
       window.aideChat && aideChat.setUser(window.__AIDE_CHAT_USER__);
       aideChat.onAuthRefreshNeeded = async function () {
-        const accessToken = await fetchFreshAccessToken();
+        const accessToken = await fetchFreshAccessToken(); // your app
         window.__AIDE_CHAT_USER__ = { subject: "user_123", displayName: "Alex", accessToken };
         aideChat.setUser(window.__AIDE_CHAT_USER__);
       };
