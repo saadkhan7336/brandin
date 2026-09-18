@@ -29,55 +29,36 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <!-- Botpress webchat -->
-    <script src="https://cdn.botpress.cloud/webchat/v5.0/inject.js"></script>
-    <script src="https://files.bpcontent.cloud/2026/08/27/15/20260827154835-CU4F7O8G.js" defer></script>
-    <!-- Hapy AI support — Brandly FYP (local). Hapy :3000 · Brandly UI :3001 · API :8000 -->
+    <!-- AIDE webchat (Brandly support agent) -->
     <script
       src="http://localhost:3000/embed.js?v=11"
-      data-hapy-key="BBxGkFzzcL8fSEmbEAT2XSxe"
+      data-aide-key="zhsi1XYQbmkob9GjxLPtPOx0"
       defer
     ></script>
+    <!--
+      Signed-in visitors (ACCOUNT tools): pass an Aide-signed HS256 identity JWT
+      (mint from your backend). Raw browser customerId / setUser subject alone
+      never unlocks ACCOUNT_READ on the public embed.
+      See Deploy → Signed-in visitors.
+      Live WRITE tools always Confirm in the widget before calling your API.
+      Guest lookups must return redacted data only.
+      Docs: docs/features/EMBED_END_USER_IDENTITY.md
+    -->
+    <!-- After site login (every page load while signed in) — optional for guest chat:
     <script>
-      (function () {
-        var API = (window.REACT_APP_API_URL || "http://127.0.0.1:8000") + "/api/v1";
-        function pushUser(user, accessToken) {
-          if (!window.hapyChat || !user) return;
-          var subject = String(user._id || user.id || "");
-          if (!subject) return;
-          window.hapyChat.setUser({
-            subject: subject,
-            displayName: user.fullname || user.name || "Brandly user",
-            accessToken: accessToken || undefined,
-          });
-        }
-        async function syncFromBrandly() {
-          if (!window.hapyChat) return;
-          try {
-            var res = await fetch(API + "/users/me", { credentials: "include" });
-            if (!res.ok) {
-              // Guest path — clear only if previously set; handshake null is handled by Hapy
-              return;
-            }
-            var body = await res.json();
-            var user = body?.data?.user || body?.data || body?.user;
-            pushUser(user);
-          } catch (e) {
-            console.info("[hapy] Brandly me sync skipped", e && e.message);
-          }
-        }
-        function wire() {
-          if (!window.hapyChat) return;
-          window.hapyChat.onAuthRefreshNeeded = function () {
-            syncFromBrandly();
-          };
-          syncFromBrandly();
-        }
-        window.addEventListener("load", wire);
-        setTimeout(wire, 600);
-        setTimeout(wire, 2000);
-      })();
+      window.__AIDE_CHAT_USER__ = {
+        subject: "user_123",
+        displayName: "Alex",
+        accessToken: "MERCHANT_SESSION_OR_API_TOKEN"
+      };
+      window.aideChat && aideChat.setUser(window.__AIDE_CHAT_USER__);
+      aideChat.onAuthRefreshNeeded = async function () {
+        const accessToken = await fetchFreshAccessToken();
+        window.__AIDE_CHAT_USER__ = { subject: "user_123", displayName: "Alex", accessToken };
+        aideChat.setUser(window.__AIDE_CHAT_USER__);
+      };
     </script>
+    -->
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
